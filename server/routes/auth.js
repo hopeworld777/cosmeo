@@ -1,9 +1,25 @@
 import { Router } from "express";
 import bcrypt from "bcryptjs";
+import crypto from "crypto";
 import pool from "../db.js";
 import { generateToken, requireAuth } from "../middleware/auth.js";
+import { sendVerificationEmail, sendPasswordResetEmail } from "../email.js";
 
 const router = Router();
+
+function generateSecureToken() {
+  return crypto.randomBytes(48).toString("hex");
+}
+
+async function createAuthToken(userId, type, expiresInHours = 24) {
+  const token = generateSecureToken();
+  const expiresAt = new Date(Date.now() + expiresInHours * 60 * 60 * 1000);
+  await pool.query(
+    "INSERT INTO auth_tokens (user_id, token, type, expires_at) VALUES ($1, $2, $3, $4)",
+    [userId, token, type, expiresAt]
+  );
+  return token;
+}
 
 // POST /api/auth/register
 router.post("/register", async (req, res) => {
@@ -24,14 +40,24 @@ router.post("/register", async (req, res) => {
     }
     const hashedPassword = await bcrypt.hash(password, 12);
     const result = await pool.query(
-      `INSERT INTO users (username, email, password_hash, bio)
-       VALUES ($1, $2, $3, $4)
-       RETURNING id, username, email, bio, avatar_url, rating, review_count, sales_count, created_at`,
+      `INSERT INTO users (username, email, password_hash, bio, email_verified)
+       VALUES ($1, $2, $3, $4, false)
+       RETURNING id, username, email, bio, avatar_url, rating, review_count, sales_count, email_verified, created_at`,
       [username, email.toLowerCase(), hashedPassword, bio || ""]
     );
     const user = result.rows[0];
-    const token = generateToken(user.id);
-    res.status(201).json({ user, token });
+
+    // Send verification email
+    let verifyLink = null;
+    try {
+      const token = await createAuthToken(user.id, "email_verification", 24);
+      verifyLink = await sendVerificationEmail(email.toLowerCase(), token);
+    } catch (emailErr) {
+      console.error("Email send error (non-fatal):", emailErr.message);
+    }
+
+    const jwtToken = generateToken(user.id);
+    res.status(201).json({ user, token: jwtToken, verifyLink });
   } catch (err) {
     console.error("Register error:", err);
     res.status(500).json({ error: "Registration failed" });
@@ -70,7 +96,7 @@ router.post("/login", async (req, res) => {
 router.get("/me", requireAuth, async (req, res) => {
   try {
     const result = await pool.query(
-      `SELECT id, username, email, bio, avatar_url, rating, review_count, sales_count, balance, created_at, location
+      `SELECT id, username, email, bio, avatar_url, rating, review_count, sales_count, balance, email_verified, created_at, location
        FROM users WHERE id = $1`,
       [req.userId]
     );
@@ -89,13 +115,153 @@ router.patch("/me", requireAuth, async (req, res) => {
     const result = await pool.query(
       `UPDATE users SET bio = COALESCE($1, bio), location = COALESCE($2, location)
        WHERE id = $3
-       RETURNING id, username, email, bio, avatar_url, rating, review_count, sales_count, balance, created_at, location`,
+       RETURNING id, username, email, bio, avatar_url, rating, review_count, sales_count, balance, email_verified, created_at, location`,
       [bio, location, req.userId]
     );
     res.json(result.rows[0]);
   } catch (err) {
     console.error("Update me error:", err);
     res.status(500).json({ error: "Failed to update profile" });
+  }
+});
+
+// POST /api/auth/resend-verification
+router.post("/resend-verification", requireAuth, async (req, res) => {
+  try {
+    const userResult = await pool.query(
+      "SELECT email, email_verified FROM users WHERE id = $1",
+      [req.userId]
+    );
+    const user = userResult.rows[0];
+    if (!user) return res.status(404).json({ error: "User not found" });
+    if (user.email_verified) return res.status(400).json({ error: "Email already verified" });
+
+    // Invalidate old tokens
+    await pool.query(
+      "UPDATE auth_tokens SET used_at = NOW() WHERE user_id = $1 AND type = 'email_verification' AND used_at IS NULL",
+      [req.userId]
+    );
+
+    const token = await createAuthToken(req.userId, "email_verification", 24);
+    let verifyLink = null;
+    try {
+      verifyLink = await sendVerificationEmail(user.email, token);
+    } catch (emailErr) {
+      console.error("Email send error:", emailErr.message);
+    }
+    res.json({ success: true, verifyLink });
+  } catch (err) {
+    console.error("Resend verification error:", err);
+    res.status(500).json({ error: "Failed to send verification email" });
+  }
+});
+
+// POST /api/auth/verify-email
+router.post("/verify-email", async (req, res) => {
+  const { token } = req.body;
+  if (!token) return res.status(400).json({ error: "Token required" });
+  try {
+    const result = await pool.query(
+      `SELECT at.*, u.email FROM auth_tokens at
+       JOIN users u ON u.id = at.user_id
+       WHERE at.token = $1 AND at.type = 'email_verification' AND at.used_at IS NULL AND at.expires_at > NOW()`,
+      [token]
+    );
+    const row = result.rows[0];
+    if (!row) return res.status(400).json({ error: "Invalid or expired verification link" });
+
+    await pool.query("UPDATE users SET email_verified = true WHERE id = $1", [row.user_id]);
+    await pool.query("UPDATE auth_tokens SET used_at = NOW() WHERE id = $1", [row.id]);
+
+    // Generate a fresh JWT so user is logged in after verifying
+    const jwtToken = generateToken(row.user_id);
+    const userResult = await pool.query(
+      "SELECT id, username, email, bio, avatar_url, email_verified, rating, review_count, sales_count FROM users WHERE id = $1",
+      [row.user_id]
+    );
+    res.json({ success: true, user: userResult.rows[0], token: jwtToken });
+  } catch (err) {
+    console.error("Verify email error:", err);
+    res.status(500).json({ error: "Verification failed" });
+  }
+});
+
+// POST /api/auth/forgot-password
+router.post("/forgot-password", async (req, res) => {
+  const { email } = req.body;
+  if (!email) return res.status(400).json({ error: "Email required" });
+  // Always respond success to prevent email enumeration
+  try {
+    const result = await pool.query("SELECT id FROM users WHERE email = $1", [email.toLowerCase()]);
+    const user = result.rows[0];
+    if (user) {
+      // Invalidate old reset tokens
+      await pool.query(
+        "UPDATE auth_tokens SET used_at = NOW() WHERE user_id = $1 AND type = 'password_reset' AND used_at IS NULL",
+        [user.id]
+      );
+      const token = await createAuthToken(user.id, "password_reset", 1);
+      let resetLink = null;
+      try {
+        resetLink = await sendPasswordResetEmail(email.toLowerCase(), token);
+      } catch (emailErr) {
+        console.error("Email send error:", emailErr.message);
+      }
+      // Return link only in dev mode (when no SMTP configured)
+      if (!process.env.SMTP_HOST) {
+        return res.json({ success: true, devResetLink: resetLink });
+      }
+    }
+    res.json({ success: true });
+  } catch (err) {
+    console.error("Forgot password error:", err);
+    res.status(500).json({ error: "Failed to process request" });
+  }
+});
+
+// POST /api/auth/reset-password
+router.post("/reset-password", async (req, res) => {
+  const { token, password } = req.body;
+  if (!token || !password) return res.status(400).json({ error: "Token and password required" });
+  if (password.length < 6) return res.status(400).json({ error: "Password must be at least 6 characters" });
+  try {
+    const result = await pool.query(
+      `SELECT * FROM auth_tokens
+       WHERE token = $1 AND type = 'password_reset' AND used_at IS NULL AND expires_at > NOW()`,
+      [token]
+    );
+    const row = result.rows[0];
+    if (!row) return res.status(400).json({ error: "Invalid or expired reset link" });
+
+    const hashedPassword = await bcrypt.hash(password, 12);
+    await pool.query("UPDATE users SET password_hash = $1 WHERE id = $2", [hashedPassword, row.user_id]);
+    await pool.query("UPDATE auth_tokens SET used_at = NOW() WHERE id = $1", [row.id]);
+
+    // Auto-login after reset
+    const jwtToken = generateToken(row.user_id);
+    const userResult = await pool.query(
+      "SELECT id, username, email, bio, avatar_url, email_verified, rating, review_count, sales_count FROM users WHERE id = $1",
+      [row.user_id]
+    );
+    res.json({ success: true, user: userResult.rows[0], token: jwtToken });
+  } catch (err) {
+    console.error("Reset password error:", err);
+    res.status(500).json({ error: "Password reset failed" });
+  }
+});
+
+// POST /api/auth/validate-reset-token  (check if token is valid before showing form)
+router.post("/validate-reset-token", async (req, res) => {
+  const { token } = req.body;
+  if (!token) return res.status(400).json({ valid: false });
+  try {
+    const result = await pool.query(
+      "SELECT id FROM auth_tokens WHERE token = $1 AND type = 'password_reset' AND used_at IS NULL AND expires_at > NOW()",
+      [token]
+    );
+    res.json({ valid: result.rows.length > 0 });
+  } catch {
+    res.json({ valid: false });
   }
 });
 

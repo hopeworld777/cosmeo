@@ -32,24 +32,25 @@ export default function Login() {
   };
 
   return (
-    <div className="flex flex-col min-h-full bg-background px-6 py-12 justify-center">
+    <div className="flex flex-col min-h-full bg-background px-6 pb-12 pt-16 justify-center">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         className="w-full max-w-sm mx-auto"
       >
+        {/* Logo */}
         <div className="text-center mb-10">
           <div className="flex items-center justify-center gap-2 mb-3">
             <Sparkles className="h-7 w-7 text-primary" />
             <h1 className="text-3xl font-black text-foreground">Kosmeo</h1>
           </div>
-          <p className="text-muted-foreground text-sm">Welcome back, cosplayer</p>
+          <p className="text-muted-foreground text-sm font-medium">Welcome back, cosplayer</p>
         </div>
 
-        <div className="bg-white rounded-3xl p-6 card-shadow space-y-5">
+        <div className="bg-white rounded-3xl p-6 card-shadow space-y-1">
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="login-email">Email</Label>
+              <Label htmlFor="login-email" className="font-bold">Email</Label>
               <Input
                 id="login-email"
                 type="email"
@@ -57,11 +58,19 @@ export default function Login() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 autoComplete="email"
+                className="h-12 rounded-2xl"
                 data-testid="input-login-email"
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="login-password">Password</Label>
+              <div className="flex items-center justify-between">
+                <Label htmlFor="login-password" className="font-bold">Password</Label>
+                <Link href="/forgot-password">
+                  <span className="text-xs text-primary font-semibold hover:underline cursor-pointer">
+                    Forgot password?
+                  </span>
+                </Link>
+              </div>
               <div className="relative">
                 <Input
                   id="login-password"
@@ -70,6 +79,7 @@ export default function Login() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   autoComplete="current-password"
+                  className="h-12 rounded-2xl pr-11"
                   data-testid="input-login-password"
                 />
                 <button
@@ -83,7 +93,7 @@ export default function Login() {
             </div>
             <Button
               type="submit"
-              className="w-full h-12 rounded-2xl text-base font-bold bg-primary hover:bg-primary/90"
+              className="w-full h-12 rounded-2xl text-base font-bold bg-gradient-to-r from-primary to-secondary"
               disabled={loading}
               data-testid="btn-login-submit"
             >
@@ -95,7 +105,7 @@ export default function Login() {
         <p className="text-center mt-6 text-sm text-muted-foreground">
           Don't have an account?{" "}
           <Link href="/register">
-            <span className="text-primary font-semibold cursor-pointer hover:underline">Sign up</span>
+            <span className="text-primary font-semibold cursor-pointer hover:underline">Sign up free</span>
           </Link>
         </p>
       </motion.div>

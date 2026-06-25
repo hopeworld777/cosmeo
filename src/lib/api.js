@@ -23,7 +23,6 @@ async function request(path, options = {}) {
   return data;
 }
 
-// Auth
 export const api = {
   auth: {
     register: (body) =>
@@ -33,6 +32,16 @@ export const api = {
     me: () => request("/auth/me"),
     updateMe: (body) =>
       request("/auth/me", { method: "PATCH", body: JSON.stringify(body) }),
+    resendVerification: () =>
+      request("/auth/resend-verification", { method: "POST" }),
+    verifyEmail: (token) =>
+      request("/auth/verify-email", { method: "POST", body: JSON.stringify({ token }) }),
+    forgotPassword: (email) =>
+      request("/auth/forgot-password", { method: "POST", body: JSON.stringify({ email }) }),
+    resetPassword: (token, password) =>
+      request("/auth/reset-password", { method: "POST", body: JSON.stringify({ token, password }) }),
+    validateResetToken: (token) =>
+      request("/auth/validate-reset-token", { method: "POST", body: JSON.stringify({ token }) }),
   },
 
   listings: {
