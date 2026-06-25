@@ -1,0 +1,62 @@
+uploads = []
+outputs = []
+
+[[generated]]
+id = "dQvyLGyNUfdPs1OPfDL71"
+uri = "file://src/assets/images/demon-slayer-sword.png"
+type = "image"
+title = "Demon Slayer Sword Prop"
+
+[[generated]]
+id = "bawcTdJNTFcphIPw9Du2k"
+uri = "file://src/assets/images/genshin-vision.png"
+type = "image"
+title = "Genshin Impact Anemo Vision"
+
+[[generated]]
+id = "rg1tWp_IULvzI9HIYTob2"
+uri = "file://src/assets/images/spiderman-suit.png"
+type = "image"
+title = "Spider-Man Cosplay Suit"
+
+[[generated]]
+id = "DBmdcsMUA012plskFmiti"
+uri = "file://src/assets/images/sailor-moon-wand.png"
+type = "image"
+title = "Sailor Moon Wand Prop"
+
+[[generated]]
+id = "CUKr5dOBqXe3qavXmgI2d"
+uri = "file://src/assets/images/aot-cloak.png"
+type = "image"
+title = "Attack on Titan Scout Cloak"
+
+[[generated]]
+id = "ro9LwGa_Ri3DclDeJHJji"
+uri = "file://src/assets/images/ff-buster-sword.png"
+type = "image"
+title = "Final Fantasy Buster Sword"
+
+[[generated]]
+id = "KkB_AWyQLloZ7xMnxOCU-"
+uri = "file://src/assets/images/mha-gloves.png"
+type = "image"
+title = "My Hero Academia Grenadier Bracers"
+
+[[generated]]
+id = "My-IrXq4ffe6Q5LrKJVR8"
+uri = "file://src/assets/images/zelda-shield.png"
+type = "image"
+title = "Zelda Hylian Shield"
+
+[[generated]]
+id = "cZTWp3XnoLoo1dojg6SRT"
+uri = "file://src/assets/images/star-wars-helmet.png"
+type = "image"
+title = "Star Wars Mandalorian Helmet"
+
+[[generated]]
+id = "A-dnZVkw4DDkTmMS_7-J8"
+uri = "file://src/assets/images/wig-pink.png"
+type = "image"
+title = "Long Pink Cosplay Wig"
