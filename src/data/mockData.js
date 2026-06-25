@@ -209,7 +209,7 @@ export const MOCK_LISTINGS = [
 
 export const CATEGORIES = [
   { id: "c1", name: "Costumes", icon: "Shirt" },
-  { id: "c2", name: "Props", icon: "Wand" },
+  { id: "c2", name: "Props", icon: "Wand2" },
   { id: "c3", name: "Wigs", icon: "Scissors" },
   { id: "c4", name: "Armor", icon: "Shield" },
   { id: "c5", name: "Accessories", icon: "Gem" },

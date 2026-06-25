@@ -1,37 +1,42 @@
 import { motion } from "framer-motion";
-import { Search, Sparkles, Zap, Flame } from "lucide-react";
+import { Search, Sparkles, Zap, Flame, Shirt, Wand2, Scissors, Shield, Gem } from "lucide-react";
 import { Link } from "wouter";
-import { Input } from "@/components/ui/input";
 import ListingCard from "@/components/ListingCard";
 import { MOCK_LISTINGS, CATEGORIES } from "@/data/mockData";
+
+const iconMap = {
+  Shirt,
+  Wand: Wand2,
+  Wand2,
+  Scissors,
+  Shield,
+  Gem,
+};
 
 export default function Home() {
   const trendingListings = MOCK_LISTINGS.slice(0, 4);
   const recentListings = MOCK_LISTINGS.slice(4, 10);
 
   return (
-    <div className="flex flex-col pb-6">
+    <div className="flex flex-col pb-6 bg-background">
       {/* Hero Section */}
-      <section className="relative px-4 pt-12 pb-8 bg-grid-pattern">
-        <div className="absolute inset-0 bg-gradient-to-b from-primary/10 to-transparent pointer-events-none" />
-        
+      <section className="relative px-4 pt-12 pb-10 pastel-gradient rounded-b-[2.5rem]">
         <motion.div 
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           className="relative z-10"
         >
           <div className="flex items-center gap-2 mb-4">
-            <Sparkles className="h-5 w-5 text-secondary" />
-            <h1 className="text-3xl font-bold tracking-tight text-white">Kosmeo</h1>
+            <Sparkles className="h-6 w-6 text-primary" />
+            <h1 className="text-4xl font-black tracking-tight text-foreground">Kosmeo</h1>
           </div>
-          <p className="text-muted-foreground mb-6 text-lg">Where cosplay culture shops.</p>
+          <p className="text-muted-foreground mb-8 text-lg font-medium">Where cosplay culture shops.</p>
           
           <Link href="/browse">
             <div className="relative group cursor-pointer" data-testid="search-bar">
-              <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-primary to-secondary blur-sm opacity-50 group-hover:opacity-100 transition duration-500" />
-              <div className="relative flex items-center h-12 w-full rounded-xl bg-card border border-white/10 px-4 shadow-xl">
-                <Search className="h-5 w-5 text-muted-foreground mr-3" />
-                <span className="text-muted-foreground">Search props, wigs, costumes...</span>
+              <div className="relative flex items-center h-14 w-full rounded-2xl bg-white px-4 card-shadow border border-border/50">
+                <Search className="h-5 w-5 text-primary mr-3" />
+                <span className="text-muted-foreground font-medium">Search props, wigs, costumes...</span>
               </div>
             </div>
           </Link>
@@ -39,44 +44,47 @@ export default function Home() {
       </section>
 
       {/* Categories */}
-      <section className="px-4 py-6">
-        <h2 className="text-lg font-bold mb-4 flex items-center gap-2">
-          <Zap className="h-4 w-4 text-primary" />
+      <section className="px-4 py-8">
+        <h2 className="text-xl font-extrabold mb-5 flex items-center gap-2 text-foreground">
+          <Zap className="h-5 w-5 text-primary" />
           Explore
         </h2>
-        <div className="flex gap-3 overflow-x-auto no-scrollbar pb-2 -mx-4 px-4 snap-x">
-          {CATEGORIES.map((cat, i) => (
-            <motion.div
-              key={cat.id}
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: i * 0.1 }}
-              className="snap-start shrink-0 flex flex-col items-center justify-center gap-2"
-            >
-              <Link href={`/browse?category=${cat.id}`}>
-                <div className="h-16 w-16 rounded-2xl bg-card border border-border flex items-center justify-center hover:border-primary transition-colors cursor-pointer shadow-md">
-                  <span className="text-sm font-semibold text-foreground/80">{cat.name.charAt(0)}</span>
-                </div>
-              </Link>
-              <span className="text-xs text-muted-foreground font-medium">{cat.name}</span>
-            </motion.div>
-          ))}
+        <div className="flex gap-4 overflow-x-auto no-scrollbar pb-4 -mx-4 px-4 snap-x">
+          {CATEGORIES.map((cat, i) => {
+            const Icon = iconMap[cat.icon] || Shirt;
+            return (
+              <motion.div
+                key={cat.id}
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: i * 0.05 }}
+                className="snap-start shrink-0 flex flex-col items-center justify-center gap-3"
+              >
+                <Link href={`/browse?category=${cat.id}`}>
+                  <div className="h-20 w-20 rounded-full bg-white card-shadow flex items-center justify-center hover:-translate-y-1 transition-transform cursor-pointer border border-border/50">
+                    <Icon className="h-8 w-8 text-primary" />
+                  </div>
+                </Link>
+                <span className="text-sm text-foreground font-bold">{cat.name}</span>
+              </motion.div>
+            );
+          })}
         </div>
       </section>
 
       {/* Trending */}
       <section className="px-4 py-6">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-bold flex items-center gap-2">
-            <Flame className="h-5 w-5 text-secondary" />
+        <div className="flex items-center justify-between mb-5">
+          <h2 className="text-2xl font-extrabold flex items-center gap-2 text-foreground">
+            <Flame className="h-6 w-6 text-secondary" />
             Trending Now
           </h2>
-          <Link href="/browse"><span className="text-sm font-medium text-primary cursor-pointer hover:underline">View all</span></Link>
+          <Link href="/browse"><span className="text-sm font-bold text-primary cursor-pointer hover:opacity-80">View all</span></Link>
         </div>
         
-        <div className="flex gap-4 overflow-x-auto no-scrollbar pb-4 -mx-4 px-4 snap-x">
+        <div className="flex gap-5 overflow-x-auto no-scrollbar pb-6 -mx-4 px-4 snap-x">
           {trendingListings.map((listing, i) => (
-            <div key={listing.id} className="w-[200px] shrink-0 snap-start">
+            <div key={listing.id} className="w-[240px] shrink-0 snap-start">
               <ListingCard listing={listing} index={i} />
             </div>
           ))}
@@ -85,7 +93,7 @@ export default function Home() {
 
       {/* Just Dropped */}
       <section className="px-4 py-6">
-        <h2 className="text-xl font-bold mb-4">Just Dropped</h2>
+        <h2 className="text-2xl font-extrabold mb-5 text-foreground">Just Dropped</h2>
         <div className="grid grid-cols-2 gap-4">
           {recentListings.map((listing, i) => (
             <ListingCard key={listing.id} listing={listing} index={i} />

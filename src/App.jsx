@@ -11,8 +11,8 @@ import Wishlist from "@/pages/Wishlist";
 
 export default function App() {
   return (
-    <div className="flex justify-center bg-black min-h-[100dvh] w-full">
-      <div className="flex h-[100dvh] w-full max-w-[430px] flex-col overflow-hidden bg-background relative border-x border-border/50 shadow-2xl">
+    <div className="flex justify-center bg-background min-h-[100dvh] w-full">
+      <div className="flex h-[100dvh] w-full max-w-[430px] flex-col overflow-hidden bg-background relative border-x border-border/30 shadow-2xl">
         <div className="flex-1 overflow-y-auto no-scrollbar relative z-0 pb-20">
           <Switch>
             <Route path="/" component={Home} />
