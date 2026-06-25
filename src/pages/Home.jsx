@@ -1,8 +1,10 @@
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Search, Sparkles, Zap, Flame, Shirt, Wand2, Scissors, Shield, Gem } from "lucide-react";
 import { Link } from "wouter";
 import ListingCard from "@/components/ListingCard";
-import { MOCK_LISTINGS, CATEGORIES } from "@/data/mockData";
+import { CATEGORIES } from "@/data/mockData";
+import { api } from "@/lib/api";
 
 const iconMap = {
   Shirt,
@@ -14,8 +16,27 @@ const iconMap = {
 };
 
 export default function Home() {
-  const trendingListings = MOCK_LISTINGS.slice(0, 4);
-  const recentListings = MOCK_LISTINGS.slice(4, 10);
+  const [trendingListings, setTrendingListings] = useState([]);
+  const [recentListings, setRecentListings] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchData() {
+      try {
+        const [trending, recent] = await Promise.all([
+          api.listings.trending(),
+          api.listings.list({ limit: 6, offset: 4 })
+        ]);
+        setTrendingListings(trending || []);
+        setRecentListings(recent || []);
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchData();
+  }, []);
 
   return (
     <div className="flex flex-col pb-6 bg-background">
@@ -83,11 +104,21 @@ export default function Home() {
         </div>
         
         <div className="flex gap-5 overflow-x-auto no-scrollbar pb-6 -mx-4 px-4 snap-x">
-          {trendingListings.map((listing, i) => (
-            <div key={listing.id} className="w-[240px] shrink-0 snap-start">
-              <ListingCard listing={listing} index={i} />
-            </div>
-          ))}
+          {loading ? (
+            Array.from({ length: 4 }).map((_, i) => (
+              <div key={i} className="w-[240px] shrink-0 snap-start">
+                <div className="aspect-[3/4] w-full bg-muted rounded-3xl animate-pulse" />
+              </div>
+            ))
+          ) : trendingListings.length === 0 ? (
+             <div className="text-muted-foreground font-medium py-4">No trending listings yet.</div>
+          ) : (
+            trendingListings.map((listing, i) => (
+              <div key={listing.id} className="w-[240px] shrink-0 snap-start">
+                <ListingCard listing={listing} index={i} />
+              </div>
+            ))
+          )}
         </div>
       </section>
 
@@ -95,9 +126,17 @@ export default function Home() {
       <section className="px-4 py-6">
         <h2 className="text-2xl font-extrabold mb-5 text-foreground">Just Dropped</h2>
         <div className="grid grid-cols-2 gap-4">
-          {recentListings.map((listing, i) => (
-            <ListingCard key={listing.id} listing={listing} index={i} />
-          ))}
+          {loading ? (
+            Array.from({ length: 4 }).map((_, i) => (
+              <div key={i} className="aspect-[3/4] w-full bg-muted rounded-3xl animate-pulse" />
+            ))
+          ) : recentListings.length === 0 ? (
+             <div className="col-span-2 text-muted-foreground font-medium py-4">No recent listings yet.</div>
+          ) : (
+            recentListings.map((listing, i) => (
+              <ListingCard key={listing.id} listing={listing} index={i} />
+            ))
+          )}
         </div>
       </section>
     </div>

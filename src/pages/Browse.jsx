@@ -1,29 +1,62 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Search, SlidersHorizontal } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import ListingCard from "@/components/ListingCard";
-import { MOCK_LISTINGS } from "@/data/mockData";
+import { api } from "@/lib/api";
+import { useLocation } from "wouter";
 
 export default function Browse() {
   const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [activeFilter, setActiveFilter] = useState("All");
+  const [listings, setListings] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  // Read initial query params if any
+  const [location] = useLocation();
+  const searchParams = new URLSearchParams(window.location.search);
+  const initialCategory = searchParams.get("category");
 
   const filters = ["All", "Rentals", "For Sale", "Under $50", "Costumes", "Props"];
 
-  const filteredListings = MOCK_LISTINGS.filter(l => {
-    if (search && !l.title.toLowerCase().includes(search.toLowerCase()) && !l.fandom.toLowerCase().includes(search.toLowerCase())) {
-      return false;
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(search);
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [search]);
+
+  useEffect(() => {
+    async function fetchListings() {
+      setLoading(true);
+      try {
+        const params = {
+          search: debouncedSearch,
+        };
+
+        if (initialCategory && activeFilter === "All") {
+          // If we mapped standard categories to the IDs, but let's just pass it
+        }
+
+        if (activeFilter === "Rentals") params.filter = "rentals";
+        if (activeFilter === "For Sale") params.filter = "sale";
+        if (activeFilter === "Under $50") params.filter = "under50";
+        if (activeFilter === "Costumes") params.category = "costume";
+        if (activeFilter === "Props") params.category = "prop";
+
+        const data = await api.listings.list(params);
+        setListings(data || []);
+      } catch (err) {
+        console.error("Failed to fetch listings", err);
+      } finally {
+        setLoading(false);
+      }
     }
-    if (activeFilter === "Rentals" && !l.isForRent) return false;
-    if (activeFilter === "For Sale" && !l.isForSale) return false;
-    if (activeFilter === "Under $50" && l.price > 50) return false;
-    if (activeFilter === "Costumes" && l.category !== "costume") return false;
-    if (activeFilter === "Props" && l.category !== "prop") return false;
-    return true;
-  });
+    fetchListings();
+  }, [debouncedSearch, activeFilter, initialCategory]);
 
   return (
     <div className="flex h-full flex-col bg-background">
@@ -65,13 +98,18 @@ export default function Browse() {
       {/* Grid */}
       <div className="flex-1 p-4 pt-6">
         <p className="text-sm text-muted-foreground mb-4 font-bold px-1">
-          {filteredListings.length} {filteredListings.length === 1 ? 'result' : 'results'}
+          {listings.length} {listings.length === 1 ? 'result' : 'results'}
         </p>
         <div className="grid grid-cols-2 gap-4 pb-12">
-          {filteredListings.map((listing, i) => (
-            <ListingCard key={listing.id} listing={listing} index={i} />
-          ))}
-          {filteredListings.length === 0 && (
+          {loading ? (
+            Array.from({ length: 6 }).map((_, i) => (
+               <div key={i} className="aspect-[3/4] w-full bg-muted rounded-3xl animate-pulse" />
+            ))
+          ) : listings.length > 0 ? (
+            listings.map((listing, i) => (
+              <ListingCard key={listing.id} listing={listing} index={i} />
+            ))
+          ) : (
             <div className="col-span-2 py-20 text-center text-muted-foreground font-medium">
               No items match your search. Try different keywords!
             </div>

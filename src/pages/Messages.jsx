@@ -1,29 +1,28 @@
-import { MOCK_USERS } from "@/data/mockData";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Link } from "wouter";
-
-const MOCK_CHATS = [
-  {
-    id: "m1",
-    user: MOCK_USERS[0],
-    lastMessage: "Is the Buster Sword heavy to carry around?",
-    time: "2m ago",
-    unread: 2,
-    listing: "Buster Sword 3D Print Kit"
-  },
-  {
-    id: "m2",
-    user: MOCK_USERS[1],
-    lastMessage: "I'll take the Sailor Moon wand. Can you ship tomorrow?",
-    time: "1h ago",
-    unread: 0,
-    listing: "Moon Stick Prop Replica"
-  }
-];
+import { useEffect, useState } from "react";
+import { api } from "@/lib/api";
 
 export default function Messages() {
+  const [conversations, setConversations] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchConversations() {
+      try {
+        const data = await api.messages.conversations();
+        setConversations(data || []);
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchConversations();
+  }, []);
+
   return (
     <div className="flex flex-col h-full bg-background">
       <div className="sticky top-0 z-30 bg-white/95 backdrop-blur-xl pt-12 pb-5 px-4 rounded-b-3xl shadow-sm">
@@ -38,31 +37,41 @@ export default function Messages() {
       </div>
 
       <div className="flex-1 p-4 pt-6 space-y-4">
-        {MOCK_CHATS.map((chat) => (
-          <Link key={chat.id} href="#">
-            <div className="flex items-center gap-4 p-5 bg-white rounded-3xl card-shadow hover:-translate-y-1 transition-transform cursor-pointer group">
-              <Avatar className="h-16 w-16 border-2 border-primary/20 shadow-sm">
-                <AvatarImage src={chat.user.avatar} />
-                <AvatarFallback className="bg-primary/10 text-primary font-black text-lg">{chat.user.username.slice(0,2).toUpperCase()}</AvatarFallback>
-              </Avatar>
-              <div className="flex-1 overflow-hidden">
-                <div className="flex justify-between items-center mb-1.5">
-                  <h3 className="font-extrabold text-foreground text-lg">{chat.user.username}</h3>
-                  <span className="text-xs font-bold text-muted-foreground">{chat.time}</span>
+        {loading ? (
+           Array.from({ length: 3 }).map((_, i) => (
+             <div key={i} className="h-24 w-full bg-muted rounded-3xl animate-pulse" />
+           ))
+        ) : conversations.length === 0 ? (
+           <div className="text-center text-muted-foreground font-medium py-10">No messages yet.</div>
+        ) : (
+          conversations.map((chat) => (
+            <Link key={chat.id} href="#">
+              <div className="flex items-center gap-4 p-5 bg-white rounded-3xl card-shadow hover:-translate-y-1 transition-transform cursor-pointer group">
+                <Avatar className="h-16 w-16 border-2 border-primary/20 shadow-sm">
+                  <AvatarImage src={chat.other_avatar} />
+                  <AvatarFallback className="bg-primary/10 text-primary font-black text-lg">{chat.other_username ? chat.other_username.slice(0,2).toUpperCase() : "U"}</AvatarFallback>
+                </Avatar>
+                <div className="flex-1 overflow-hidden">
+                  <div className="flex justify-between items-center mb-1.5">
+                    <h3 className="font-extrabold text-foreground text-lg">{chat.other_username}</h3>
+                    <span className="text-xs font-bold text-muted-foreground">
+                      {chat.last_message_at ? new Date(chat.last_message_at).toLocaleDateString() : ""}
+                    </span>
+                  </div>
+                  <p className="text-xs font-bold text-primary mb-1.5 line-clamp-1">{chat.listing_title}</p>
+                  <p className={`text-sm line-clamp-1 ${chat.unread_count ? 'text-foreground font-bold' : 'text-muted-foreground font-medium'}`}>
+                    {chat.last_message}
+                  </p>
                 </div>
-                <p className="text-xs font-bold text-primary mb-1.5 line-clamp-1">{chat.listing}</p>
-                <p className={`text-sm line-clamp-1 ${chat.unread ? 'text-foreground font-bold' : 'text-muted-foreground font-medium'}`}>
-                  {chat.lastMessage}
-                </p>
+                {chat.unread_count > 0 && (
+                  <div className="h-7 w-7 rounded-full bg-primary flex items-center justify-center text-xs font-black text-white shadow-md">
+                    {chat.unread_count}
+                  </div>
+                )}
               </div>
-              {chat.unread > 0 && (
-                <div className="h-7 w-7 rounded-full bg-primary flex items-center justify-center text-xs font-black text-white shadow-md">
-                  {chat.unread}
-                </div>
-              )}
-            </div>
-          </Link>
-        ))}
+            </Link>
+          ))
+        )}
       </div>
     </div>
   );

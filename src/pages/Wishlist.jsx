@@ -1,10 +1,25 @@
-import { MOCK_LISTINGS } from "@/data/mockData";
 import ListingCard from "@/components/ListingCard";
 import { Heart } from "lucide-react";
+import { useState, useEffect } from "react";
+import { api } from "@/lib/api";
 
 export default function Wishlist() {
-  // Mock wishlist items
-  const wishlist = MOCK_LISTINGS.filter((_, i) => [0, 2, 4, 7].includes(i));
+  const [wishlist, setWishlist] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchWishlist() {
+      try {
+        const data = await api.favorites.list();
+        setWishlist(data || []);
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchWishlist();
+  }, []);
 
   return (
     <div className="flex flex-col h-full bg-background">
@@ -14,14 +29,20 @@ export default function Wishlist() {
       </div>
 
       <div className="flex-1 p-4 pt-6 pb-24">
-        {wishlist.length > 0 ? (
+        {loading ? (
+          <div className="grid grid-cols-2 gap-4">
+            {Array.from({ length: 4 }).map((_, i) => (
+               <div key={i} className="aspect-[3/4] w-full bg-muted rounded-3xl animate-pulse" />
+            ))}
+          </div>
+        ) : wishlist.length > 0 ? (
           <div className="grid grid-cols-2 gap-4">
             {wishlist.map((listing, i) => (
               <ListingCard key={listing.id} listing={listing} index={i} />
             ))}
           </div>
         ) : (
-          <div className="flex h-full flex-col items-center justify-center text-center">
+          <div className="flex h-full flex-col items-center justify-center text-center py-20">
             <div className="h-24 w-24 rounded-full bg-primary/10 flex items-center justify-center mb-6">
               <Heart className="h-10 w-10 text-primary" />
             </div>

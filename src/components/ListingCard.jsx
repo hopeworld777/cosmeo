@@ -1,25 +1,57 @@
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import { Heart } from "lucide-react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/context/AuthContext";
+import { api } from "@/lib/api";
 
 export default function ListingCard({ listing, index = 0 }) {
   const [isHovered, setIsHovered] = useState(false);
-  const [isLiked, setIsLiked] = useState(false);
+  const [isLiked, setIsLiked] = useState(listing.is_favorited || false);
   const { toast } = useToast();
+  const { user } = useAuth();
+  const [, setLocation] = useLocation();
 
-  const toggleLike = (e) => {
+  useEffect(() => {
+    if (listing.is_favorited !== undefined) {
+      setIsLiked(listing.is_favorited);
+    }
+  }, [listing.is_favorited]);
+
+  const toggleLike = async (e) => {
     e.preventDefault();
     e.stopPropagation();
-    setIsLiked(!isLiked);
-    toast({
-      title: !isLiked ? "Saved to Wishlist" : "Removed from Wishlist",
-      description: listing.title,
-    });
+    
+    if (!user) {
+      toast({
+        title: "Sign in to save items",
+        description: "You need an account to save to wishlist.",
+      });
+      setLocation("/login");
+      return;
+    }
+
+    const newLiked = !isLiked;
+    setIsLiked(newLiked);
+    
+    try {
+      if (newLiked) {
+        await api.favorites.add(listing.id);
+        toast({ title: "Saved to Wishlist", description: listing.title });
+      } else {
+        await api.favorites.remove(listing.id);
+        toast({ title: "Removed from Wishlist", description: listing.title });
+      }
+    } catch (err) {
+      setIsLiked(!newLiked);
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    }
   };
+
+  const imageSrc = listing.images && listing.images.length > 0 ? listing.images[0] : null;
 
   return (
     <motion.div
@@ -34,11 +66,15 @@ export default function ListingCard({ listing, index = 0 }) {
       <Link href={`/item/${listing.id}`}>
         <div className="block h-full w-full">
           <div className="relative aspect-[3/4] w-full overflow-hidden bg-muted rounded-t-3xl">
-            <img
-              src={listing.images[0]}
-              alt={listing.title}
-              className="h-full w-full object-cover"
-            />
+            {imageSrc ? (
+              <img
+                src={imageSrc}
+                alt={listing.title}
+                className="h-full w-full object-cover"
+              />
+            ) : (
+              <div className="h-full w-full bg-muted" />
+            )}
             
             <button
               data-testid={`btn-like-${listing.id}`}
@@ -49,12 +85,12 @@ export default function ListingCard({ listing, index = 0 }) {
             </button>
 
             <div className="absolute left-3 top-3 flex flex-col gap-1">
-              {listing.isForRent && (
+              {listing.is_for_rent && (
                 <Badge variant="secondary" className="bg-secondary/90 text-white border-none shadow-sm backdrop-blur-md rounded-full px-2.5 py-0.5">
-                  Rent ${listing.rentPrice}/d
+                  Rent ${listing.rent_price}/d
                 </Badge>
               )}
-              {listing.isForSale && (
+              {listing.is_for_sale && (
                 <Badge variant="default" className="bg-primary/90 text-white border-none shadow-sm backdrop-blur-md rounded-full px-2.5 py-0.5">
                   Buy ${listing.price}
                 </Badge>

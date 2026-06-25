@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -11,6 +11,8 @@ import { useToast } from "@/hooks/use-toast";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { motion } from "framer-motion";
 import { useLocation } from "wouter";
+import { api } from "@/lib/api";
+import { useAuth } from "@/context/AuthContext";
 
 const schema = z.object({
   title: z.string().min(5, "Title must be at least 5 characters"),
@@ -24,11 +26,16 @@ const schema = z.object({
 });
 
 export default function Sell() {
+  const { user } = useAuth();
   const { toast } = useToast();
   const [, setLocation] = useLocation();
   const [isForSale, setIsForSale] = useState(true);
   const [isForRent, setIsForRent] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
+  const [loading, setLoading] = useState(false);
+  
+  const [uploadedImages, setUploadedImages] = useState([]);
+  const fileInputRef = useRef(null);
 
   const { register, handleSubmit, formState: { errors }, setValue } = useForm({
     resolver: zodResolver(schema),
@@ -38,16 +45,44 @@ export default function Sell() {
     }
   });
 
-  const onSubmit = (data) => {
+  const handleFileSelect = async (e) => {
+    const files = Array.from(e.target.files);
+    if (!files.length) return;
+    
+    try {
+      setLoading(true);
+      const { urls } = await api.upload.multiple(files);
+      setUploadedImages(prev => [...prev, ...urls]);
+    } catch (err) {
+      toast({ title: "Upload failed", description: err.message, variant: "destructive" });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const onSubmit = async (data) => {
     if (!isForSale && !isForRent) {
       toast({ title: "Error", description: "Must select either Rent or Sell", variant: "destructive" });
       return;
     }
-    console.log({ ...data, isForSale, isForRent });
-    setIsSuccess(true);
-    setTimeout(() => {
-      setLocation("/profile");
-    }, 2000);
+    
+    setLoading(true);
+    try {
+      await api.listings.create({
+        ...data,
+        rent_price: data.rentPrice,
+        is_for_sale: isForSale,
+        is_for_rent: isForRent,
+        images: uploadedImages,
+      });
+      setIsSuccess(true);
+      setTimeout(() => {
+        setLocation("/profile");
+      }, 2000);
+    } catch (err) {
+      toast({ title: "Listing failed", description: err.message, variant: "destructive" });
+      setLoading(false);
+    }
   };
 
   if (isSuccess) {
@@ -77,10 +112,26 @@ export default function Sell() {
           <div className="space-y-3">
             <Label className="font-extrabold text-foreground ml-1">Photos</Label>
             <div className="flex gap-3 overflow-x-auto no-scrollbar pb-2">
-              <div className="flex h-32 w-32 shrink-0 cursor-pointer flex-col items-center justify-center gap-2 rounded-3xl border-2 border-dashed border-primary/40 bg-primary/5 hover:bg-primary/10 transition-colors text-primary">
+              <input 
+                type="file" 
+                multiple 
+                accept="image/*" 
+                className="hidden" 
+                ref={fileInputRef}
+                onChange={handleFileSelect}
+              />
+              <div 
+                onClick={() => fileInputRef.current?.click()}
+                className="flex h-32 w-32 shrink-0 cursor-pointer flex-col items-center justify-center gap-2 rounded-3xl border-2 border-dashed border-primary/40 bg-primary/5 hover:bg-primary/10 transition-colors text-primary"
+              >
                 <Camera className="h-8 w-8" />
                 <span className="text-sm font-bold">Add Photo</span>
               </div>
+              {uploadedImages.map((url, i) => (
+                <div key={i} className="h-32 w-32 shrink-0 rounded-3xl overflow-hidden bg-muted">
+                  <img src={url} alt="upload" className="w-full h-full object-cover" />
+                </div>
+              ))}
             </div>
           </div>
 
@@ -179,8 +230,8 @@ export default function Sell() {
             {errors.description && <p className="text-xs text-destructive font-bold">{errors.description.message}</p>}
           </div>
 
-          <Button type="submit" className="w-full h-16 rounded-2xl text-xl font-black text-white bg-gradient-to-r from-primary to-secondary shadow-[0_8px_24px_rgba(139,92,246,0.3)] hover:opacity-90 transition-opacity" data-testid="btn-submit-listing">
-            Publish Listing
+          <Button type="submit" disabled={loading} className="w-full h-16 rounded-2xl text-xl font-black text-white bg-gradient-to-r from-primary to-secondary shadow-[0_8px_24px_rgba(139,92,246,0.3)] hover:opacity-90 transition-opacity" data-testid="btn-submit-listing">
+            {loading ? "Publishing..." : "Publish Listing"}
           </Button>
         </form>
       </div>

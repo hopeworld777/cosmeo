@@ -1,0 +1,1 @@
+- [Kosmeo stack](kosmeo-stack.md) — Express 3001 + Vite 5000, pg pool, JWT auth, multer uploads; Vite proxies /api and /uploads to backend
