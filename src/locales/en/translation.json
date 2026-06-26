@@ -76,5 +76,19 @@
   "slide2Title": "Hand-to-Hand Exchange",
   "slide2Desc": "Trade costumes, wigs, and custom props completely free with 0% transaction fees. Meet safely in local hubs!",
   "slide3Title": "Showcase Your Craft",
-  "slide3Desc": "Build your artisan profile, earn trust medals, and turn your craftsmanship into total local earnings."
+  "slide3Desc": "Build your artisan profile, earn trust medals, and turn your craftsmanship into total local earnings.",
+  "authTitle": "Join the cosplay marketplace",
+  "username": "Username",
+  "email": "Email",
+  "password": "Password",
+  "createAccountBtn": "Create Account",
+  "termsNotice": "By creating an account you agree to our Terms of Service.",
+  "checkInbox": "Check your inbox",
+  "verificationSentTo": "We sent a verification link to",
+  "verifyClickLink": "Click the link in the email to verify your account and unlock all features.",
+  "browseWhileUnverified": "You can browse and buy right now — verification unlocks selling.",
+  "continueToKosmeo": "Continue to Kosmeo",
+  "resendEmail": "Didn't get it? Resend email",
+  "sending": "Sending...",
+  "creatingAccount": "Creating account..."
 }
