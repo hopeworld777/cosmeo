@@ -1,7 +1,7 @@
-import { createContext, useContext, useState, useEffect, useCallback } from "react";
+import { createContext, useState, useEffect, useCallback } from "react";
 import { api } from "@/lib/api";
 
-const AuthContext = createContext(null);
+export const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
@@ -9,7 +9,10 @@ export function AuthProvider({ children }) {
 
   const fetchMe = useCallback(async () => {
     const token = localStorage.getItem("kosmeo_token");
-    if (!token) { setLoading(false); return; }
+    if (!token) {
+      setLoading(false);
+      return;
+    }
     try {
       const me = await api.auth.me();
       setUser(me);
@@ -20,20 +23,22 @@ export function AuthProvider({ children }) {
     }
   }, []);
 
-  useEffect(() => { fetchMe(); }, [fetchMe]);
+  useEffect(() => {
+    fetchMe();
+  }, [fetchMe]);
 
   const login = async (email, password) => {
-    const { user, token } = await api.auth.login({ email, password });
+    const { user: u, token } = await api.auth.login({ email, password });
     localStorage.setItem("kosmeo_token", token);
-    setUser(user);
-    return user;
+    setUser(u);
+    return u;
   };
 
   const register = async (username, email, password) => {
-    const { user, token } = await api.auth.register({ username, email, password });
+    const { user: u, token } = await api.auth.register({ username, email, password });
     localStorage.setItem("kosmeo_token", token);
-    setUser(user);
-    return user;
+    setUser(u);
+    return u;
   };
 
   const logout = () => {
@@ -46,10 +51,4 @@ export function AuthProvider({ children }) {
       {children}
     </AuthContext.Provider>
   );
-}
-
-export function useAuth() {
-  const ctx = useContext(AuthContext);
-  if (!ctx) throw new Error("useAuth must be used within AuthProvider");
-  return ctx;
 }

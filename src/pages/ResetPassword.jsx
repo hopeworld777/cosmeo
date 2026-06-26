@@ -3,7 +3,7 @@ import { useLocation, useSearch } from "wouter";
 import { motion } from "framer-motion";
 import { Eye, EyeOff, KeyRound, CheckCircle2, XCircle } from "lucide-react";
 import { api } from "@/lib/api";
-import { useAuth } from "@/context/AuthContext";
+import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
