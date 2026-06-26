@@ -52,7 +52,7 @@ export default function BottomNav() {
 
   return (
     <nav
-      className="absolute bottom-0 left-0 right-0 z-50 flex h-20 items-center justify-around bg-white/95 px-2 pb-4 backdrop-blur-xl"
+      className="md:hidden absolute bottom-0 left-0 right-0 z-50 flex h-20 items-center justify-around bg-white/95 px-2 pb-4 backdrop-blur-xl"
       style={{ boxShadow: "0 -4px 24px rgba(139,92,246,0.08)" }}
     >
       {navItems.map((item) => {

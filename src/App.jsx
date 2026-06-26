@@ -1,5 +1,6 @@
-import { Switch, Route, useLocation } from "wouter";
+import { Switch, Route, useLocation, Link } from "wouter";
 import { useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import { Toaster } from "@/components/ui/toaster";
 import BottomNav from "@/components/BottomNav";
 import Home from "@/pages/Home";
@@ -25,6 +26,9 @@ import LanguageSwitcher from "@/components/LanguageSwitcher";
 const AUTH_ROUTES = ["/login", "/register", "/onboarding", "/forgot-password", "/reset-password", "/verify-email"];
 const NO_BOTTOM_NAV = [...AUTH_ROUTES, "/chat/", "/terms"];
 
+// Routes where the page itself renders its own inline language switcher (mobile only)
+const OWN_LANG_ROUTES = ["/"];
+
 function ProtectedRoute({ component: Component, ...rest }) {
   const { user, loading } = useAuth();
   const [, setLocation] = useLocation();
@@ -45,7 +49,6 @@ function OnboardingGuard() {
   useEffect(() => {
     if (loading) return;
     const onboarded = localStorage.getItem("kosmeo_onboarded");
-    // Show onboarding on first visit (no account, never onboarded)
     if (!user && !onboarded && location === "/") {
       setLocation("/onboarding");
     }
@@ -54,24 +57,101 @@ function OnboardingGuard() {
   return null;
 }
 
-// Routes where each page manages its own language switcher inline
-const OWN_LANG_ROUTES = ["/"];
+// ── Desktop top navigation bar ────────────────────────────────────────────────
+// Visible only on md+ screens. Hidden on mobile (BottomNav handles mobile nav).
+function DesktopNav() {
+  const [location] = useLocation();
+  const { user } = useAuth();
+  const { t } = useTranslation();
+
+  const links = [
+    { href: "/",         labelKey: "home"     },
+    { href: "/browse",   labelKey: "browse"   },
+    { href: "/sell",     labelKey: "sell"     },
+    { href: "/messages", labelKey: "messages" },
+  ];
+
+  return (
+    <header className="hidden md:flex fixed top-0 left-0 right-0 z-[80] h-16 items-center gap-8 px-8 bg-white/95 backdrop-blur-xl border-b border-border/20"
+      style={{ boxShadow: "0 2px 16px rgba(124,58,237,0.07)" }}
+    >
+      <Link href="/" className="font-black text-xl shrink-0 bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+        CosMeo
+      </Link>
+
+      <nav className="flex items-center gap-6 flex-1">
+        {links.map(l => {
+          const isActive = location === l.href || (l.href !== "/" && location.startsWith(l.href));
+          return (
+            <Link
+              key={l.href}
+              href={l.href}
+              className={`text-sm font-bold transition-colors ${
+                isActive ? "text-primary" : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              {t(l.labelKey)}
+            </Link>
+          );
+        })}
+      </nav>
+
+      <div className="flex items-center gap-4 shrink-0">
+        <LanguageSwitcher />
+        {user ? (
+          <Link href="/profile">
+            <div className="h-9 w-9 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center text-white font-black text-sm cursor-pointer hover:opacity-90 transition-opacity">
+              {user.username?.charAt(0).toUpperCase()}
+            </div>
+          </Link>
+        ) : (
+          <Link href="/login">
+            <button className="px-4 py-2 rounded-xl bg-primary text-white text-sm font-bold hover:bg-primary/90 transition-colors">
+              {t("signIn")}
+            </button>
+          </Link>
+        )}
+      </div>
+    </header>
+  );
+}
 
 function AppShell() {
   const [location] = useLocation();
   const hideNav = NO_BOTTOM_NAV.some(r => location.startsWith(r));
-  const showFloatLang = !hideNav && !OWN_LANG_ROUTES.includes(location);
+  // On mobile only: show a floating lang switcher on non-home app pages
+  const showMobileFloatLang = !hideNav && !OWN_LANG_ROUTES.includes(location);
+
+  // Auth/legal routes stay in the narrow phone frame on all screen sizes.
+  // App routes expand to full width on desktop.
+  const isAuthRoute = hideNav;
 
   return (
     <div className="flex justify-center bg-background min-h-[100dvh] w-full">
-      <div className="flex h-[100dvh] w-full max-w-[430px] flex-col overflow-hidden bg-background relative border-x border-border/30 shadow-2xl">
+      {/* Desktop nav — only on app routes, hidden on auth/legal */}
+      {!hideNav && <DesktopNav />}
+
+      <div className={[
+        "flex flex-col w-full relative bg-background",
+        // ── Mobile / auth: phone frame ──────────────────────────────────
+        "max-w-[430px] h-[100dvh] overflow-hidden border-x border-border/30 shadow-2xl",
+        // ── Desktop app routes: remove frame, add top-nav spacing ────────
+        !isAuthRoute && "md:max-w-none md:h-auto md:min-h-[100dvh] md:overflow-visible md:border-x-0 md:shadow-none md:pt-16",
+      ].filter(Boolean).join(" ")}>
         <OnboardingGuard />
-        {showFloatLang && (
-          <div className="absolute top-3 right-3 z-[60] min-h-[44px] flex items-center">
+
+        {/* Mobile-only floating lang switcher (non-home pages) */}
+        {showMobileFloatLang && (
+          <div className="md:hidden absolute top-3 right-3 z-[60] min-h-[44px] flex items-center">
             <LanguageSwitcher />
           </div>
         )}
-        <div className={`flex-1 overflow-y-auto no-scrollbar relative z-0 ${hideNav ? "" : "pb-20"}`}>
+
+        <div className={[
+          "flex-1 overflow-y-auto no-scrollbar relative z-0",
+          !hideNav && "pb-20",
+          !isAuthRoute && "md:overflow-visible md:pb-0",
+        ].filter(Boolean).join(" ")}>
           <Switch>
             <Route path="/" component={Home} />
             <Route path="/browse" component={Browse} />
@@ -96,6 +176,7 @@ function AppShell() {
             </Route>
           </Switch>
         </div>
+
         {!hideNav && <BottomNav />}
         <Toaster />
       </div>

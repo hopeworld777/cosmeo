@@ -59,7 +59,7 @@ export default function Home() {
 
       {/* ── Sticky header ────────────────────────────────────────────── */}
       <div className="sticky top-0 z-40 bg-white/95 backdrop-blur-xl border-b border-border/20">
-        <div className="px-5 pt-11 pb-3">
+        <div className="px-5 pt-11 md:pt-5 pb-3 md:max-w-6xl md:mx-auto">
 
           {/* Brand row */}
           <div className="flex items-center justify-between mb-4">
@@ -72,9 +72,9 @@ export default function Home() {
               </p>
             </div>
 
-            {/* Right controls — language switcher + avatar/sign-in */}
+            {/* Right controls — language switcher (mobile only) + avatar/sign-in */}
             <div className="flex items-center gap-3">
-              <LanguageSwitcher />
+              <span className="md:hidden"><LanguageSwitcher /></span>
               {user ? (
                 <Link href="/profile">
                   <motion.div
@@ -124,12 +124,12 @@ export default function Home() {
         </div>
 
         {/* ── Categories label + bubbles ─────────────────────────── */}
-        <div className="px-5 pt-1 pb-1">
+        <div className="px-5 md:max-w-6xl md:mx-auto pt-1 pb-1">
           <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">
             {t("categories")}
           </p>
         </div>
-        <div className="flex gap-2 overflow-x-auto no-scrollbar px-5 pb-3.5 pt-1">
+        <div className="flex gap-2 overflow-x-auto no-scrollbar px-5 md:max-w-6xl md:mx-auto pb-3.5 pt-1">
           {CATEGORIES.map(cat => {
             const active = activeCategory === cat.id;
             return (
@@ -153,7 +153,7 @@ export default function Home() {
       </div>
 
       {/* ── Results grid ──────────────────────────────────────────── */}
-      <div className="flex-1 px-4 pt-5 pb-8">
+      <div className="flex-1 px-4 pt-5 pb-8 md:max-w-6xl md:mx-auto md:w-full">
         <div className="flex items-center justify-between mb-4 px-1">
           <p className="text-lg font-black text-foreground tracking-tight">
             {t("freshDrops")} ✨
@@ -171,7 +171,7 @@ export default function Home() {
 
         {/* Loading skeleton grid */}
         {loading && (
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
             {Array.from({ length: 6 }).map((_, i) => (
               <div key={i} className="rounded-3xl overflow-hidden bg-white card-shadow">
                 <div className="aspect-[3/4] bg-muted animate-pulse" />
@@ -227,7 +227,7 @@ export default function Home() {
           {!loading && filtered.length > 0 && (
             <motion.div
               key={`${activeCategory}-${query}`}
-              className="grid grid-cols-2 gap-4"
+              className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4"
             >
               {filtered.map((item, i) => (
                 <motion.div

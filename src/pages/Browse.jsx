@@ -90,10 +90,10 @@ export default function Browse() {
   }
 
   return (
-    <div className="flex h-full flex-col bg-background">
+    <div className="flex flex-col min-h-full bg-background">
 
       {/* ── Sticky header ──────────────────────────────────────────── */}
-      <div className="sticky top-0 z-30 bg-white/95 backdrop-blur-xl pb-4 pt-12 px-4 rounded-b-3xl" style={{ boxShadow: "0 4px 20px rgba(139,92,246,0.05)" }}>
+      <div className="sticky top-0 z-30 bg-white/95 backdrop-blur-xl pb-4 pt-12 md:pt-6 px-4 rounded-b-3xl" style={{ boxShadow: "0 4px 20px rgba(139,92,246,0.05)" }}>
         <h1 className="text-3xl font-black mb-5 text-foreground">{t("discover")}</h1>
 
         <div className="flex items-center gap-3 mb-5">
@@ -144,11 +144,11 @@ export default function Browse() {
       </div>
 
       {/* ── Grid ──────────────────────────────────────────────────── */}
-      <div className="flex-1 p-4 pt-6">
+      <div className="flex-1 p-4 pt-6 md:max-w-6xl md:mx-auto md:w-full">
         <p className="text-sm text-muted-foreground mb-4 font-bold px-1">
           {displayed.length} {displayed.length === 1 ? t("result") : t("results")}
         </p>
-        <div className="grid grid-cols-2 gap-4 pb-12">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 pb-12">
           {loading ? (
             Array.from({ length: 6 }).map((_, i) => (
               <div key={i} className="aspect-[3/4] w-full bg-muted rounded-3xl animate-pulse" />
@@ -184,7 +184,7 @@ export default function Browse() {
               animate={{ y: 0 }}
               exit={{ y: "100%" }}
               transition={{ type: "spring", damping: 30, stiffness: 300 }}
-              className="fixed bottom-0 left-0 right-0 max-w-[430px] mx-auto z-50 bg-white rounded-t-[2rem] shadow-2xl"
+              className="fixed bottom-0 left-0 right-0 max-w-[430px] md:max-w-lg mx-auto z-50 bg-white rounded-t-[2rem] shadow-2xl"
             >
               {/* Handle */}
               <div className="flex justify-center pt-3 pb-1">
