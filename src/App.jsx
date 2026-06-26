@@ -16,11 +16,12 @@ import ForgotPassword from "@/pages/ForgotPassword";
 import ResetPassword from "@/pages/ResetPassword";
 import VerifyEmail from "@/pages/VerifyEmail";
 import Settings from "@/pages/Settings";
+import Chat from "@/pages/Chat";
 import { AuthProvider } from "@/context/AuthContext";
 import { useAuth } from "@/hooks/useAuth";
 
 const AUTH_ROUTES = ["/login", "/register", "/onboarding", "/forgot-password", "/reset-password", "/verify-email"];
-const NO_BOTTOM_NAV = [...AUTH_ROUTES];
+const NO_BOTTOM_NAV = [...AUTH_ROUTES, "/chat/"];
 
 function ProtectedRoute({ component: Component, ...rest }) {
   const { user, loading } = useAuth();
@@ -73,6 +74,7 @@ function AppShell() {
             <Route path="/settings"><ProtectedRoute component={Settings} /></Route>
             <Route path="/sell"><ProtectedRoute component={Sell} /></Route>
             <Route path="/messages"><ProtectedRoute component={Messages} /></Route>
+            <Route path="/chat/:id"><ProtectedRoute component={Chat} /></Route>
             <Route path="/profile"><ProtectedRoute component={Profile} /></Route>
             <Route path="/wishlist"><ProtectedRoute component={Wishlist} /></Route>
             <Route>
