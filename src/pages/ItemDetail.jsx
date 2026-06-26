@@ -245,7 +245,7 @@ export default function ItemDetail() {
           </div>
 
           {/* Price row */}
-          <div className="flex items-center gap-3 mb-6">
+          <div className="flex items-center gap-3 mb-4">
             {listing.is_for_sale && listing.price && (
               <div className="flex flex-col">
                 <span className="text-xs font-bold text-muted-foreground uppercase tracking-wide">Buy</span>
@@ -258,6 +258,14 @@ export default function ItemDetail() {
                 <span className="text-2xl font-black text-secondary">{formatGEL(listing.rent_price)}</span>
               </div>
             )}
+          </div>
+
+          {/* Hand-to-Hand Exchange Banner */}
+          <div className="flex items-start gap-3 bg-amber-50 border border-amber-200/60 rounded-2xl px-4 py-3 mb-6">
+            <span className="text-lg leading-none mt-0.5 shrink-0">📍</span>
+            <p className="text-[13px] font-semibold text-amber-800 leading-snug">
+              <span className="font-black">Hand-to-Hand Exchange:</span> Coordinate payments and handoffs safely with the seller via chat. Meet up in public spaces (e.g., Metro stations)!
+            </p>
           </div>
 
           {/* Description */}
@@ -298,7 +306,7 @@ export default function ItemDetail() {
                 className="mt-4 w-full h-12 rounded-2xl bg-gradient-to-r from-primary to-secondary text-white font-bold flex items-center justify-center gap-2 shadow-[0_4px_14px_rgba(124,58,237,0.3)] hover:opacity-90 transition-opacity"
               >
                 <MessageCircle className="h-5 w-5" />
-                💬 Chat with Seller
+                💬 Open Handoff Chat
               </motion.button>
             )}
           </div>

@@ -362,7 +362,7 @@ function ReviewModal({ listing, onClose, onSubmitted }) {
 }
 
 // ── My Listings Panel ──────────────────────────────────────────────────────────
-function MyListings() {
+function MyListings({ onSold }) {
   const [listings, setListings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [reviewListing, setReviewListing] = useState(null);
@@ -382,6 +382,8 @@ function MyListings() {
       setListings((prev) =>
         prev.map((l) => l.id === listing.id ? { ...l, status: "sold", is_active: false } : l)
       );
+      const salePrice = Number(listing.price || listing.rent_price || 0);
+      if (salePrice > 0 && onSold) onSold(salePrice);
       toast({ title: "Marked as sold! ✅", description: "Now rate the transaction." });
       setReviewListing(listing);
     } catch (err) {
@@ -523,7 +525,7 @@ export default function Profile() {
   const { toast } = useToast();
 
   const [balance, setBalance] = useState(Number(user?.balance || 0));
-  const [withdrawOpen, setWithdrawOpen] = useState(false);
+  const [withdrawOpen] = useState(false);
   const [listingsOpen, setListingsOpen] = useState(false);
   const [balanceLoading, setBalanceLoading] = useState(true);
 
@@ -645,8 +647,8 @@ export default function Profile() {
           <div className="flex items-start justify-between relative">
             <div>
               <div className="flex items-center gap-2 mb-1">
-                <Wallet className="h-4 w-4 text-white/70" />
-                <p className="text-xs font-bold text-white/70 uppercase tracking-widest">GEL Wallet</p>
+                <TrendingUp className="h-4 w-4 text-white/70" />
+                <p className="text-xs font-bold text-white/70 uppercase tracking-widest">Total Earnings (₾)</p>
               </div>
               {balanceLoading ? (
                 <div className="h-10 w-28 bg-white/20 rounded-xl animate-pulse mt-1" />
@@ -655,7 +657,7 @@ export default function Profile() {
                   ₾{balance.toFixed(2)}
                 </p>
               )}
-              <p className="text-xs text-white/60 font-medium mt-1.5">Available balance</p>
+              <p className="text-xs text-white/60 font-medium mt-1.5">Total value traded in the community 🏆</p>
             </div>
             <div className="flex items-center gap-1.5 bg-white/10 rounded-2xl px-3 py-2">
               <TrendingUp className="h-4 w-4 text-white/80" />
@@ -663,19 +665,31 @@ export default function Profile() {
             </div>
           </div>
 
-          {/* Cash out button */}
-          <button
-            onClick={() => setWithdrawOpen(true)}
-            disabled={balance <= 0}
-            className="mt-5 w-full h-12 rounded-2xl bg-white text-primary font-extrabold text-sm flex items-center justify-center gap-2 hover:bg-white/90 active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
-          >
-            <ArrowDownToLine className="h-4 w-4" />
-            💸 Cash Out / Withdraw
-          </button>
+          {/* Gamified stat footer */}
+          <div className="mt-5 flex items-center justify-between bg-white/10 rounded-2xl px-4 py-3">
+            <div className="text-center">
+              <p className="text-lg font-black text-white">{user.sales_count || 0}</p>
+              <p className="text-[10px] font-bold text-white/60 uppercase tracking-wide">Sales</p>
+            </div>
+            <div className="w-px h-8 bg-white/20" />
+            <div className="text-center">
+              <p className="text-lg font-black text-white">
+                {balance > 0 ? `₾${balance.toFixed(0)}` : "₾0"}
+              </p>
+              <p className="text-[10px] font-bold text-white/60 uppercase tracking-wide">Earned</p>
+            </div>
+            <div className="w-px h-8 bg-white/20" />
+            <div className="text-center flex flex-col items-center">
+              <p className="text-lg font-black text-white">
+                {balance >= 500 ? "🥇" : balance >= 100 ? "🥈" : "🥉"}
+              </p>
+              <p className="text-[10px] font-bold text-white/60 uppercase tracking-wide">Rank</p>
+            </div>
+          </div>
 
           {balance <= 0 && (
             <p className="text-center text-[10px] text-white/50 mt-2 font-medium">
-              Sell items to earn your first ₾
+              Mark your first listing as Sold to start tracking! 🚀
             </p>
           )}
         </motion.div>
@@ -725,7 +739,7 @@ export default function Profile() {
                 className="overflow-hidden"
               >
                 <div className="px-4 pb-4">
-                  <MyListings />
+                  <MyListings onSold={(price) => setBalance((b) => b + price)} />
                 </div>
               </motion.div>
             )}
