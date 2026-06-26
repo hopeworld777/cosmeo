@@ -21,5 +21,12 @@
   "rentals": "გაქირავება",
   "forSale": "გასაყიდი",
   "under50": "₾50-მდე",
-  "costumes": "კოსტიუმები"
+  "costumes": "კოსტიუმები",
+  "city_tbilisi": "თბილისი",
+  "city_batumi": "ბათუმი",
+  "city_kutaisi": "ქუთაისი",
+  "city_rustavi": "რუსთავი",
+  "city_zugdidi": "ზუგდიდი",
+  "city_poti": "ფოთი",
+  "city_gori": "გორი"
 }

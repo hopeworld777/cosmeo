@@ -15,11 +15,18 @@
   "wigs": "Wigs",
   "outfits": "Full Outfits",
   "shoes": "Shoes",
-  "props": "Props",
+  "props": "Props & Armor",
   "materials": "Crafting Supplies",
   "discover": "Discover",
   "rentals": "Rentals",
   "forSale": "For Sale",
   "under50": "Under ₾50",
-  "costumes": "Costumes"
+  "costumes": "Costumes",
+  "city_tbilisi": "Tbilisi",
+  "city_batumi": "Batumi",
+  "city_kutaisi": "Kutaisi",
+  "city_rustavi": "Rustavi",
+  "city_zugdidi": "Zugdidi",
+  "city_poti": "Poti",
+  "city_gori": "Gori"
 }
