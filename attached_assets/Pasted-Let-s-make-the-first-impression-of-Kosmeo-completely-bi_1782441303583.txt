@@ -1,0 +1,33 @@
+Let's make the first impression of Kosmeo completely bilingual! The very first page (Onboarding screen with the three animated intro slides) doesn't have the language switcher and its content is entirely untranslated.
+
+Please update the code to fix this:
+
+1. Add New Onboarding Translation Keys:
+   Add these keys to your translation json files:
+   - EN: 
+     "skip": "Skip",
+     "next": "Next",
+     "getStarted": "Get Started",
+     "slide1Title": "Welcome to Kosmeo",
+     "slide1Desc": "The ultimate marketplace built specifically for the Georgian cosplay and gaming community.",
+     "slide2Title": "Hand-to-Hand Exchange",
+     "slide2Desc": "Trade costumes, wigs, and custom props completely free with 0% transaction fees. Meet safely in local hubs!",
+     "slide3Title": "Showcase Your Craft",
+     "slide3Desc": "Build your artisan profile, earn trust medals, and turn your craftsmanship into total local earnings."
+   - KA: 
+     "skip": "გამოტოვება",
+     "next": "შემდეგი",
+     "getStarted": "დაწყება",
+     "slide1Title": "მოგესალმებით Kosmeo-ზე",
+     "slide1Desc": "საუკეთესო პლატფორმა შექმნილი სპეციალურად ქართული კოსპლეი და გეიმინგ კომიუნითისთვის.",
+     "slide2Title": "ხელზე გადაცემა",
+     "slide2Desc": "გაცვალეთ კოსტიუმები, პარიკები და პროპები სრულიად უფასოდ, 0%-იანი საკომისიოთი. შეხვდით უსაფრთხოდ საჯარო სივრცეებში!",
+     "slide3Title": "წარმოაჩინე შენი ნამუშევარი",
+     "slide3Desc": "შექმენი არტისტის პროფილი, დააგროვე რეიტინგი და აქციე შენი ხელოვნება რეალურ შემოსავლად."
+
+2. Update Onboarding Layout:
+   - In your Onboarding page component, import the LanguageSwitcher component.
+   - Mount <LanguageSwitcher /> absolutely at the top-right corner of the onboarding screen so users can toggle languages instantly before reading a single slide.
+   - Use the t() hook to swap the titles, descriptions, and action buttons ("Skip", "Next", "Get Started") across all three slides dynamically.
+
+Let's make our entry screen look flawlessly bilingual!

@@ -66,5 +66,15 @@
   "noCitiesFound": "No cities found",
   "results": "results",
   "result": "result",
-  "noMessages": "No messages yet. Start a conversation from a listing page!"
+  "noMessages": "No messages yet. Start a conversation from a listing page!",
+  "skip": "Skip",
+  "next": "Next",
+  "getStarted": "Get Started",
+  "alreadyHaveAccount": "Already have an account? Sign in",
+  "slide1Title": "Welcome to Kosmeo",
+  "slide1Desc": "The ultimate marketplace built specifically for the Georgian cosplay and gaming community.",
+  "slide2Title": "Hand-to-Hand Exchange",
+  "slide2Desc": "Trade costumes, wigs, and custom props completely free with 0% transaction fees. Meet safely in local hubs!",
+  "slide3Title": "Showcase Your Craft",
+  "slide3Desc": "Build your artisan profile, earn trust medals, and turn your craftsmanship into total local earnings."
 }
