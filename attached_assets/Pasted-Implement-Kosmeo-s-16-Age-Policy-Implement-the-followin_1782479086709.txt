@@ -1,0 +1,95 @@
+Implement Kosmeo's 16+ Age Policy
+
+Implement the following age policy consistently throughout the entire project.
+
+Official Policy
+
+Kosmeo is available only to users aged 16 and older.
+
+Users under 16 may not create an account.
+Users aged 16–17 may use Kosmeo only with permission from a parent or legal guardian.
+Users 18+ may use the platform normally.
+
+Do not add age verification or ID verification. This is a declaration-based policy.
+
+1. Registration Page
+
+Update the registration form.
+
+Add a required checkbox before the Create Account button.
+
+English:
+
+I confirm that I am at least 16 years old. If I am 16–17 years old, I have permission from my parent or legal guardian to use Kosmeo.
+
+Georgian:
+
+ვადასტურებ, რომ ვარ მინიმუმ 16 წლის. თუ ვარ 16–17 წლის, მაქვს მშობლის ან კანონიერი მეურვის ნებართვა Kosmeo-ს გამოყენებაზე.
+
+The checkbox must be required before registration.
+
+Use the existing validation and i18n system.
+
+2. Terms of Service
+
+Update the Eligibility & Accounts section.
+
+Replace the age requirement with:
+
+Minimum age is 16.
+Users aged 16–17 require parent/guardian permission.
+By creating an account the user confirms they satisfy these requirements.
+
+Update both English and Georgian translations.
+
+3. Safety Guide
+
+Add a new accordion section:
+
+Young Cosplayers (16–17)
+
+Include:
+
+Meet only in busy public places.
+Bring a parent, guardian, or trusted adult whenever possible.
+Never meet at a private residence.
+Never pay deposits or transfer money before meeting.
+Keep all communication inside Kosmeo.
+
+Translate into English and Georgian.
+
+4. Community Rules
+
+Add a new rule:
+
+English:
+
+Any content involving minors that is exploitative, abusive, or sexualized is strictly prohibited and will result in permanent account suspension.
+
+Provide a Georgian translation.
+
+5. Moderation Notes
+
+Where appropriate in the admin/moderation code, add comments documenting that:
+
+Accounts confirmed to belong to users under 16 should be suspended.
+Repeat violations of the age policy may result in permanent bans.
+
+This is documentation only—do not implement automatic age detection.
+
+6. Translation Files
+
+Add all new strings to both:
+
+src/locales/en/translation.json
+src/locales/ka/translation.json
+
+Use the existing naming convention.
+
+Requirements
+Reuse the existing design language.
+Reuse existing components where possible.
+No new dependencies.
+Preserve existing functionality.
+Ensure all new UI supports both English and Georgian.
+Keep styling consistent with the existing Kosmeo interface
