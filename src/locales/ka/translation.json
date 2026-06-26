@@ -98,5 +98,10 @@
   "dontHaveAccount": "არ გაქვთ ანგარიში? რეგისტრაცია",
   "emailPlaceholder": "შეიყვანეთ ელ.ფოსტა",
   "passwordPlaceholder": "შეიყვანეთ პაროლი",
-  "usernamePlaceholder": "აირჩიეთ მომხმარებლის სახელი"
+  "usernamePlaceholder": "აირჩიეთ მომხმარებლის სახელი",
+  "forgotPasswordTitle": "დაგავიწყდათ პაროლი?",
+  "forgotPasswordDesc": "შეიყვანეთ თქვენი ელ.ფოსტა და ჩვენ გამოგიგზავნით ლინკს პაროლის აღსადგენად.",
+  "resetLinkBtn": "აღდგენის ლინკის გაგზავნა",
+  "backToSignIn": "უკან შესვლაზე",
+  "successResetEmail": "შეამოწმეთ ელ.ფოსტა! პაროლის აღდგენის ინსტრუქცია გამოგზავნილია."
 }
