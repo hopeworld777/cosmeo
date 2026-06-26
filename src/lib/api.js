@@ -96,6 +96,25 @@ export const api = {
       }),
   },
 
+  reports: {
+    create: async ({ reported_user_id, listing_id, conversation_id, reason, detail }) => {
+      const token = getToken();
+      const res = await fetch(`${BASE}/reports`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({ reported_user_id, listing_id, conversation_id, reason, detail }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || "Failed to submit report");
+      }
+      return res.json();
+    },
+  },
+
   upload: {
     single: async (file) => {
       const formData = new FormData();

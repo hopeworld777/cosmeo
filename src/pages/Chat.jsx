@@ -1,13 +1,218 @@
 import { useParams, useLocation } from "wouter";
-import { ChevronLeft, Send, Loader2, ShieldCheck } from "lucide-react";
+import {
+  ChevronLeft, Send, Loader2, ShieldCheck,
+  Flag, AlertTriangle, X, CheckCircle2,
+} from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { motion } from "framer-motion";
-import { useState, useEffect, useRef } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { api } from "@/lib/api";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { useTranslation } from "react-i18next";
 
+// ─── Keyword → warning key map ────────────────────────────────────────────────
+const KEYWORD_RULES = [
+  {
+    patterns: /გადმო?ვ?ი?ც?ხ?ო?ვ?|transfer|გადარიცხ|გადახდ|გადაიხად|bank|ბანკ|card|ბარათ|crypto|крипто/i,
+    warnKey: "chatWarn_transfer",
+  },
+  {
+    patterns: /ship|shipped|shipping|გამო?გ?ზ?ა?ვ?ნ|courier|კურიერ|post|ფოსტ|delivery|მიტანა/i,
+    warnKey: "chatWarn_shipping",
+  },
+  {
+    patterns: /telegram|whatsapp|viber|signal|instagram|dm me|dm you|პირად|პირადად|move.*chat|chat.*move/i,
+    warnKey: "chatWarn_offplatform",
+  },
+  {
+    patterns: /deposit|დეპოზიტ|advance|წინასწარ|advance.*pay|pay.*advance|reserve.*pay/i,
+    warnKey: "chatWarn_deposit",
+  },
+];
+
+function detectWarning(text) {
+  for (const rule of KEYWORD_RULES) {
+    if (rule.patterns.test(text)) return rule.warnKey;
+  }
+  return null;
+}
+
+// ─── Inline safety banner ─────────────────────────────────────────────────────
+function SafetyBanner({ warnKey, onDismiss }) {
+  const { t } = useTranslation();
+  return (
+    <AnimatePresence>
+      {warnKey && (
+        <motion.div
+          key={warnKey}
+          initial={{ opacity: 0, y: 6, scale: 0.98 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          exit={{ opacity: 0, y: 4, scale: 0.98 }}
+          transition={{ duration: 0.2 }}
+          className="mx-4 mb-2 rounded-2xl border border-amber-300 bg-amber-50 px-3 py-2.5 flex items-start gap-2.5 shadow-sm"
+        >
+          <AlertTriangle size={15} className="text-amber-500 shrink-0 mt-0.5" />
+          <p className="flex-1 text-[12.5px] leading-snug text-amber-800 font-medium">
+            {t(warnKey)}
+          </p>
+          <button
+            onClick={onDismiss}
+            className="shrink-0 text-amber-400 hover:text-amber-600 transition-colors"
+            aria-label="Dismiss"
+          >
+            <X size={13} />
+          </button>
+        </motion.div>
+      )}
+    </AnimatePresence>
+  );
+}
+
+// ─── Report bottom sheet ──────────────────────────────────────────────────────
+const REPORT_REASONS = [
+  "report_reason_scam",
+  "report_reason_fake_listing",
+  "report_reason_offplatform",
+  "report_reason_harassment",
+  "report_reason_counterfeit",
+  "report_reason_other",
+];
+
+function ReportSheet({ open, onClose, conversationId, reportedUserId, listingId }) {
+  const { t } = useTranslation();
+  const { toast } = useToast();
+  const [step, setStep] = useState("pick");
+  const [reason, setReason] = useState(null);
+  const [detail, setDetail] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+
+  useEffect(() => {
+    if (open) { setStep("pick"); setReason(null); setDetail(""); }
+  }, [open]);
+
+  async function submit() {
+    setSubmitting(true);
+    try {
+      await api.reports.create({
+        reported_user_id: reportedUserId,
+        listing_id: listingId,
+        conversation_id: conversationId,
+        reason,
+        detail: detail.trim(),
+      });
+      setStep("done");
+    } catch (err) {
+      toast({ title: t("report_error"), description: err.message, variant: "destructive" });
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  return (
+    <AnimatePresence>
+      {open && (
+        <>
+          <motion.div
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/40 z-50"
+            onClick={onClose}
+          />
+          <motion.div
+            initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }}
+            transition={{ type: "spring", damping: 26, stiffness: 260 }}
+            className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[430px] z-50 bg-background rounded-t-3xl shadow-2xl pb-safe"
+          >
+            <div className="flex justify-center pt-3 pb-1">
+              <div className="w-10 h-1 rounded-full bg-border" />
+            </div>
+
+            {step === "pick" && (
+              <div className="px-5 pb-8">
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="font-extrabold text-[17px]">{t("report_sheet_title")}</h2>
+                  <button onClick={onClose} className="p-1.5 rounded-xl hover:bg-muted">
+                    <X size={18} className="text-muted-foreground" />
+                  </button>
+                </div>
+                <p className="text-[13px] text-muted-foreground mb-4">{t("report_sheet_subtitle")}</p>
+                <div className="space-y-2">
+                  {REPORT_REASONS.map((rk) => (
+                    <button
+                      key={rk}
+                      onClick={() => { setReason(rk); setStep("detail"); }}
+                      className="w-full text-left px-4 py-3 rounded-2xl border border-border/60 bg-muted/40 hover:border-primary/40 hover:bg-primary/5 transition-all text-[13.5px] font-semibold"
+                    >
+                      {t(rk)}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {step === "detail" && (
+              <div className="px-5 pb-8">
+                <div className="flex items-center gap-2 mb-4">
+                  <button onClick={() => setStep("pick")} className="p-1.5 rounded-xl hover:bg-muted">
+                    <ChevronLeft size={18} className="text-muted-foreground" />
+                  </button>
+                  <h2 className="font-extrabold text-[17px]">{t("report_detail_title")}</h2>
+                </div>
+                <div className="rounded-2xl bg-primary/8 border border-primary/20 px-3 py-2 mb-4 text-[12.5px] text-primary font-semibold">
+                  {t(reason)}
+                </div>
+                <textarea
+                  value={detail}
+                  onChange={(e) => setDetail(e.target.value)}
+                  placeholder={t("report_detail_placeholder")}
+                  rows={4}
+                  maxLength={500}
+                  className="w-full rounded-2xl border border-border/60 bg-muted/50 px-4 py-3 text-[13.5px] resize-none outline-none focus:border-primary/50 transition-colors"
+                />
+                <p className="text-right text-[11px] text-muted-foreground mt-1">{detail.length}/500</p>
+                <button
+                  onClick={submit}
+                  disabled={submitting}
+                  className="mt-3 w-full py-3.5 rounded-2xl bg-gradient-to-r from-primary to-secondary text-white font-extrabold text-[14px] disabled:opacity-50 transition-opacity shadow-md"
+                >
+                  {submitting ? (
+                    <span className="flex items-center justify-center gap-2">
+                      <Loader2 size={14} className="animate-spin" />
+                      {t("report_submitting")}
+                    </span>
+                  ) : t("report_submit_btn")}
+                </button>
+                <p className="text-center text-[11.5px] text-muted-foreground mt-3">
+                  {t("report_privacy_note")}
+                </p>
+              </div>
+            )}
+
+            {step === "done" && (
+              <div className="px-5 pb-12 flex flex-col items-center text-center">
+                <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mb-4 mt-4">
+                  <CheckCircle2 size={32} className="text-primary" />
+                </div>
+                <h2 className="font-extrabold text-[18px] mb-2">{t("report_done_title")}</h2>
+                <p className="text-[13.5px] text-muted-foreground max-w-[280px] leading-relaxed">
+                  {t("report_done_desc")}
+                </p>
+                <button
+                  onClick={onClose}
+                  className="mt-6 px-8 py-3 rounded-2xl bg-muted font-bold text-[14px]"
+                >
+                  {t("report_done_close")}
+                </button>
+              </div>
+            )}
+          </motion.div>
+        </>
+      )}
+    </AnimatePresence>
+  );
+}
+
+// ─── Main Chat page ───────────────────────────────────────────────────────────
 export default function Chat() {
   const { id } = useParams();
   const { user } = useAuth();
@@ -23,20 +228,19 @@ export default function Chat() {
   const endRef = useRef(null);
   const inputRef = useRef(null);
 
-  useEffect(() => {
-    loadMessages();
-  }, [id]);
+  // Warning + report state
+  const [activeWarn, setActiveWarn] = useState(null);
+  const [dismissedWarns, setDismissedWarns] = useState(new Set());
+  const [reportOpen, setReportOpen] = useState(false);
 
-  useEffect(() => {
-    endRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
+  useEffect(() => { loadMessages(); }, [id]);
+  useEffect(() => { endRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages]);
 
   async function loadMessages() {
     try {
       setLoading(true);
       const msgs = await api.messages.getMessages(id);
       setMessages(msgs || []);
-
       const convs = await api.messages.conversations();
       const meta = (convs || []).find((c) => String(c.id) === String(id));
       setConvMeta(meta || null);
@@ -47,6 +251,23 @@ export default function Chat() {
     }
   }
 
+  // Keyword scanner — fires on every keystroke
+  const handleTextChange = useCallback((e) => {
+    const val = e.target.value;
+    setText(val);
+    const warnKey = detectWarning(val);
+    if (warnKey && !dismissedWarns.has(warnKey)) {
+      setActiveWarn(warnKey);
+    } else if (!warnKey) {
+      setActiveWarn(null);
+    }
+  }, [dismissedWarns]);
+
+  function dismissWarn() {
+    setDismissedWarns((prev) => new Set(prev).add(activeWarn));
+    setActiveWarn(null);
+  }
+
   async function sendMessage() {
     const trimmed = text.trim();
     if (!trimmed || sending) return;
@@ -55,6 +276,7 @@ export default function Chat() {
       const msg = await api.messages.sendMessage(id, trimmed);
       setMessages((prev) => [...prev, msg]);
       setText("");
+      setActiveWarn(null);
     } catch (err) {
       toast({ title: t("failedToSend"), description: err.message, variant: "destructive" });
     } finally {
@@ -63,21 +285,19 @@ export default function Chat() {
   }
 
   function handleKeyDown(e) {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
-      sendMessage();
-    }
+    if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage(); }
   }
 
-  const otherName = convMeta?.other_username || t("seller");
-  const otherAvatar = convMeta?.other_avatar || null;
+  const otherName    = convMeta?.other_username || t("seller");
+  const otherAvatar  = convMeta?.other_avatar   || null;
   const otherInitial = otherName.slice(0, 2).toUpperCase();
-  const listingTitle = convMeta?.listing_title || "";
+  const listingTitle = convMeta?.listing_title  || "";
+  const otherUserId  = convMeta?.other_user_id  || null;
+  const listingId    = convMeta?.listing_id     || null;
 
   const formatTime = (ts) => {
     if (!ts) return "";
-    const d = new Date(ts);
-    return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+    return new Date(ts).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
   };
 
   return (
@@ -105,6 +325,16 @@ export default function Chat() {
             )}
           </div>
 
+          {/* Report button */}
+          <button
+            onClick={() => setReportOpen(true)}
+            className="h-9 w-9 bg-muted rounded-full flex items-center justify-center hover:bg-red-50 hover:text-red-500 transition-colors shrink-0"
+            aria-label={t("report_btn_label")}
+            title={t("report_btn_label")}
+          >
+            <Flag className="h-4 w-4 text-muted-foreground hover:text-red-500" />
+          </button>
+
           <div className="h-9 w-9 bg-primary/10 rounded-full flex items-center justify-center shrink-0">
             <ShieldCheck className="h-4 w-4 text-primary" />
           </div>
@@ -119,8 +349,7 @@ export default function Chat() {
           </div>
         ) : messages.length === 0 ? (
           <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
+            initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
             className="flex flex-col items-center justify-center py-24 text-center"
           >
             <div className="text-5xl mb-4">👋</div>
@@ -140,9 +369,7 @@ export default function Chat() {
                   <div className="flex justify-center my-3">
                     <span className="text-[10px] font-bold text-muted-foreground bg-muted px-3 py-1 rounded-full">
                       {new Date(msg.created_at).toLocaleDateString([], {
-                        weekday: "short",
-                        month: "short",
-                        day: "numeric",
+                        weekday: "short", month: "short", day: "numeric",
                       })}
                     </span>
                   </div>
@@ -183,6 +410,9 @@ export default function Chat() {
         <div ref={endRef} />
       </div>
 
+      {/* Safety banner — sits just above the input bar */}
+      <SafetyBanner warnKey={activeWarn} onDismiss={dismissWarn} />
+
       {/* Input Bar */}
       <div className="sticky bottom-0 bg-white/95 backdrop-blur-xl border-t border-border/20 px-4 pb-8 pt-3">
         <div className="flex items-center gap-2 bg-muted rounded-2xl px-4 py-2.5">
@@ -190,7 +420,7 @@ export default function Chat() {
             ref={inputRef}
             type="text"
             value={text}
-            onChange={(e) => setText(e.target.value)}
+            onChange={handleTextChange}
             onKeyDown={handleKeyDown}
             placeholder={t("typeMessage")}
             className="flex-1 bg-transparent text-sm font-medium outline-none placeholder:text-muted-foreground/60"
@@ -202,14 +432,19 @@ export default function Chat() {
             disabled={!text.trim() || sending}
             className="h-10 w-10 rounded-xl bg-gradient-to-br from-primary to-secondary text-white flex items-center justify-center disabled:opacity-40 transition-opacity shadow-md"
           >
-            {sending ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <Send className="h-4 w-4" />
-            )}
+            {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
           </motion.button>
         </div>
       </div>
+
+      {/* Report sheet */}
+      <ReportSheet
+        open={reportOpen}
+        onClose={() => setReportOpen(false)}
+        conversationId={id}
+        reportedUserId={otherUserId}
+        listingId={listingId}
+      />
     </div>
   );
 }
