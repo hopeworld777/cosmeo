@@ -12,10 +12,10 @@ export default function LanguageSwitcher() {
   }
 
   return (
-    <div className="flex items-center gap-0.5 bg-white/80 backdrop-blur-md rounded-full px-1 py-0.5 shadow-[0_2px_12px_rgba(124,58,237,0.15)] border border-border/30">
+    <div className="flex items-center bg-white/80 backdrop-blur-md rounded-full p-[3px] shadow-[0_1px_8px_rgba(124,58,237,0.12)] border border-border/30 shrink-0">
       <button
         onClick={() => switchTo("en")}
-        className="relative px-3 py-2 rounded-full text-[11px] font-black tracking-widest transition-colors focus:outline-none min-h-[44px] flex items-center"
+        className="relative h-[28px] min-w-[30px] px-2 rounded-full text-[12px] font-medium transition-colors focus:outline-none flex items-center justify-center"
       >
         {current === "en" && (
           <motion.div
@@ -24,16 +24,14 @@ export default function LanguageSwitcher() {
             transition={{ type: "spring", damping: 22, stiffness: 300 }}
           />
         )}
-        <span className={`relative z-10 ${current === "en" ? "text-white" : "text-muted-foreground"}`}>
+        <span className={`relative z-10 leading-none ${current === "en" ? "text-white" : "text-muted-foreground"}`}>
           EN
         </span>
       </button>
 
-      <span className="text-[10px] text-muted-foreground/50 font-bold select-none">|</span>
-
       <button
         onClick={() => switchTo("ka")}
-        className="relative px-3 py-2 rounded-full text-[11px] font-black tracking-widest transition-colors focus:outline-none min-h-[44px] flex items-center"
+        className="relative h-[28px] min-w-[34px] px-2 rounded-full text-[12px] font-medium transition-colors focus:outline-none flex items-center justify-center"
       >
         {current === "ka" && (
           <motion.div
@@ -42,7 +40,7 @@ export default function LanguageSwitcher() {
             transition={{ type: "spring", damping: 22, stiffness: 300 }}
           />
         )}
-        <span className={`relative z-10 ${current === "ka" ? "text-white" : "text-muted-foreground"}`}>
+        <span className={`relative z-10 leading-none ${current === "ka" ? "text-white" : "text-muted-foreground"}`}>
           ქარ
         </span>
       </button>
