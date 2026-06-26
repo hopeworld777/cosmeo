@@ -1,240 +1,551 @@
 import { useState, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
-import { Camera, CheckCircle2 } from "lucide-react";
+import { z } from "zod";
+import { motion, AnimatePresence } from "framer-motion";
+import { Camera, CheckCircle2, ArrowLeft, ArrowRight, X, Sparkles } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { motion } from "framer-motion";
 import { useLocation } from "wouter";
 import { api } from "@/lib/api";
 import { useAuth } from "@/hooks/useAuth";
 
-const schema = z.object({
-  title: z.string().min(5, "Title must be at least 5 characters"),
-  description: z.string().min(10, "Add more details for buyers"),
-  price: z.string().optional(),
-  rentPrice: z.string().optional(),
-  fandom: z.string().min(2, "Fandom is required"),
-  category: z.string().min(1, "Select a category"),
-  condition: z.string().min(1, "Select condition"),
-  size: z.string().min(1, "Size is required"),
+// ── Category config ────────────────────────────────────────────────────────────
+const CATEGORIES = [
+  { id: "outfit",   emoji: "👗", label: "Full Outfit",   bg: "bg-pink-50",   border: "border-pink-300",   text: "text-pink-600",   activeBg: "bg-pink-100"   },
+  { id: "wig",      emoji: "💇", label: "Wig",           bg: "bg-purple-50", border: "border-purple-300", text: "text-purple-600", activeBg: "bg-purple-100" },
+  { id: "shoes",    emoji: "🥾", label: "Shoes",         bg: "bg-amber-50",  border: "border-amber-300",  text: "text-amber-600",  activeBg: "bg-amber-100"  },
+  { id: "prop",     emoji: "⚔️",  label: "Prop",          bg: "bg-blue-50",   border: "border-blue-300",   text: "text-blue-600",   activeBg: "bg-blue-100"   },
+  { id: "crafting", emoji: "🧵", label: "Crafting/DIY",  bg: "bg-green-50",  border: "border-green-300",  text: "text-green-600",  activeBg: "bg-green-100"  },
+];
+
+// Placeholder image per category (used when seller uploads no photos)
+const PLACEHOLDER = {
+  outfit:   "https://images.unsplash.com/photo-1578632767115-351597cf2477?w=600&q=80",
+  wig:      "https://images.unsplash.com/photo-1589998059171-988d887df646?w=600&q=80",
+  shoes:    "https://images.unsplash.com/photo-1530103862676-de8c9debad1d?w=600&q=80",
+  prop:     "https://images.unsplash.com/photo-1518611012118-696072aa579a?w=600&q=80",
+  crafting: "https://images.unsplash.com/photo-1518609878373-06d740f60d8b?w=600&q=80",
+};
+
+const STEPS = ["Category", "Details", "Pricing"];
+
+// ── Zod schema for the details step ───────────────────────────────────────────
+const detailsSchema = z.object({
+  title:       z.string().min(5, "Title must be at least 5 characters"),
+  description: z.string().min(10, "Add a bit more detail for buyers"),
+  fandom:      z.string().optional(),
 });
+
+// ── Slide animation helpers ────────────────────────────────────────────────────
+const slide = {
+  enter: (dir) => ({ x: dir > 0 ? 50 : -50, opacity: 0 }),
+  center: { x: 0, opacity: 1, transition: { duration: 0.22, ease: "easeOut" } },
+  exit:   (dir) => ({ x: dir < 0 ? 50 : -50, opacity: 0, transition: { duration: 0.16, ease: "easeIn" } }),
+};
 
 export default function Sell() {
   const { user } = useAuth();
   const { toast } = useToast();
   const [, setLocation] = useLocation();
+
+  // Multi-step state
+  const [step, setStep]       = useState(0);
+  const [direction, setDir]   = useState(1);   // +1 = forward, -1 = backward
+  const [category, setCategory] = useState("");
   const [isForSale, setIsForSale] = useState(true);
   const [isForRent, setIsForRent] = useState(false);
-  const [isSuccess, setIsSuccess] = useState(false);
-  const [loading, setLoading] = useState(false);
-  
+  const [salePrice, setSalePrice] = useState("");
+  const [rentPrice, setRentPrice] = useState("");
   const [uploadedImages, setUploadedImages] = useState([]);
+  const [uploading, setUploading] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [success, setSuccess]   = useState(false);
+
   const fileInputRef = useRef(null);
 
-  const { register, handleSubmit, formState: { errors }, setValue } = useForm({
-    resolver: zodResolver(schema),
-    defaultValues: {
-      category: "",
-      condition: "",
-    }
+  const { register, handleSubmit, trigger, getValues, formState: { errors } } = useForm({
+    resolver: zodResolver(detailsSchema),
+    mode: "onBlur",
   });
 
+  // ── Navigation ───────────────────────────────────────────────────────────────
+  const goNext = async () => {
+    if (step === 0) {
+      if (!category) {
+        toast({ title: "Pick a category first!", variant: "destructive" });
+        return;
+      }
+    }
+    if (step === 1) {
+      const ok = await trigger(["title", "description"]);
+      if (!ok) return;
+    }
+    setDir(1);
+    setStep(s => s + 1);
+  };
+
+  const goBack = () => {
+    setDir(-1);
+    setStep(s => s - 1);
+  };
+
+  // ── Photo upload ─────────────────────────────────────────────────────────────
   const handleFileSelect = async (e) => {
-    const files = Array.from(e.target.files);
+    const files = Array.from(e.target.files || []);
     if (!files.length) return;
-    
+    setUploading(true);
     try {
-      setLoading(true);
       const { urls } = await api.upload.multiple(files);
       setUploadedImages(prev => [...prev, ...urls]);
     } catch (err) {
       toast({ title: "Upload failed", description: err.message, variant: "destructive" });
     } finally {
-      setLoading(false);
+      setUploading(false);
     }
   };
 
-  const onSubmit = async (data) => {
+  const removeImage = (idx) => setUploadedImages(prev => prev.filter((_, i) => i !== idx));
+
+  // ── Final submit ─────────────────────────────────────────────────────────────
+  const onPublish = async () => {
     if (!isForSale && !isForRent) {
-      toast({ title: "Error", description: "Must select either Rent or Sell", variant: "destructive" });
+      toast({ title: "Choose how to sell", description: "Toggle For Sale and/or For Rent.", variant: "destructive" });
       return;
     }
-    
-    setLoading(true);
+    if (isForSale && (!salePrice || Number(salePrice) <= 0)) {
+      toast({ title: "Enter a sale price", variant: "destructive" });
+      return;
+    }
+    if (isForRent && (!rentPrice || Number(rentPrice) <= 0)) {
+      toast({ title: "Enter a rental price", variant: "destructive" });
+      return;
+    }
+
+    const { title, description, fandom } = getValues();
+    const images = uploadedImages.length > 0
+      ? uploadedImages
+      : [PLACEHOLDER[category]];   // auto-placeholder if no uploads
+
+    setSubmitting(true);
     try {
       await api.listings.create({
-        ...data,
-        rent_price: data.rentPrice,
+        title,
+        description,
+        fandom: fandom || "",
+        category,
         is_for_sale: isForSale,
         is_for_rent: isForRent,
-        images: uploadedImages,
+        price:      isForSale ? Number(salePrice) : null,
+        rent_price: isForRent ? Number(rentPrice) : null,
+        images,
       });
-      setIsSuccess(true);
-      setTimeout(() => {
-        setLocation("/profile");
-      }, 2000);
+
+      setSuccess(true);
+      toast({ title: "Listing published! 🎉", description: "Your item is now live." });
+
+      setTimeout(() => setLocation("/"), 2200);
     } catch (err) {
-      toast({ title: "Listing failed", description: err.message, variant: "destructive" });
-      setLoading(false);
+      toast({ title: "Could not publish", description: err.message, variant: "destructive" });
+      setSubmitting(false);
     }
   };
 
-  if (isSuccess) {
+  // ── Success screen ────────────────────────────────────────────────────────────
+  if (success) {
     return (
-      <div className="flex h-full flex-col items-center justify-center p-8 text-center bg-background pastel-gradient">
-        <motion.div initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="flex flex-col items-center bg-white p-10 rounded-[3rem] card-shadow">
-          <div className="rounded-full bg-primary/10 p-6 mb-6">
-            <CheckCircle2 className="h-20 w-20 text-primary" />
+      <div className="flex h-full flex-col items-center justify-center p-8 text-center bg-background">
+        <motion.div
+          initial={{ scale: 0.7, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ type: "spring", stiffness: 200, damping: 18 }}
+          className="flex flex-col items-center bg-white p-10 rounded-[3rem] card-shadow w-full max-w-[340px]"
+        >
+          <div className="relative">
+            <div className="rounded-full bg-green-100 p-6 mb-5">
+              <CheckCircle2 className="h-16 w-16 text-green-500" />
+            </div>
+            <motion.div
+              initial={{ scale: 0 }}
+              animate={{ scale: [0, 1.4, 1] }}
+              transition={{ delay: 0.3, duration: 0.5 }}
+              className="absolute -top-1 -right-1 text-2xl"
+            >
+              ✨
+            </motion.div>
           </div>
-          <h1 className="text-3xl font-black text-foreground mb-3">Listed Successfully!</h1>
-          <p className="text-muted-foreground font-medium text-lg">Your item is now live in the marketplace.</p>
+          <h1 className="text-2xl font-black text-foreground mb-2">Listed!</h1>
+          <p className="text-muted-foreground font-medium">
+            Your item is live in the CosMeo marketplace.
+          </p>
+          <p className="text-xs text-muted-foreground mt-3">Taking you to the feed…</p>
         </motion.div>
       </div>
     );
   }
 
+  // ── Selected category info ────────────────────────────────────────────────────
+  const activeCat = CATEGORIES.find(c => c.id === category);
+
   return (
     <div className="flex flex-col h-full bg-background">
-      <div className="sticky top-0 z-30 bg-white/95 backdrop-blur-xl pt-12 pb-4 px-4 rounded-b-3xl" style={{ boxShadow: "0 4px 20px rgba(139,92,246,0.05)" }}>
-        <h1 className="text-3xl font-black text-foreground">List an Item</h1>
-      </div>
 
-      <div className="flex-1 overflow-y-auto p-4 pb-24 pt-6 no-scrollbar">
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-          
-          {/* Photo Upload */}
-          <div className="space-y-3">
-            <Label className="font-extrabold text-foreground ml-1">Photos</Label>
-            <div className="flex gap-3 overflow-x-auto no-scrollbar pb-2">
-              <input 
-                type="file" 
-                multiple 
-                accept="image/*" 
-                className="hidden" 
-                ref={fileInputRef}
-                onChange={handleFileSelect}
-              />
-              <div 
-                onClick={() => fileInputRef.current?.click()}
-                className="flex h-32 w-32 shrink-0 cursor-pointer flex-col items-center justify-center gap-2 rounded-3xl border-2 border-dashed border-primary/40 bg-primary/5 hover:bg-primary/10 transition-colors text-primary"
-              >
-                <Camera className="h-8 w-8" />
-                <span className="text-sm font-bold">Add Photo</span>
-              </div>
-              {uploadedImages.map((url, i) => (
-                <div key={i} className="h-32 w-32 shrink-0 rounded-3xl overflow-hidden bg-muted">
-                  <img src={url} alt="upload" className="w-full h-full object-cover" />
-                </div>
-              ))}
+      {/* ── Sticky header with step indicator ──────────────────────────── */}
+      <div className="sticky top-0 z-30 bg-white/95 backdrop-blur-xl pt-11 pb-4 px-5 border-b border-border/20">
+        <div className="flex items-center gap-3 mb-4">
+          {step > 0 ? (
+            <button
+              onClick={goBack}
+              className="h-9 w-9 rounded-full bg-muted flex items-center justify-center shrink-0 hover:bg-muted/70 transition-colors"
+            >
+              <ArrowLeft className="h-4 w-4 text-foreground" />
+            </button>
+          ) : (
+            <div className="h-9 w-9 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+              <Sparkles className="h-4 w-4 text-primary" />
             </div>
+          )}
+          <div className="flex-1">
+            <h1 className="text-xl font-black text-foreground leading-tight">List an Item</h1>
+            <p className="text-xs text-muted-foreground font-medium">Step {step + 1} of {STEPS.length} · {STEPS[step]}</p>
           </div>
+        </div>
 
-          <div className="space-y-5 bg-white p-6 rounded-3xl card-shadow border-none">
-            <div className="space-y-2">
-              <Label htmlFor="title" className="font-bold text-foreground">Title</Label>
-              <Input id="title" placeholder="e.g. Master Sword Replica" className="bg-muted border-none h-12 rounded-2xl font-medium" {...register("title")} />
-              {errors.title && <p className="text-xs text-destructive font-bold">{errors.title.message}</p>}
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="fandom" className="font-bold text-foreground">Fandom / Series</Label>
-              <Input id="fandom" placeholder="e.g. Zelda" className="bg-muted border-none h-12 rounded-2xl font-medium" {...register("fandom")} />
-              {errors.fandom && <p className="text-xs text-destructive font-bold">{errors.fandom.message}</p>}
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label className="font-bold text-foreground">Category</Label>
-                <Select onValueChange={(val) => setValue("category", val)}>
-                  <SelectTrigger className="bg-muted border-none h-12 rounded-2xl font-medium">
-                    <SelectValue placeholder="Select" />
-                  </SelectTrigger>
-                  <SelectContent className="rounded-2xl border-none card-shadow">
-                    <SelectItem value="costume" className="rounded-xl font-bold">Costume</SelectItem>
-                    <SelectItem value="prop" className="rounded-xl font-bold">Prop</SelectItem>
-                    <SelectItem value="wig" className="rounded-xl font-bold">Wig</SelectItem>
-                    <SelectItem value="armor" className="rounded-xl font-bold">Armor</SelectItem>
-                  </SelectContent>
-                </Select>
-                {errors.category && <p className="text-xs text-destructive font-bold">{errors.category.message}</p>}
-              </div>
-
-              <div className="space-y-2">
-                <Label className="font-bold text-foreground">Condition</Label>
-                <Select onValueChange={(val) => setValue("condition", val)}>
-                  <SelectTrigger className="bg-muted border-none h-12 rounded-2xl font-medium">
-                    <SelectValue placeholder="Select" />
-                  </SelectTrigger>
-                  <SelectContent className="rounded-2xl border-none card-shadow">
-                    <SelectItem value="new" className="rounded-xl font-bold">Brand New</SelectItem>
-                    <SelectItem value="like-new" className="rounded-xl font-bold">Like New</SelectItem>
-                    <SelectItem value="good" className="rounded-xl font-bold">Good</SelectItem>
-                    <SelectItem value="fair" className="rounded-xl font-bold">Fair</SelectItem>
-                  </SelectContent>
-                </Select>
-                {errors.condition && <p className="text-xs text-destructive font-bold">{errors.condition.message}</p>}
-              </div>
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="size" className="font-bold text-foreground">Size</Label>
-              <Input id="size" placeholder="e.g. Mens M, Adjustable" className="bg-muted border-none h-12 rounded-2xl font-medium" {...register("size")} />
-              {errors.size && <p className="text-xs text-destructive font-bold">{errors.size.message}</p>}
-            </div>
-          </div>
-
-          <div className="space-y-5 bg-white p-6 rounded-3xl card-shadow border-none">
-            <div className="flex items-center justify-between">
-              <div className="space-y-1">
-                <Label className="text-lg font-black text-foreground">List for Sale</Label>
-                <p className="text-sm font-medium text-muted-foreground">Sell this item permanently.</p>
-              </div>
-              <Switch checked={isForSale} onCheckedChange={setIsForSale} />
-            </div>
-            
-            {isForSale && (
-              <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} className="pt-1">
-                <Input type="number" placeholder="Sale Price ($)" className="bg-muted border-none h-14 rounded-2xl text-lg font-bold" {...register("price")} />
-              </motion.div>
-            )}
-
-            <div className="flex items-center justify-between pt-5 border-t border-border">
-              <div className="space-y-1">
-                <Label className="text-lg font-black text-secondary">List for Rent</Label>
-                <p className="text-sm font-medium text-muted-foreground">Lend it out for daily rates.</p>
-              </div>
-              <Switch checked={isForRent} onCheckedChange={setIsForRent} />
-            </div>
-            
-            {isForRent && (
-              <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} className="pt-1">
-                <Input type="number" placeholder="Daily Rental Rate ($)" className="bg-muted border-none h-14 rounded-2xl text-lg font-bold" {...register("rentPrice")} />
-              </motion.div>
-            )}
-          </div>
-
-          <div className="space-y-2 bg-white p-6 rounded-3xl card-shadow border-none">
-            <Label htmlFor="description" className="font-bold text-foreground">Description</Label>
-            <textarea 
-              id="description" 
-              className="flex min-h-[140px] w-full rounded-2xl border-none bg-muted px-4 py-3 text-base font-medium ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:cursor-not-allowed disabled:opacity-50"
-              placeholder="Tell buyers about the fit, materials, flaws, and history..."
-              {...register("description")}
+        {/* Progress bar */}
+        <div className="flex gap-1.5">
+          {STEPS.map((_, i) => (
+            <div
+              key={i}
+              className={`h-1.5 flex-1 rounded-full transition-all duration-300 ${
+                i <= step ? "bg-primary" : "bg-muted"
+              }`}
             />
-            {errors.description && <p className="text-xs text-destructive font-bold">{errors.description.message}</p>}
-          </div>
-
-          <Button type="submit" disabled={loading} className="w-full h-16 rounded-2xl text-xl font-black text-white bg-gradient-to-r from-primary to-secondary shadow-[0_8px_24px_rgba(139,92,246,0.3)] hover:opacity-90 transition-opacity" data-testid="btn-submit-listing">
-            {loading ? "Publishing..." : "Publish Listing"}
-          </Button>
-        </form>
+          ))}
+        </div>
       </div>
+
+      {/* ── Animated step content ──────────────────────────────────────── */}
+      <div className="flex-1 overflow-y-auto no-scrollbar">
+        <AnimatePresence mode="wait" custom={direction}>
+          <motion.div
+            key={step}
+            custom={direction}
+            variants={slide}
+            initial="enter"
+            animate="center"
+            exit="exit"
+            className="p-5 pb-28 flex flex-col gap-5"
+          >
+
+            {/* ══ STEP 0: Category + Photos ══════════════════════════════ */}
+            {step === 0 && (
+              <>
+                <div>
+                  <h2 className="text-2xl font-black text-foreground mb-1">What are you selling?</h2>
+                  <p className="text-sm text-muted-foreground font-medium">Pick the category that best fits your item.</p>
+                </div>
+
+                {/* Category grid */}
+                <div className="grid grid-cols-2 gap-3">
+                  {CATEGORIES.map((cat) => {
+                    const active = category === cat.id;
+                    return (
+                      <motion.button
+                        key={cat.id}
+                        type="button"
+                        whileTap={{ scale: 0.95 }}
+                        onClick={() => setCategory(cat.id)}
+                        className={`flex flex-col items-center justify-center gap-2 p-5 rounded-3xl border-2 transition-all duration-150 ${
+                          active
+                            ? `${cat.activeBg} ${cat.border} shadow-md`
+                            : `bg-white border-border/40 hover:border-border`
+                        } ${cat.id === "crafting" ? "col-span-2" : ""}`}
+                      >
+                        <span className="text-3xl">{cat.emoji}</span>
+                        <span className={`text-sm font-bold ${active ? cat.text : "text-foreground"}`}>
+                          {cat.label}
+                        </span>
+                        {active && (
+                          <span className={`text-[10px] font-bold ${cat.text} bg-white/60 px-2 py-0.5 rounded-full`}>
+                            Selected ✓
+                          </span>
+                        )}
+                      </motion.button>
+                    );
+                  })}
+                </div>
+
+                {/* Photos section */}
+                <div>
+                  <p className="text-sm font-bold text-foreground mb-3">
+                    Photos
+                    <span className="text-muted-foreground font-normal ml-2 text-xs">optional — we'll use a placeholder if skipped</span>
+                  </p>
+                  <input
+                    type="file"
+                    multiple
+                    accept="image/*"
+                    className="hidden"
+                    ref={fileInputRef}
+                    onChange={handleFileSelect}
+                  />
+                  <div className="flex gap-3 overflow-x-auto no-scrollbar pb-1">
+                    <button
+                      type="button"
+                      onClick={() => fileInputRef.current?.click()}
+                      disabled={uploading}
+                      className="flex h-28 w-28 shrink-0 cursor-pointer flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-primary/40 bg-primary/5 hover:bg-primary/10 transition-colors text-primary disabled:opacity-60"
+                    >
+                      {uploading ? (
+                        <span className="h-5 w-5 rounded-full border-2 border-primary/40 border-t-primary animate-spin" />
+                      ) : (
+                        <>
+                          <Camera className="h-6 w-6" />
+                          <span className="text-xs font-bold">Add Photo</span>
+                        </>
+                      )}
+                    </button>
+                    {uploadedImages.map((url, i) => (
+                      <div key={i} className="relative h-28 w-28 shrink-0 rounded-2xl overflow-hidden bg-muted">
+                        <img src={url} alt="" className="w-full h-full object-cover" />
+                        <button
+                          type="button"
+                          onClick={() => removeImage(i)}
+                          className="absolute top-1.5 right-1.5 h-6 w-6 rounded-full bg-black/50 flex items-center justify-center"
+                        >
+                          <X className="h-3 w-3 text-white" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </>
+            )}
+
+            {/* ══ STEP 1: Details ════════════════════════════════════════ */}
+            {step === 1 && (
+              <>
+                <div>
+                  <h2 className="text-2xl font-black text-foreground mb-1">Tell buyers more</h2>
+                  <p className="text-sm text-muted-foreground font-medium">
+                    {activeCat && <>{activeCat.emoji} {activeCat.label} · </>}Good titles get more views!
+                  </p>
+                </div>
+
+                <div className="bg-white rounded-3xl card-shadow p-5 flex flex-col gap-5">
+                  {/* Title */}
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-sm font-bold text-foreground">Title <span className="text-red-400">*</span></label>
+                    <Input
+                      {...register("title")}
+                      placeholder="e.g. Sailor Moon Wig – Silver, Long"
+                      className="bg-muted border-none h-12 rounded-xl text-sm font-medium focus-visible:ring-primary/30"
+                    />
+                    {errors.title && <p className="text-xs text-red-500 font-medium">{errors.title.message}</p>}
+                  </div>
+
+                  {/* Description */}
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-sm font-bold text-foreground">Description <span className="text-red-400">*</span></label>
+                    <textarea
+                      {...register("description")}
+                      placeholder="Describe the size, condition, materials, what's included…"
+                      rows={4}
+                      className="w-full rounded-xl bg-muted border-none p-3.5 text-sm font-medium resize-none outline-none focus:ring-2 focus:ring-primary/25 placeholder:text-muted-foreground/50 leading-relaxed transition-shadow"
+                    />
+                    {errors.description && <p className="text-xs text-red-500 font-medium">{errors.description.message}</p>}
+                  </div>
+
+                  {/* Fandom */}
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-sm font-bold text-foreground">
+                      Fandom / Series
+                      <span className="text-muted-foreground font-normal ml-2 text-xs">optional</span>
+                    </label>
+                    <Input
+                      {...register("fandom")}
+                      placeholder="e.g. Genshin Impact, Sailor Moon, Demon Slayer…"
+                      className="bg-muted border-none h-12 rounded-xl text-sm font-medium focus-visible:ring-primary/30"
+                    />
+                  </div>
+                </div>
+              </>
+            )}
+
+            {/* ══ STEP 2: Pricing ════════════════════════════════════════ */}
+            {step === 2 && (
+              <>
+                <div>
+                  <h2 className="text-2xl font-black text-foreground mb-1">Set your price</h2>
+                  <p className="text-sm text-muted-foreground font-medium">You can offer both options at once.</p>
+                </div>
+
+                {/* For Sale toggle */}
+                <div className={`bg-white rounded-3xl card-shadow p-5 flex flex-col gap-4 transition-all ${isForSale ? "ring-2 ring-primary/30" : ""}`}>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="font-extrabold text-foreground">For Sale</p>
+                      <p className="text-xs text-muted-foreground font-medium mt-0.5">One-time purchase</p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setIsForSale(v => !v)}
+                      className={`w-12 h-6 rounded-full transition-colors relative ${isForSale ? "bg-primary" : "bg-muted"}`}
+                    >
+                      <span className={`absolute top-1 h-4 w-4 rounded-full bg-white shadow transition-all ${isForSale ? "left-7" : "left-1"}`} />
+                    </button>
+                  </div>
+
+                  <AnimatePresence>
+                    {isForSale && (
+                      <motion.div
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: "auto", opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        transition={{ duration: 0.18 }}
+                        className="overflow-hidden"
+                      >
+                        <div className="relative">
+                          <span className="absolute left-4 top-1/2 -translate-y-1/2 text-lg font-black text-primary">₾</span>
+                          <input
+                            type="number"
+                            min="0"
+                            step="1"
+                            value={salePrice}
+                            onChange={e => setSalePrice(e.target.value)}
+                            placeholder="0"
+                            className="w-full h-14 rounded-2xl bg-muted border-none pl-10 pr-4 text-2xl font-black text-foreground outline-none focus:ring-2 focus:ring-primary/25"
+                          />
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+
+                {/* For Rent toggle */}
+                <div className={`bg-white rounded-3xl card-shadow p-5 flex flex-col gap-4 transition-all ${isForRent ? "ring-2 ring-secondary/30" : ""}`}>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="font-extrabold text-foreground">For Rent</p>
+                      <p className="text-xs text-muted-foreground font-medium mt-0.5">Daily rental rate</p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setIsForRent(v => !v)}
+                      className={`w-12 h-6 rounded-full transition-colors relative ${isForRent ? "bg-secondary" : "bg-muted"}`}
+                    >
+                      <span className={`absolute top-1 h-4 w-4 rounded-full bg-white shadow transition-all ${isForRent ? "left-7" : "left-1"}`} />
+                    </button>
+                  </div>
+
+                  <AnimatePresence>
+                    {isForRent && (
+                      <motion.div
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: "auto", opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        transition={{ duration: 0.18 }}
+                        className="overflow-hidden"
+                      >
+                        <div className="relative">
+                          <span className="absolute left-4 top-1/2 -translate-y-1/2 text-lg font-black text-secondary">₾</span>
+                          <input
+                            type="number"
+                            min="0"
+                            step="1"
+                            value={rentPrice}
+                            onChange={e => setRentPrice(e.target.value)}
+                            placeholder="0"
+                            className="w-full h-14 rounded-2xl bg-muted border-none pl-10 pr-4 text-2xl font-black text-foreground outline-none focus:ring-2 focus:ring-secondary/25"
+                          />
+                          <span className="absolute right-4 top-1/2 -translate-y-1/2 text-sm text-muted-foreground font-bold">/ day</span>
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+
+                {/* Mini preview card */}
+                {(getValues("title") || category) && (
+                  <div className="bg-white rounded-3xl card-shadow p-4">
+                    <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-3">Preview</p>
+                    <div className="flex items-center gap-3">
+                      <div className="h-14 w-14 rounded-2xl overflow-hidden bg-muted shrink-0">
+                        <img
+                          src={uploadedImages[0] || PLACEHOLDER[category]}
+                          alt=""
+                          className="h-full w-full object-cover"
+                        />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-bold text-foreground text-sm line-clamp-1">
+                          {getValues("title") || "Your listing title"}
+                        </p>
+                        <p className="text-xs text-muted-foreground font-medium mt-0.5">
+                          {activeCat?.emoji} {activeCat?.label}
+                        </p>
+                        <div className="flex gap-2 mt-1.5">
+                          {isForSale && salePrice && (
+                            <span className="text-xs font-bold bg-primary/10 text-primary px-2 py-0.5 rounded-full">
+                              ₾{salePrice}
+                            </span>
+                          )}
+                          {isForRent && rentPrice && (
+                            <span className="text-xs font-bold bg-secondary/10 text-secondary px-2 py-0.5 rounded-full">
+                              ₾{rentPrice}/d
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Publish button */}
+                <motion.div whileTap={{ scale: 0.97 }}>
+                  <Button
+                    type="button"
+                    onClick={onPublish}
+                    disabled={submitting}
+                    className="w-full h-16 rounded-2xl text-lg font-black text-white bg-gradient-to-r from-primary to-secondary shadow-[0_8px_24px_rgba(139,92,246,0.3)] hover:opacity-90 transition-opacity"
+                  >
+                    {submitting ? (
+                      <span className="flex items-center gap-3">
+                        <span className="h-5 w-5 rounded-full border-2 border-white/40 border-t-white animate-spin" />
+                        Publishing…
+                      </span>
+                    ) : (
+                      <span className="flex items-center gap-2">
+                        <Sparkles className="h-5 w-5" />
+                        Publish Listing
+                      </span>
+                    )}
+                  </Button>
+                </motion.div>
+              </>
+            )}
+
+          </motion.div>
+        </AnimatePresence>
+      </div>
+
+      {/* ── Floating Next button (steps 0 & 1) ─────────────────────────── */}
+      {step < 2 && (
+        <div className="fixed bottom-20 left-1/2 -translate-x-1/2 w-full max-w-[430px] px-5 z-40">
+          <motion.div whileTap={{ scale: 0.97 }}>
+            <Button
+              type="button"
+              onClick={goNext}
+              className="w-full h-14 rounded-2xl font-bold text-base bg-primary hover:bg-primary/90 text-white shadow-[0_6px_20px_rgba(124,58,237,0.3)]"
+            >
+              Continue
+              <ArrowRight className="h-5 w-5 ml-2" />
+            </Button>
+          </motion.div>
+        </div>
+      )}
+
     </div>
   );
 }

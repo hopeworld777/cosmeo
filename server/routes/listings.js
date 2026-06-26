@@ -1,6 +1,35 @@
 import { Router } from "express";
+import { z } from "zod";
 import pool from "../db.js";
 import { requireAuth, optionalAuth } from "../middleware/auth.js";
+
+// ── Zod schema for creating a listing ─────────────────────────────────────────
+const createListingSchema = z.object({
+  title:       z.string().min(5,  "Title must be at least 5 characters"),
+  description: z.string().min(10, "Description must be at least 10 characters"),
+  category:    z.enum(["outfit", "wig", "shoes", "prop", "crafting"], {
+    errorMap: () => ({ message: "Select a valid category" }),
+  }),
+  is_for_sale: z.boolean(),
+  is_for_rent: z.boolean(),
+  price:       z.number().positive("Sale price must be greater than 0").nullable().optional(),
+  rent_price:  z.number().positive("Rental price must be greater than 0").nullable().optional(),
+  fandom:      z.string().optional().default(""),
+  size:        z.string().optional().default(""),
+  condition:   z.string().optional().default(""),
+  images:      z.array(z.string().url()).optional().default([]),
+})
+  .refine(d => d.is_for_sale || d.is_for_rent, {
+    message: "Must be listed for sale or for rent (or both)",
+  })
+  .refine(d => !d.is_for_sale || (d.price != null && d.price > 0), {
+    message: "Sale price required when listing for sale",
+    path: ["price"],
+  })
+  .refine(d => !d.is_for_rent || (d.rent_price != null && d.rent_price > 0), {
+    message: "Daily rental price required when listing for rent",
+    path: ["rent_price"],
+  });
 
 const router = Router();
 
@@ -112,45 +141,51 @@ router.get("/:id", optionalAuth, async (req, res) => {
 
 // POST /api/listings
 router.post("/", requireAuth, async (req, res) => {
+  // Zod validation
+  const parsed = createListingSchema.safeParse(req.body);
+  if (!parsed.success) {
+    const first = parsed.error.errors[0];
+    return res.status(400).json({ error: first.message, details: parsed.error.errors });
+  }
+
   const {
     title, description, price, rent_price, is_for_rent, is_for_sale,
-    category, fandom, character, size, condition, images
-  } = req.body;
-
-  if (!title || !description || !category || !condition || !size) {
-    return res.status(400).json({ error: "Missing required fields" });
-  }
-  if (!is_for_rent && !is_for_sale) {
-    return res.status(400).json({ error: "Must be for sale or rent" });
-  }
+    category, fandom, size, condition, images,
+  } = parsed.data;
 
   const client = await pool.connect();
   try {
     await client.query("BEGIN");
+
     const listingResult = await client.query(
-      `INSERT INTO listings (seller_id, title, description, price, rent_price, is_for_rent, is_for_sale, category, fandom, character, size, condition)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)
+      `INSERT INTO listings
+         (seller_id, title, description, price, rent_price, is_for_rent, is_for_sale,
+          category, fandom, size, condition)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)
        RETURNING *`,
-      [req.userId, title, description, price || null, rent_price || null,
-       is_for_rent || false, is_for_sale || true, category, fandom || "", character || "", size, condition]
+      [req.userId, title, description,
+       is_for_sale ? price : null,
+       is_for_rent ? rent_price : null,
+       is_for_rent, is_for_sale,
+       category, fandom, size, condition]
     );
     const listing = listingResult.rows[0];
 
-    if (images && images.length > 0) {
-      for (let i = 0; i < images.length; i++) {
-        await client.query(
-          "INSERT INTO listing_images (listing_id, image_url, sort_order) VALUES ($1, $2, $3)",
-          [listing.id, images[i], i]
-        );
-      }
+    // Insert images (placeholder already included by the client when no upload)
+    for (let i = 0; i < images.length; i++) {
+      await client.query(
+        "INSERT INTO listing_images (listing_id, image_url, sort_order) VALUES ($1, $2, $3)",
+        [listing.id, images[i], i]
+      );
     }
 
-    await client.query("UPDATE users SET sales_count = sales_count + 1 WHERE id = $1", [req.userId]);
     await client.query("COMMIT");
 
     const full = await pool.query(`
-      SELECT l.*, u.username as seller_username,
-             (SELECT json_agg(image_url ORDER BY sort_order) FROM listing_images WHERE listing_id = l.id) as images
+      SELECT l.*, u.username as seller_username, u.location as seller_location,
+             u.rating as seller_rating, u.review_count as seller_review_count,
+             (SELECT json_agg(image_url ORDER BY sort_order)
+              FROM listing_images WHERE listing_id = l.id) as images
       FROM listings l JOIN users u ON u.id = l.seller_id WHERE l.id = $1
     `, [listing.id]);
 
