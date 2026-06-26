@@ -1,0 +1,20 @@
+🚀 1. The "Bump Up" / Highlight Feature (Best Passive Income)
+When the app gets popular, hundreds of people will be listing costumes and wigs. Naturally, old listings get pushed to the bottom of the feed.
+
+How you make money: A seller wants to sell their 500-Lari cosplay armor fast. They pay you a tiny fee—for example, 3₾ for 3 days or 7₾ for a week—to "Bump" their item back to the absolute top of the Home page or give it a glowing neon border.
+
+Why it's passive: You don't have to connect a complex bank gateway to the entire app code for this. You can simply put a button that says "Promote Listing". When clicked, it displays a personal TBC/BOG QR Code or a simple payment link. Once they pay you, you toggle a switch on their item in your database, and the app visually promotes it automatically.
+
+🏪 2. "Pro Artisan" Shop Subscriptions
+The Georgian cosplay community has talented prop makers, wig stylists, and 3D printers who make items for a living.
+
+How you make money: Let regular users list up to 3 items completely free. But if a professional maker wants to list 15 items at once, put a direct link to their Instagram portfolio, or get a verified "Pro Maker" checkmark badge next to their name, they pay a small subscription (e.g., 9₾ per month).
+
+Why it's passive: It is a recurring monthly membership. Once a maker sees they are getting clients through Kosmeo, they will gladly pay a small monthly fee to keep their digital storefront active.
+
+🎪 3. Local Event Banner Sponsorships
+Every single user on Kosmeo is a guaranteed fan of gaming, anime, pop culture, or digital art in Georgia. This audience is incredibly hard for event organizers to find normally.
+
+How you make money: Leave a premium banner slot at the top of the Home or Browse feed. When local festivals or events (like GameFest, SoundFest, or local comic cons) are coming up, you rent that banner space to the organizers for a flat weekly fee to advertise their ticket sales.
+
+Why it's passive: You swap out an image link once, and it sits there generating revenue while your active users browse the app daily.

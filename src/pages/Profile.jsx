@@ -11,6 +11,7 @@ import { useEffect, useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { api } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
+import { useTranslation } from "react-i18next";
 
 // ── Withdraw Modal ─────────────────────────────────────────────────────────────
 function WithdrawModal({ balance, onClose, onSuccess }) {
@@ -520,6 +521,7 @@ function MyListings({ onSold }) {
 
 // ── Main Profile Page ──────────────────────────────────────────────────────────
 export default function Profile() {
+  const { t } = useTranslation();
   const { user, logout } = useAuth();
   const [, setLocation] = useLocation();
   const { toast } = useToast();
@@ -648,7 +650,7 @@ export default function Profile() {
             <div>
               <div className="flex items-center gap-2 mb-1">
                 <TrendingUp className="h-4 w-4 text-white/70" />
-                <p className="text-xs font-bold text-white/70 uppercase tracking-widest">Total Earnings (₾)</p>
+                <p className="text-xs font-bold text-white/70 uppercase tracking-widest">{t("earnings")} (₾)</p>
               </div>
               {balanceLoading ? (
                 <div className="h-10 w-28 bg-white/20 rounded-xl animate-pulse mt-1" />

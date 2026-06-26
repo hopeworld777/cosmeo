@@ -19,6 +19,7 @@ import Settings from "@/pages/Settings";
 import Chat from "@/pages/Chat";
 import { AuthProvider } from "@/context/AuthContext";
 import { useAuth } from "@/hooks/useAuth";
+import LanguageSwitcher from "@/components/LanguageSwitcher";
 
 const AUTH_ROUTES = ["/login", "/register", "/onboarding", "/forgot-password", "/reset-password", "/verify-email"];
 const NO_BOTTOM_NAV = [...AUTH_ROUTES, "/chat/"];
@@ -60,6 +61,11 @@ function AppShell() {
     <div className="flex justify-center bg-background min-h-[100dvh] w-full">
       <div className="flex h-[100dvh] w-full max-w-[430px] flex-col overflow-hidden bg-background relative border-x border-border/30 shadow-2xl">
         <OnboardingGuard />
+        {!hideNav && (
+          <div className="absolute top-3 right-3 z-[60]">
+            <LanguageSwitcher />
+          </div>
+        )}
         <div className={`flex-1 overflow-y-auto no-scrollbar relative z-0 ${hideNav ? "" : "pb-20"}`}>
           <Switch>
             <Route path="/" component={Home} />

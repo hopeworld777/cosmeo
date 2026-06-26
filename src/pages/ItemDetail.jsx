@@ -11,8 +11,10 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useState, useEffect, useRef } from "react";
 import { api } from "@/lib/api";
 import { useAuth } from "@/hooks/useAuth";
+import { useTranslation } from "react-i18next";
 
 export default function ItemDetail() {
+  const { t } = useTranslation();
   const { id } = useParams();
   const { toast } = useToast();
   const { user } = useAuth();
@@ -264,7 +266,7 @@ export default function ItemDetail() {
           <div className="flex items-start gap-3 bg-amber-50 border border-amber-200/60 rounded-2xl px-4 py-3 mb-6">
             <span className="text-lg leading-none mt-0.5 shrink-0">📍</span>
             <p className="text-[13px] font-semibold text-amber-800 leading-snug">
-              <span className="font-black">Hand-to-Hand Exchange:</span> Coordinate payments and handoffs safely with the seller via chat. Meet up in public spaces (e.g., Metro stations)!
+              {t("handoffBanner")}
             </p>
           </div>
 
@@ -306,7 +308,7 @@ export default function ItemDetail() {
                 className="mt-4 w-full h-12 rounded-2xl bg-gradient-to-r from-primary to-secondary text-white font-bold flex items-center justify-center gap-2 shadow-[0_4px_14px_rgba(124,58,237,0.3)] hover:opacity-90 transition-opacity"
               >
                 <MessageCircle className="h-5 w-5" />
-                💬 Open Handoff Chat
+                💬 {t("openChat")}
               </motion.button>
             )}
           </div>
