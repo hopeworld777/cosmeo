@@ -103,5 +103,19 @@
   "forgotPasswordDesc": "შეიყვანეთ თქვენი ელ.ფოსტა და ჩვენ გამოგიგზავნით ლინკს პაროლის აღსადგენად.",
   "resetLinkBtn": "აღდგენის ლინკის გაგზავნა",
   "backToSignIn": "უკან შესვლაზე",
-  "successResetEmail": "შეამოწმეთ ელ.ფოსტა! პაროლის აღდგენის ინსტრუქცია გამოგზავნილია."
+  "successResetEmail": "შეამოწმეთ ელ.ფოსტა! პაროლის აღდგენის ინსტრუქცია გამოგზავნილია.",
+  "setNewPasswordTitle": "ახალი პაროლის დაყენება",
+  "setNewPasswordDesc": "გთხოვთ, თქვენი უსაფრთხოებისთვის ქვემოთ შეიყვანოთ ახალი ძლიერი პაროლი.",
+  "newPasswordLabel": "ახალი პაროლი",
+  "confirmPasswordLabel": "გაიმეორეთ ახალი პაროლი",
+  "newPasswordPlaceholder": "შეიყვანეთ ახალი პაროლი (მინ. 6 სიმბოლო)",
+  "confirmPasswordPlaceholder": "გაიმეორეთ ახალი პაროლი",
+  "updatePasswordBtn": "პაროლის განახლება",
+  "updatingPassword": "განახლება...",
+  "passwordSuccessTitle": "პაროლი განახლდა!",
+  "passwordSuccessDesc": "თქვენი პაროლი წარმატებით შეიცვალა. ახლა შეგიძლიათ შეხვიდეთ ახალი მონაცემებით.",
+  "passwordMismatch": "პაროლები არ ემთხვევა",
+  "linkExpiredTitle": "ლინკი ვადაგასულია",
+  "linkExpiredDesc": "ეს ლინკი არასწორია ან უკვე გამოყენებულია. მოითხოვეთ ახალი.",
+  "requestNewLink": "ახალი ლინკის მოთხოვნა"
 }

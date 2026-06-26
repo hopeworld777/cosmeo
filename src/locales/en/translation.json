@@ -103,5 +103,19 @@
   "forgotPasswordDesc": "Enter your email address below and we'll send you a link to reset your password.",
   "resetLinkBtn": "Send Reset Link",
   "backToSignIn": "Back to Sign In",
-  "successResetEmail": "Check your inbox! We've sent password reset instructions to your email."
+  "successResetEmail": "Check your inbox! We've sent password reset instructions to your email.",
+  "setNewPasswordTitle": "Set New Password",
+  "setNewPasswordDesc": "Please enter a strong new password below to secure your account.",
+  "newPasswordLabel": "New Password",
+  "confirmPasswordLabel": "Confirm New Password",
+  "newPasswordPlaceholder": "Enter your new password (min 6 chars)",
+  "confirmPasswordPlaceholder": "Confirm your new password",
+  "updatePasswordBtn": "Update Password",
+  "updatingPassword": "Updating...",
+  "passwordSuccessTitle": "Password Updated!",
+  "passwordSuccessDesc": "Your password has been changed successfully. You can now log in with your new credentials.",
+  "passwordMismatch": "Passwords don't match",
+  "linkExpiredTitle": "Link expired",
+  "linkExpiredDesc": "This reset link is invalid or has already been used. Request a new one.",
+  "requestNewLink": "Request New Link"
 }
