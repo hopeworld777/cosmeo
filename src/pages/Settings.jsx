@@ -4,6 +4,7 @@ import { z } from "zod";
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { ArrowLeft, MapPin, Check, Camera } from "lucide-react";
+import LanguageSwitcher from "@/components/LanguageSwitcher";
 import { useLocation, Link } from "wouter";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
@@ -92,11 +93,12 @@ export default function Settings() {
         <button
           type="button"
           onClick={() => setLocation("/profile")}
-          className="h-10 w-10 rounded-full bg-muted flex items-center justify-center hover:bg-muted/70 transition-colors shrink-0"
+          className="h-11 w-11 rounded-full bg-muted flex items-center justify-center hover:bg-muted/70 transition-colors shrink-0"
         >
           <ArrowLeft className="h-5 w-5 text-foreground" />
         </button>
-        <h1 className="text-2xl font-black text-foreground">{t("editProfile")}</h1>
+        <h1 className="text-2xl font-black text-foreground flex-1">{t("editProfile")}</h1>
+        <LanguageSwitcher />
       </div>
 
       <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-5 p-5 pt-6">

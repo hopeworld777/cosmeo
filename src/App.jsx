@@ -26,9 +26,9 @@ import LanguageSwitcher from "@/components/LanguageSwitcher";
 const AUTH_ROUTES = ["/login", "/register", "/onboarding", "/forgot-password", "/reset-password", "/verify-email"];
 const NO_BOTTOM_NAV = [...AUTH_ROUTES, "/chat/", "/terms"];
 
-// Routes where the page itself renders its own inline language switcher (mobile only).
-// AppShell suppresses its floating switcher on these routes to avoid duplicates.
-const OWN_LANG_ROUTES = ["/", "/sell"];
+// Pages that carry their own language switcher via HeaderControls (or inline).
+// AppShell suppresses its floating mobile switcher on these routes to avoid duplicates.
+const OWN_LANG_ROUTES = ["/", "/sell", "/browse", "/messages", "/profile", "/wishlist", "/settings"];
 
 function ProtectedRoute({ component: Component, ...rest }) {
   const { user, loading } = useAuth();

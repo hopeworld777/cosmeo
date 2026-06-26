@@ -6,7 +6,7 @@ import ListingCard from "@/components/ListingCard";
 import { api } from "@/lib/api";
 import { useAuth } from "@/hooks/useAuth";
 import { useTranslation } from "react-i18next";
-import LanguageSwitcher from "@/components/LanguageSwitcher";
+import HeaderControls from "@/components/HeaderControls";
 
 const CAT_MAP = { costume: "outfit", armor: "outfit", wig: "wig", prop: "prop", accessories: "prop" };
 
@@ -81,28 +81,7 @@ export default function Home() {
               </p>
             </div>
 
-            {/* Right controls — language switcher (mobile only) + avatar/sign-in */}
-            <div className="flex items-center gap-3">
-              <span className="md:hidden"><LanguageSwitcher /></span>
-              {user ? (
-                <Link href="/profile">
-                  <motion.div
-                    whileTap={{ scale: 0.92 }}
-                    className="h-11 w-11 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center shadow-md cursor-pointer shrink-0"
-                  >
-                    <span className="text-white font-black text-base">
-                      {user.username?.charAt(0).toUpperCase()}
-                    </span>
-                  </motion.div>
-                </Link>
-              ) : (
-                <Link href="/login">
-                  <button className="min-h-[44px] px-4 rounded-xl bg-primary/10 text-primary text-sm font-bold hover:bg-primary/20 transition-colors">
-                    {t("signIn")}
-                  </button>
-                </Link>
-              )}
-            </div>
+            <HeaderControls />
           </div>
 
           {/* Search bar */}

@@ -8,6 +8,7 @@ import ListingCard from "@/components/ListingCard";
 import CityPicker from "@/components/CityPicker";
 import { api } from "@/lib/api";
 import { useTranslation } from "react-i18next";
+import HeaderControls from "@/components/HeaderControls";
 
 export default function Browse() {
   const { t } = useTranslation();
@@ -94,7 +95,10 @@ export default function Browse() {
 
       {/* ── Sticky header ──────────────────────────────────────────── */}
       <div className="sticky top-0 z-30 bg-white/95 backdrop-blur-xl pb-4 pt-12 md:pt-6 px-4 rounded-b-3xl" style={{ boxShadow: "0 4px 20px rgba(139,92,246,0.05)" }}>
-        <h1 className="text-3xl font-black mb-5 text-foreground">{t("discover")}</h1>
+        <div className="flex items-center justify-between mb-5">
+          <h1 className="text-3xl font-black text-foreground">{t("discover")}</h1>
+          <HeaderControls />
+        </div>
 
         <div className="flex items-center gap-3 mb-5">
           <div className="relative flex-1">

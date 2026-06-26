@@ -15,7 +15,7 @@ export default function LanguageSwitcher() {
     <div className="flex items-center gap-0.5 bg-white/80 backdrop-blur-md rounded-full px-1 py-0.5 shadow-[0_2px_12px_rgba(124,58,237,0.15)] border border-border/30">
       <button
         onClick={() => switchTo("en")}
-        className="relative px-3 py-2 rounded-full text-[11px] font-black tracking-widest transition-colors focus:outline-none min-h-[36px] flex items-center"
+        className="relative px-3 py-2 rounded-full text-[11px] font-black tracking-widest transition-colors focus:outline-none min-h-[44px] flex items-center"
       >
         {current === "en" && (
           <motion.div
@@ -33,7 +33,7 @@ export default function LanguageSwitcher() {
 
       <button
         onClick={() => switchTo("ka")}
-        className="relative px-3 py-2 rounded-full text-[11px] font-black tracking-widest transition-colors focus:outline-none min-h-[36px] flex items-center"
+        className="relative px-3 py-2 rounded-full text-[11px] font-black tracking-widest transition-colors focus:outline-none min-h-[44px] flex items-center"
       >
         {current === "ka" && (
           <motion.div

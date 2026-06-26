@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { api } from "@/lib/api";
 import { Link } from "wouter";
+import HeaderControls from "@/components/HeaderControls";
 
 export default function Wishlist() {
   const [wishlist, setWishlist] = useState([]);
@@ -39,11 +40,7 @@ export default function Wishlist() {
               {loading ? "…" : `${wishlist.length} saved item${wishlist.length !== 1 ? "s" : ""}`}
             </p>
           </div>
-          {!loading && wishlist.length > 0 && (
-            <div className="h-12 w-12 rounded-2xl bg-secondary/10 flex items-center justify-center">
-              <Heart className="h-5 w-5 text-secondary fill-secondary" />
-            </div>
-          )}
+          <HeaderControls />
         </div>
 
         {/* Search — only shown when there are items */}

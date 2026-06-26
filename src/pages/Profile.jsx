@@ -3,6 +3,7 @@ import {
   Wallet, ArrowDownToLine, CheckCircle2, Trash2, Tag, X, Loader2,
   AlertCircle, TrendingUp, ShieldCheck, ScrollText
 } from "lucide-react";
+import HeaderControls from "@/components/HeaderControls";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
@@ -595,12 +596,7 @@ export default function Profile() {
       {/* Header */}
       <div className="sticky top-0 z-30 bg-white/95 backdrop-blur-xl pt-14 pb-4 px-5 flex justify-between items-center border-b border-border/20">
         <h1 className="text-3xl font-black text-foreground">{t("profile")}</h1>
-        <button
-          onClick={() => setLocation("/settings")}
-          className="h-11 w-11 rounded-full bg-muted flex items-center justify-center hover:bg-muted/70 transition-colors"
-        >
-          <Settings className="h-5 w-5 text-foreground" />
-        </button>
+        <HeaderControls variant="settings" />
       </div>
 
       <div className="p-4 pt-6 flex flex-col gap-5">

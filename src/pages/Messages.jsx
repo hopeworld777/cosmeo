@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { api } from "@/lib/api";
 import { useTranslation } from "react-i18next";
+import HeaderControls from "@/components/HeaderControls";
 
 export default function Messages() {
   const { t } = useTranslation();
@@ -51,7 +52,10 @@ export default function Messages() {
 
       {/* Sticky Header */}
       <div className="sticky top-0 z-30 bg-white/95 backdrop-blur-xl pt-12 pb-5 px-4 rounded-b-3xl shadow-sm">
-        <h1 className="text-3xl font-black mb-5 text-foreground">Inbox</h1>
+        <div className="flex items-center justify-between mb-5">
+          <h1 className="text-3xl font-black text-foreground">Inbox</h1>
+          <HeaderControls />
+        </div>
         <div className="relative">
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-primary pointer-events-none" />
           <Input
