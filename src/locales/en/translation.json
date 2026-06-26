@@ -8,5 +8,18 @@
   "sellBtn": "Sell Item",
   "handoffBanner": "Hand-to-Hand Exchange: Coordinate payments and handoffs safely via chat. Meet in public spaces!",
   "openChat": "Open Handoff Chat",
-  "earnings": "Total Earnings"
+  "earnings": "Total Earnings",
+  "freshDrops": "Fresh Drops",
+  "categories": "Categories",
+  "all": "All",
+  "wigs": "Wigs",
+  "outfits": "Full Outfits",
+  "shoes": "Shoes",
+  "props": "Props",
+  "materials": "Crafting Supplies",
+  "discover": "Discover",
+  "rentals": "Rentals",
+  "forSale": "For Sale",
+  "under50": "Under ₾50",
+  "costumes": "Costumes"
 }

@@ -5,18 +5,9 @@ import { Link } from "wouter";
 import ListingCard from "@/components/ListingCard";
 import { api } from "@/lib/api";
 import { useAuth } from "@/hooks/useAuth";
+import { useTranslation } from "react-i18next";
 
-// ─── Category definitions ─────────────────────────────────────────────────────
-const CATEGORIES = [
-  { id: "all",      emoji: "✨", label: "All"          },
-  { id: "outfit",   emoji: "👗", label: "Full Outfits" },
-  { id: "wig",      emoji: "💇", label: "Wigs"         },
-  { id: "shoes",    emoji: "🥾", label: "Shoes"        },
-  { id: "prop",     emoji: "⚔️",  label: "Props"        },
-  { id: "crafting", emoji: "🧵", label: "Crafting/DIY" },
-];
-
-// Map DB category slugs → new category ids
+// Map DB category slugs → category ids
 const CAT_MAP = { costume: "outfit", armor: "outfit", wig: "wig", prop: "prop", accessories: "prop" };
 
 // ─── Georgian seed items (shown immediately, no API wait) ─────────────────────
@@ -69,16 +60,26 @@ const SEED_ITEMS = [
 ];
 
 export default function Home() {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const [activeCategory, setActiveCategory] = useState("all");
   const [query, setQuery] = useState("");
   const [apiItems, setApiItems] = useState([]);
 
+  // ─── Categories defined inside component so t() is available ─────────────
+  const CATEGORIES = [
+    { id: "all",      emoji: "✨", tKey: "all"       },
+    { id: "outfit",   emoji: "👗", tKey: "outfits"   },
+    { id: "wig",      emoji: "💇", tKey: "wigs"      },
+    { id: "shoes",    emoji: "🥾", tKey: "shoes"     },
+    { id: "prop",     emoji: "⚔️",  tKey: "props"     },
+    { id: "crafting", emoji: "🧵", tKey: "materials" },
+  ];
+
   // Fetch real listings from the API in background
   useEffect(() => {
     api.listings.list({ limit: 20 })
       .then(data => {
-        // Normalise API items to the new category + location shape
         const normalised = (data || []).map(l => ({
           ...l,
           category: CAT_MAP[l.category] || l.category,
@@ -91,13 +92,10 @@ export default function Home() {
 
   // Merge seed + API, deduplicate by id, then filter
   const filtered = useMemo(() => {
-    const apiIds = new Set(apiItems.map(i => String(i.id)));
-    // Seed items appear first; API items fill in behind them (no duplication)
     const all = [
       ...SEED_ITEMS,
       ...apiItems.filter(i => !SEED_ITEMS.some(s => s.id === String(i.id))),
     ];
-
     return all.filter(item => {
       const catMatch = activeCategory === "all" || item.category === activeCategory;
       const q = query.trim().toLowerCase();
@@ -173,7 +171,12 @@ export default function Home() {
           </div>
         </div>
 
-        {/* ── Category bubbles ─────────────────────────────────────── */}
+        {/* ── Categories label + bubbles ────────────────────────────── */}
+        <div className="px-5 pt-1 pb-1">
+          <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">
+            {t("categories")}
+          </p>
+        </div>
         <div className="flex gap-2 overflow-x-auto no-scrollbar px-5 pb-3.5 pt-1">
           {CATEGORIES.map(cat => {
             const active = activeCategory === cat.id;
@@ -190,7 +193,7 @@ export default function Home() {
                 data-testid={`cat-${cat.id}`}
               >
                 <span className="text-base leading-none">{cat.emoji}</span>
-                <span>{cat.label}</span>
+                <span>{t(cat.tKey)}</span>
               </motion.button>
             );
           })}
@@ -199,16 +202,16 @@ export default function Home() {
 
       {/* ── Results grid ─────────────────────────────────────────────── */}
       <div className="flex-1 px-4 pt-5 pb-8">
-        {/* Count line */}
+        {/* Section header */}
         <div className="flex items-center justify-between mb-4 px-1">
+          <p className="text-lg font-black text-foreground tracking-tight">
+            {t("freshDrops")} ✨
+          </p>
           <p className="text-sm font-bold text-muted-foreground">
             <span className="text-foreground">{filtered.length}</span>{" "}
             {filtered.length === 1 ? "item" : "items"}
-            {activeCategory !== "all" && (
-              <span className="text-muted-foreground"> in {activeCat?.label}</span>
-            )}
-            {query && (
-              <span className="text-muted-foreground"> for "{query}"</span>
+            {activeCategory !== "all" && activeCat && (
+              <span className="text-muted-foreground"> · {t(activeCat.tKey)}</span>
             )}
           </p>
         </div>
