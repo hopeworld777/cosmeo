@@ -197,7 +197,8 @@ export default function Sell() {
               {t("stepLabel")} {step + 1} {t("ofLabel")} {STEP_LABELS.length} · {STEP_LABELS[step]}
             </p>
           </div>
-          <LanguageSwitcher />
+          {/* Hidden on desktop — DesktopNav handles lang switching there */}
+          <span className="md:hidden ml-1"><LanguageSwitcher /></span>
         </div>
         <div className="flex gap-1.5">
           {STEP_LABELS.map((_, i) => (
