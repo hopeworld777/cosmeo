@@ -110,13 +110,57 @@ router.get("/me", requireAuth, async (req, res) => {
 
 // PATCH /api/auth/me
 router.patch("/me", requireAuth, async (req, res) => {
-  const { bio, location } = req.body;
+  const { username, bio, location } = req.body;
   try {
+    // Validate + uniqueness-check username if provided
+    if (username !== undefined) {
+      const trimmed = (username || "").trim();
+      if (trimmed.length < 2) {
+        return res.status(400).json({ error: "Username must be at least 2 characters" });
+      }
+      if (trimmed.length > 30) {
+        return res.status(400).json({ error: "Username must be 30 characters or fewer" });
+      }
+      if (!/^[a-zA-Z0-9_]+$/.test(trimmed)) {
+        return res.status(400).json({ error: "Username may only contain letters, numbers and underscores" });
+      }
+      const conflict = await pool.query(
+        "SELECT id FROM users WHERE username = $1 AND id != $2",
+        [trimmed, req.userId]
+      );
+      if (conflict.rows.length > 0) {
+        return res.status(409).json({ error: "That username is already taken" });
+      }
+    }
+
+    // Build a dynamic SET clause — only update fields that were actually sent
+    const fields = [];
+    const values = [];
+    let idx = 1;
+
+    if (username !== undefined) {
+      fields.push(`username = $${idx++}`);
+      values.push(username.trim());
+    }
+    if (bio !== undefined) {
+      fields.push(`bio = $${idx++}`);
+      values.push(bio);
+    }
+    if (location !== undefined) {
+      fields.push(`location = $${idx++}`);
+      values.push(location || null);
+    }
+
+    if (fields.length === 0) {
+      return res.status(400).json({ error: "No fields to update" });
+    }
+
+    values.push(req.userId);
     const result = await pool.query(
-      `UPDATE users SET bio = COALESCE($1, bio), location = COALESCE($2, location)
-       WHERE id = $3
-       RETURNING id, username, email, bio, avatar_url, rating, review_count, sales_count, balance, email_verified, created_at, location`,
-      [bio, location, req.userId]
+      `UPDATE users SET ${fields.join(", ")} WHERE id = $${idx}
+       RETURNING id, username, email, bio, avatar_url, rating, review_count,
+                 sales_count, balance, email_verified, created_at, location`,
+      values
     );
     res.json(result.rows[0]);
   } catch (err) {

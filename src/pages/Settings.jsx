@@ -1,0 +1,293 @@
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { useState } from "react";
+import { motion } from "framer-motion";
+import { ArrowLeft, MapPin, Check, Camera } from "lucide-react";
+import { useLocation } from "wouter";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { useAuth } from "@/hooks/useAuth";
+import { useToast } from "@/hooks/use-toast";
+import { api } from "@/lib/api";
+
+const GEO_CITIES = [
+  "Tbilisi",
+  "Kutaisi",
+  "Batumi",
+  "Rustavi",
+  "Gori",
+  "Zugdidi",
+  "Poti",
+  "Akhaltsikhe",
+];
+
+const schema = z.object({
+  username: z
+    .string()
+    .min(2, "Must be at least 2 characters")
+    .max(30, "Must be 30 characters or fewer")
+    .regex(/^[a-zA-Z0-9_]+$/, "Letters, numbers and underscores only"),
+  bio: z.string().max(200, "Keep it under 200 characters"),
+  location: z.string(),
+});
+
+export default function Settings() {
+  const { user, setUser } = useAuth();
+  const { toast } = useToast();
+  const [, setLocation] = useLocation();
+  const [saved, setSaved] = useState(false);
+
+  const {
+    register,
+    handleSubmit,
+    reset,
+    watch,
+    formState: { errors, isSubmitting, isDirty },
+  } = useForm({
+    resolver: zodResolver(schema),
+    defaultValues: {
+      username: user?.username || "",
+      bio: user?.bio || "",
+      location: user?.location || "",
+    },
+  });
+
+  const bioValue = watch("bio") || "";
+
+  if (!user) return null;
+
+  const initial = user.username?.slice(0, 2).toUpperCase() || "U";
+
+  const onSubmit = async (data) => {
+    try {
+      const updated = await api.auth.updateMe({
+        username: data.username.trim(),
+        bio: data.bio,
+        location: data.location || null,
+      });
+      setUser(updated);
+      // Reset form so isDirty = false again, with new saved values
+      reset({
+        username: updated.username,
+        bio: updated.bio || "",
+        location: updated.location || "",
+      });
+      setSaved(true);
+      toast({
+        title: "Profile updated!",
+        description: "Your changes have been saved successfully.",
+      });
+      setTimeout(() => setSaved(false), 3000);
+    } catch (err) {
+      toast({
+        title: "Could not save changes",
+        description: err.message,
+        variant: "destructive",
+      });
+    }
+  };
+
+  return (
+    <div className="flex flex-col min-h-full bg-background pb-28">
+
+      {/* ── Sticky header ─────────────────────────────────────────── */}
+      <div className="sticky top-0 z-30 bg-white/95 backdrop-blur-xl pt-12 pb-4 px-5 flex items-center gap-3 border-b border-border/20">
+        <button
+          type="button"
+          onClick={() => setLocation("/profile")}
+          className="h-10 w-10 rounded-full bg-muted flex items-center justify-center hover:bg-muted/70 transition-colors shrink-0"
+        >
+          <ArrowLeft className="h-5 w-5 text-foreground" />
+        </button>
+        <h1 className="text-2xl font-black text-foreground">Edit Profile</h1>
+      </div>
+
+      <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-5 p-5 pt-6">
+
+        {/* ── Avatar ───────────────────────────────────────────────── */}
+        <div className="flex flex-col items-center gap-2 py-3">
+          <div className="relative">
+            <Avatar className="h-24 w-24 border-4 border-white shadow-xl">
+              <AvatarImage src={user.avatar_url} />
+              <AvatarFallback className="bg-gradient-to-br from-primary to-secondary text-white text-2xl font-black">
+                {initial}
+              </AvatarFallback>
+            </Avatar>
+            <div className="absolute -bottom-1 -right-1 h-8 w-8 rounded-full bg-primary flex items-center justify-center shadow-md">
+              <Camera className="h-3.5 w-3.5 text-white" />
+            </div>
+          </div>
+          <p className="text-xs text-muted-foreground font-medium">Avatar editing coming soon 💜</p>
+        </div>
+
+        {/* ── Profile info card ─────────────────────────────────────── */}
+        <div className="bg-white rounded-3xl card-shadow p-5 flex flex-col gap-5">
+          <h2 className="text-sm font-extrabold text-muted-foreground uppercase tracking-wider">
+            Profile Info
+          </h2>
+
+          {/* Username */}
+          <div className="flex flex-col gap-1.5">
+            <label className="text-sm font-bold text-foreground">Username</label>
+            <div className="relative">
+              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground font-semibold text-sm select-none">
+                @
+              </span>
+              <Input
+                {...register("username")}
+                placeholder="your_handle"
+                autoCapitalize="none"
+                autoCorrect="off"
+                spellCheck={false}
+                className="pl-8 h-12 rounded-xl bg-muted border-none text-sm font-medium focus-visible:ring-2 focus-visible:ring-primary/30"
+              />
+            </div>
+            {errors.username ? (
+              <p className="text-xs text-red-500 font-medium">{errors.username.message}</p>
+            ) : (
+              <p className="text-xs text-muted-foreground font-medium">
+                This is your public handle visible to other users.
+              </p>
+            )}
+          </div>
+
+          {/* Bio */}
+          <div className="flex flex-col gap-1.5">
+            <div className="flex items-center justify-between">
+              <label className="text-sm font-bold text-foreground">
+                Bio
+                <span className="text-muted-foreground font-normal ml-2 text-xs">optional</span>
+              </label>
+              <span className={`text-xs font-bold ${bioValue.length > 180 ? "text-amber-500" : "text-muted-foreground"}`}>
+                {bioValue.length}/200
+              </span>
+            </div>
+            <textarea
+              {...register("bio")}
+              placeholder="Tell the community about your cosplay style…"
+              rows={3}
+              className="w-full rounded-xl bg-muted border-none p-3.5 text-sm font-medium resize-none outline-none focus:ring-2 focus:ring-primary/25 placeholder:text-muted-foreground/50 transition-shadow leading-relaxed"
+            />
+            {errors.bio && (
+              <p className="text-xs text-red-500 font-medium">{errors.bio.message}</p>
+            )}
+          </div>
+
+          {/* City dropdown */}
+          <div className="flex flex-col gap-1.5">
+            <label className="text-sm font-bold text-foreground flex items-center gap-1.5">
+              <MapPin className="h-3.5 w-3.5 text-primary" />
+              City
+            </label>
+            <div className="relative">
+              <select
+                {...register("location")}
+                className="w-full h-12 rounded-xl bg-muted border-none px-4 text-sm font-medium outline-none focus:ring-2 focus:ring-primary/25 transition-shadow appearance-none cursor-pointer text-foreground"
+              >
+                <option value="">— Select your city —</option>
+                {GEO_CITIES.map((city) => (
+                  <option key={city} value={city}>
+                    {city}
+                  </option>
+                ))}
+              </select>
+              {/* Custom dropdown arrow */}
+              <div className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2">
+                <svg width="12" height="7" viewBox="0 0 12 7" fill="none">
+                  <path d="M1 1L6 6L11 1" stroke="#94a3b8" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              </div>
+            </div>
+            {errors.location && (
+              <p className="text-xs text-red-500 font-medium">{errors.location.message}</p>
+            )}
+          </div>
+        </div>
+
+        {/* ── Account info card (read-only) ─────────────────────────── */}
+        <div className="bg-white rounded-3xl card-shadow p-5 flex flex-col gap-1">
+          <h2 className="text-sm font-extrabold text-muted-foreground uppercase tracking-wider mb-3">
+            Account
+          </h2>
+
+          <div className="flex items-center justify-between py-2.5 border-b border-border/30">
+            <span className="text-sm font-medium text-muted-foreground">Email</span>
+            <span className="text-sm font-bold text-foreground truncate max-w-[180px]">{user.email}</span>
+          </div>
+
+          <div className="flex items-center justify-between py-2.5">
+            <span className="text-sm font-medium text-muted-foreground">Email verified</span>
+            {user.email_verified ? (
+              <span className="flex items-center gap-1 text-xs font-bold bg-green-100 text-green-700 px-2.5 py-1 rounded-full">
+                <Check className="h-3 w-3" />
+                Verified
+              </span>
+            ) : (
+              <span className="text-xs font-bold bg-amber-100 text-amber-700 px-2.5 py-1 rounded-full">
+                Pending
+              </span>
+            )}
+          </div>
+        </div>
+
+        {/* ── Stats card (read-only) ────────────────────────────────── */}
+        <div className="bg-white rounded-3xl card-shadow p-5">
+          <h2 className="text-sm font-extrabold text-muted-foreground uppercase tracking-wider mb-4">
+            Stats
+          </h2>
+          <div className="grid grid-cols-3 gap-3">
+            {[
+              { label: "Rating", value: user.rating || "New" },
+              { label: "Sales", value: user.sales_count || 0 },
+              { label: "Reviews", value: user.review_count || 0 },
+            ].map((stat) => (
+              <div key={stat.label} className="flex flex-col items-center bg-muted/50 rounded-2xl p-3">
+                <span className="text-xl font-black text-foreground">{stat.value}</span>
+                <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wide mt-0.5">
+                  {stat.label}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* ── Save button ───────────────────────────────────────────── */}
+        <motion.div whileTap={{ scale: 0.97 }}>
+          <Button
+            type="submit"
+            disabled={isSubmitting || (!isDirty && !saved)}
+            className={`w-full h-14 rounded-2xl text-base font-bold shadow-md transition-all duration-300 ${
+              saved
+                ? "bg-green-500 hover:bg-green-500 text-white shadow-green-200"
+                : "bg-primary hover:bg-primary/90 text-white"
+            }`}
+          >
+            {isSubmitting ? (
+              <span className="flex items-center gap-2.5">
+                <span className="h-4 w-4 rounded-full border-2 border-white/40 border-t-white animate-spin" />
+                Saving…
+              </span>
+            ) : saved ? (
+              <span className="flex items-center gap-2.5">
+                <Check className="h-5 w-5" />
+                Changes Saved!
+              </span>
+            ) : (
+              "Save Changes"
+            )}
+          </Button>
+        </motion.div>
+
+        {/* Hint when no changes */}
+        {!isDirty && !saved && (
+          <p className="text-xs text-center text-muted-foreground font-medium -mt-2">
+            Make a change above to enable saving
+          </p>
+        )}
+
+      </form>
+    </div>
+  );
+}

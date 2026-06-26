@@ -15,6 +15,7 @@ import Onboarding from "@/pages/Onboarding";
 import ForgotPassword from "@/pages/ForgotPassword";
 import ResetPassword from "@/pages/ResetPassword";
 import VerifyEmail from "@/pages/VerifyEmail";
+import Settings from "@/pages/Settings";
 import { AuthProvider } from "@/context/AuthContext";
 import { useAuth } from "@/hooks/useAuth";
 
@@ -69,6 +70,7 @@ function AppShell() {
             <Route path="/forgot-password" component={ForgotPassword} />
             <Route path="/reset-password" component={ResetPassword} />
             <Route path="/verify-email" component={VerifyEmail} />
+            <Route path="/settings"><ProtectedRoute component={Settings} /></Route>
             <Route path="/sell"><ProtectedRoute component={Sell} /></Route>
             <Route path="/messages"><ProtectedRoute component={Messages} /></Route>
             <Route path="/profile"><ProtectedRoute component={Profile} /></Route>
