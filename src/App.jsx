@@ -17,12 +17,13 @@ import ResetPassword from "@/pages/ResetPassword";
 import VerifyEmail from "@/pages/VerifyEmail";
 import Settings from "@/pages/Settings";
 import Chat from "@/pages/Chat";
+import TermsAndSafety from "@/pages/TermsAndSafety";
 import { AuthProvider } from "@/context/AuthContext";
 import { useAuth } from "@/hooks/useAuth";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
 
 const AUTH_ROUTES = ["/login", "/register", "/onboarding", "/forgot-password", "/reset-password", "/verify-email"];
-const NO_BOTTOM_NAV = [...AUTH_ROUTES, "/chat/"];
+const NO_BOTTOM_NAV = [...AUTH_ROUTES, "/chat/", "/terms"];
 
 function ProtectedRoute({ component: Component, ...rest }) {
   const { user, loading } = useAuth();
@@ -83,6 +84,7 @@ function AppShell() {
             <Route path="/chat/:id"><ProtectedRoute component={Chat} /></Route>
             <Route path="/profile"><ProtectedRoute component={Profile} /></Route>
             <Route path="/wishlist"><ProtectedRoute component={Wishlist} /></Route>
+            <Route path="/terms" component={TermsAndSafety} />
             <Route>
               <div className="flex h-full items-center justify-center p-8 text-center text-muted-foreground">
                 404 - Lost in the multiverse

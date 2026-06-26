@@ -4,7 +4,7 @@ import { z } from "zod";
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { ArrowLeft, MapPin, Check, Camera } from "lucide-react";
-import { useLocation } from "wouter";
+import { useLocation, Link } from "wouter";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -279,6 +279,10 @@ export default function Settings() {
             {t("makeAChange")}
           </p>
         )}
+
+        <Link href="/terms" className="text-xs text-muted-foreground underline mt-4 block text-center">
+          {t("tos_pageTitle")}
+        </Link>
 
       </form>
     </div>

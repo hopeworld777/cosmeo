@@ -186,7 +186,11 @@ export default function Register() {
             </Button>
           </form>
           <p className="text-center text-xs text-muted-foreground pt-1">
-            {t("termsNotice")}
+            {t("termsNoticePrefix")}{" "}
+            <Link href="/terms" className="underline text-primary font-semibold">
+              {t("termsNoticeLinkText")}
+            </Link>
+            .
           </p>
         </div>
 
