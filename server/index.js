@@ -9,6 +9,7 @@ import listingsRoutes from "./routes/listings.js";
 import favoritesRoutes from "./routes/favorites.js";
 import messagesRoutes from "./routes/messages.js";
 import uploadRoutes from "./routes/upload.js";
+import walletRoutes from "./routes/wallet.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
@@ -26,6 +27,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/listings", listingsRoutes);
 app.use("/api/favorites", favoritesRoutes);
 app.use("/api/messages", messagesRoutes);
+app.use("/api/wallet", walletRoutes);
 app.use("/api/upload", uploadRoutes);
 
 // Health check

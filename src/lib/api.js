@@ -57,6 +57,14 @@ export const api = {
       request("/listings", { method: "POST", body: JSON.stringify(body) }),
     delete: (id) => request(`/listings/${id}`, { method: "DELETE" }),
     byUser: (userId) => request(`/listings/user/${userId}`),
+    me: () => request("/listings/me"),
+    markSold: (id) => request(`/listings/${id}/sold`, { method: "PATCH" }),
+  },
+
+  wallet: {
+    balance: () => request("/wallet"),
+    withdraw: (body) =>
+      request("/wallet/withdraw", { method: "POST", body: JSON.stringify(body) }),
   },
 
   favorites: {

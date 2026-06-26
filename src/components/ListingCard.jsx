@@ -9,6 +9,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { api } from "@/lib/api";
 
 export default function ListingCard({ listing, index = 0 }) {
+  const isSeedItem = typeof listing.id === "string" && listing.id.startsWith("g");
   const [isLiked, setIsLiked] = useState(listing.is_favorited || false);
   const { toast } = useToast();
   const { user } = useAuth();
@@ -57,7 +58,9 @@ export default function ListingCard({ listing, index = 0 }) {
       className="group relative flex flex-col overflow-hidden rounded-3xl bg-white card-shadow cursor-pointer hover:-translate-y-1 hover:shadow-xl transition-all border-none"
       data-testid={`listing-card-${listing.id}`}
     >
-      <Link href={`/item/${listing.id}`}>
+      <Link href={isSeedItem ? "#" : `/item/${listing.id}`}
+        onClick={isSeedItem ? (e) => e.preventDefault() : undefined}
+      >
         <div className="block h-full w-full">
 
           {/* ── Image area ─────────────────────────────────────────── */}
