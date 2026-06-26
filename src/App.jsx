@@ -23,12 +23,22 @@ import { AuthProvider } from "@/context/AuthContext";
 import { useAuth } from "@/hooks/useAuth";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
 
+// Routes that hide everything (login / register / etc.)
 const AUTH_ROUTES = ["/login", "/register", "/onboarding", "/forgot-password", "/reset-password", "/verify-email"];
-const NO_BOTTOM_NAV = [...AUTH_ROUTES, "/chat/", "/terms"];
 
-// Pages that carry their own language switcher via HeaderControls (or inline).
-// AppShell suppresses its floating mobile switcher on these routes to avoid duplicates.
-const OWN_LANG_ROUTES = ["/", "/sell", "/browse", "/messages", "/profile", "/wishlist", "/settings"];
+// Routes that additionally hide the bottom tab bar (but NOT the desktop nav)
+const HIDE_BOTTOM_NAV_EXTRA = ["/chat/", "/terms"];
+
+// Routes where the page renders its own LanguageSwitcher — suppress the
+// floating mobile one to avoid duplication.  Prefix-matched for /settings/*.
+const OWN_LANG_ROUTES = ["/", "/sell", "/browse", "/messages", "/profile", "/wishlist", "/settings", "/terms"];
+
+function ownsLangSwitcher(location) {
+  return OWN_LANG_ROUTES.some((r) => {
+    if (r === "/") return location === "/";
+    return location === r || location.startsWith(r + "/");
+  });
+}
 
 function ProtectedRoute({ component: Component, ...rest }) {
   const { user, loading } = useAuth();
@@ -59,7 +69,7 @@ function OnboardingGuard() {
 }
 
 // ── Desktop top navigation bar ────────────────────────────────────────────────
-// Visible only on md+ screens. Hidden on mobile (BottomNav handles mobile nav).
+// Visible on md+ screens for every non-auth route (including /terms).
 function DesktopNav() {
   const [location] = useLocation();
   const { user } = useAuth();
@@ -119,14 +129,21 @@ function DesktopNav() {
 
 function AppShell() {
   const [location] = useLocation();
-  const hideNav = NO_BOTTOM_NAV.some(r => location.startsWith(r));
-  const showMobileFloatLang = !hideNav && !OWN_LANG_ROUTES.includes(location);
-  const isAuthRoute = hideNav;
 
-  // Always scroll the app container back to the top on every route change.
-  // useLayoutEffect fires synchronously before any child useEffect, so pages
-  // that want to restore their own scroll position (e.g. TermsAndSafety) can
-  // do so in their own useEffect and it will run *after* this reset.
+  // Auth routes hide everything (desktop nav, bottom nav, floating lang switcher).
+  const isAuthRoute = AUTH_ROUTES.some(r => location.startsWith(r));
+
+  // Some non-auth routes also hide the bottom nav (chat, terms).
+  const hideBottomNav = isAuthRoute || HIDE_BOTTOM_NAV_EXTRA.some(r => location.startsWith(r));
+
+  // Show the floating mobile LanguageSwitcher only when the current page does
+  // NOT provide its own (and we're not on an auth page).
+  const showMobileFloatLang = !isAuthRoute && !ownsLangSwitcher(location);
+
+  // Reset the mobile scroll container to the top on every route change.
+  // useLayoutEffect fires before child useEffects, so any page that wants to
+  // restore a saved scroll position (e.g. TermsAndSafety) can do so in its
+  // own useEffect and it will run *after* this reset.
   const scrollRef = useRef(null);
   useLayoutEffect(() => {
     if (scrollRef.current) scrollRef.current.scrollTop = 0;
@@ -134,7 +151,8 @@ function AppShell() {
 
   return (
     <div className="flex justify-center bg-background min-h-[100dvh] w-full">
-      {!hideNav && <DesktopNav />}
+      {/* Desktop nav is shown on every non-auth route, including /terms */}
+      {!isAuthRoute && <DesktopNav />}
 
       <div className={[
         "flex flex-col w-full relative bg-background",
@@ -149,11 +167,17 @@ function AppShell() {
           </div>
         )}
 
-        <div className={[
-          "flex-1 overflow-y-auto no-scrollbar relative z-0",
-          !hideNav && "pb-20",
-          !isAuthRoute && "md:overflow-visible md:pb-0",
-        ].filter(Boolean).join(" ")}>
+        {/* data-scroll-container is used by pages (e.g. TermsAndSafety) that
+            need to read or restore the mobile scroll position. */}
+        <div
+          ref={scrollRef}
+          data-scroll-container
+          className={[
+            "flex-1 overflow-y-auto no-scrollbar relative z-0",
+            !hideBottomNav && "pb-20",
+            !isAuthRoute && "md:overflow-visible md:pb-0",
+          ].filter(Boolean).join(" ")}
+        >
           <Switch>
             <Route path="/" component={Home} />
             <Route path="/browse" component={Browse} />
@@ -179,7 +203,7 @@ function AppShell() {
           </Switch>
         </div>
 
-        {!hideNav && <BottomNav />}
+        {!hideBottomNav && <BottomNav />}
         <Toaster />
       </div>
     </div>

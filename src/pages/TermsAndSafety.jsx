@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useLayoutEffect, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useTranslation } from "react-i18next";
 import { useLocation, useSearch } from "wouter";
@@ -12,22 +12,46 @@ import {
   ScrollText,
   Star,
 } from "lucide-react";
+import LanguageSwitcher from "@/components/LanguageSwitcher";
 
-function Section({ icon: Icon, titleKey, children, accent = "primary" }) {
+const SESSION_KEY = "kosmeo_terms_state";
+
+// Helper: get the mobile scroll container (the overflow-y-auto div in AppShell).
+// On desktop (md+) the window is the scroll container.
+function getScrollEl() {
+  if (typeof window === "undefined") return null;
+  if (window.matchMedia("(min-width: 768px)").matches) return window;
+  return document.querySelector("[data-scroll-container]") || window;
+}
+
+function getScrollTop() {
+  const el = getScrollEl();
+  if (!el) return 0;
+  return el === window ? window.scrollY : el.scrollTop;
+}
+
+function restoreScrollTop(top) {
+  const el = getScrollEl();
+  if (!el) return;
+  if (el === window) window.scrollTo(0, top);
+  else el.scrollTop = top;
+}
+
+// ── Controlled accordion section ──────────────────────────────────────────────
+function Section({ icon: Icon, titleKey, children, accent = "primary", open, onToggle }) {
   const { t } = useTranslation();
-  const [open, setOpen] = useState(false);
 
   const accentMap = {
-    primary: "text-primary border-primary/30 bg-primary/5",
+    primary:   "text-primary border-primary/30 bg-primary/5",
     secondary: "text-secondary border-secondary/30 bg-secondary/5",
-    accent: "text-accent-foreground border-accent/50 bg-accent/20",
-    warn: "text-amber-600 border-amber-300 bg-amber-50",
+    accent:    "text-accent-foreground border-accent/50 bg-accent/20",
+    warn:      "text-amber-600 border-amber-300 bg-amber-50",
   };
 
   return (
     <div className={`rounded-2xl border ${accentMap[accent]} overflow-hidden mb-3`}>
       <button
-        onClick={() => setOpen((o) => !o)}
+        onClick={onToggle}
         className="w-full flex items-center gap-3 px-4 py-4 text-left"
       >
         <Icon size={18} className="shrink-0 opacity-80" />
@@ -95,20 +119,90 @@ export default function TermsAndSafety() {
   const { t } = useTranslation();
   const [, setLocation] = useLocation();
   const search = useSearch();
-  const initialTab = new URLSearchParams(search).get("tab") === "terms" ? "terms" : "safety";
+
+  // ── Restore persisted state eagerly (before first paint) ──────────────────
+  const [restoredState] = useState(() => {
+    try {
+      const raw = sessionStorage.getItem(SESSION_KEY);
+      if (raw) return JSON.parse(raw);
+    } catch {}
+    return null;
+  });
+
+  const initialTab =
+    restoredState?.tab ??
+    (new URLSearchParams(search).get("tab") === "terms" ? "terms" : "safety");
+
   const [tab, setTab] = useState(initialTab);
+
+  // All accordion open states keyed by section titleKey
+  const [openSections, setOpenSections] = useState(
+    restoredState?.openSections ?? {}
+  );
+
+  const toggleSection = useCallback((key) => {
+    setOpenSections((prev) => ({ ...prev, [key]: !prev[key] }));
+  }, []);
+
+  // ── Track latest values in refs so cleanup can read them synchronously ─────
+  const scrollPosRef   = useRef(restoredState?.scrollTop ?? 0);
+  const openSectionsRef = useRef(openSections);
+  const tabRef          = useRef(tab);
+
+  useEffect(() => { openSectionsRef.current = openSections; }, [openSections]);
+  useEffect(() => { tabRef.current = tab; }, [tab]);
+
+  // Track scroll in real time so we always have the latest position
+  useEffect(() => {
+    const el = getScrollEl();
+    if (!el) return;
+    const handler = () => {
+      scrollPosRef.current = el === window ? window.scrollY : el.scrollTop;
+    };
+    el.addEventListener("scroll", handler, { passive: true });
+    return () => el.removeEventListener("scroll", handler);
+  }, []);
+
+  // ── Save state on unmount (useLayoutEffect cleanup fires BEFORE AppShell's
+  //    useLayoutEffect scroll-reset, so scrollPosRef still holds the real value)
+  useLayoutEffect(() => {
+    return () => {
+      try {
+        sessionStorage.setItem(
+          SESSION_KEY,
+          JSON.stringify({
+            scrollTop:    scrollPosRef.current,
+            openSections: openSectionsRef.current,
+            tab:          tabRef.current,
+          })
+        );
+      } catch {}
+    };
+  }, []);
+
+  // ── Restore scroll on mount (useEffect fires AFTER AppShell's
+  //    useLayoutEffect scroll-reset, so this correctly overwrites the reset)
+  useEffect(() => {
+    if (!restoredState) return;
+    const { scrollTop } = restoredState;
+    if (!scrollTop) return;
+    // rAF lets the layout settle before jumping
+    const id = requestAnimationFrame(() => restoreScrollTop(scrollTop));
+    return () => cancelAnimationFrame(id);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
-      <div className="sticky top-0 z-40 bg-background/95 backdrop-blur-sm border-b border-border/40 px-4 py-3 flex items-center gap-3">
+      {/* ── Sticky header ─────────────────────────────────────────────────── */}
+      {/* md:top-16 pushes the sticky header below the fixed DesktopNav on desktop */}
+      <div className="sticky top-0 md:top-16 z-40 bg-background/95 backdrop-blur-sm border-b border-border/40 px-4 py-3 flex items-center gap-3">
         <button
           onClick={() => window.history.length > 1 ? window.history.back() : setLocation("/")}
           className="p-1.5 rounded-xl hover:bg-muted transition-colors"
         >
           <ArrowLeft size={20} className="text-foreground/70" />
         </button>
-        <div>
+        <div className="flex-1">
           <h1 className="font-extrabold text-[16px] text-foreground leading-tight">
             {t("tos_pageTitle")}
           </h1>
@@ -116,14 +210,18 @@ export default function TermsAndSafety() {
             {t("tos_pageSubtitle")}
           </p>
         </div>
+        {/* Always-visible language switcher — hidden on md+ because DesktopNav has one */}
+        <div className="md:hidden">
+          <LanguageSwitcher />
+        </div>
       </div>
 
-      {/* Tab switcher */}
+      {/* ── Tab switcher ──────────────────────────────────────────────────── */}
       <div className="px-4 pt-4 pb-2">
         <div className="flex bg-muted rounded-2xl p-1 gap-1">
           {[
             { key: "safety", icon: ShieldCheck, labelKey: "tos_tab_safety" },
-            { key: "terms", icon: ScrollText, labelKey: "tos_tab_terms" },
+            { key: "terms",  icon: ScrollText,  labelKey: "tos_tab_terms"  },
           ].map(({ key, icon: Icon, labelKey }) => (
             <button
               key={key}
@@ -164,7 +262,8 @@ export default function TermsAndSafety() {
                 </p>
               </div>
 
-              <Section icon={Users} titleKey="tos_safety_s1_title" accent="primary">
+              <Section icon={Users}         titleKey="tos_safety_s1_title" accent="primary"
+                open={!!openSections["tos_safety_s1_title"]} onToggle={() => toggleSection("tos_safety_s1_title")}>
                 <div className="space-y-2">
                   <Rule n={1}>{t("tos_safety_s1_r1")}</Rule>
                   <Rule n={2}>{t("tos_safety_s1_r2")}</Rule>
@@ -174,7 +273,8 @@ export default function TermsAndSafety() {
                 </div>
               </Section>
 
-              <Section icon={MapPin} titleKey="tos_safety_s2_title" accent="secondary">
+              <Section icon={MapPin}        titleKey="tos_safety_s2_title" accent="secondary"
+                open={!!openSections["tos_safety_s2_title"]} onToggle={() => toggleSection("tos_safety_s2_title")}>
                 <div className="space-y-2">
                   <Rule n={1}>{t("tos_safety_s2_r1")}</Rule>
                   <Rule n={2}>{t("tos_safety_s2_r2")}</Rule>
@@ -184,7 +284,8 @@ export default function TermsAndSafety() {
                 </div>
               </Section>
 
-              <Section icon={AlertTriangle} titleKey="tos_safety_s3_title" accent="warn">
+              <Section icon={AlertTriangle} titleKey="tos_safety_s3_title" accent="warn"
+                open={!!openSections["tos_safety_s3_title"]} onToggle={() => toggleSection("tos_safety_s3_title")}>
                 <div className="space-y-2">
                   <Rule n={1}>{t("tos_safety_s3_r1")}</Rule>
                   <Rule n={2}>{t("tos_safety_s3_r2")}</Rule>
@@ -194,7 +295,8 @@ export default function TermsAndSafety() {
                 </div>
               </Section>
 
-              <Section icon={Users} titleKey="tos_safety_s4_title" accent="secondary">
+              <Section icon={Users}         titleKey="tos_safety_s4_title" accent="secondary"
+                open={!!openSections["tos_safety_s4_title"]} onToggle={() => toggleSection("tos_safety_s4_title")}>
                 <div className="space-y-2">
                   <Rule n={1}>{t("tos_safety_s4_r1")}</Rule>
                   <Rule n={2}>{t("tos_safety_s4_r2")}</Rule>
@@ -221,13 +323,13 @@ export default function TermsAndSafety() {
                   {t("tos_safety_hubs_title")}
                 </p>
                 <div className="grid grid-cols-2 gap-2">
-                  <Hub city="თბილისი / Tbilisi" place={t("tos_hub_tbilisi")} />
-                  <Hub city="ბათუმი / Batumi" place={t("tos_hub_batumi")} />
-                  <Hub city="ქუთაისი / Kutaisi" place={t("tos_hub_kutaisi")} />
-                  <Hub city="რუსთავი / Rustavi" place={t("tos_hub_rustavi")} />
-                  <Hub city="ზუგდიდი / Zugdidi" place={t("tos_hub_zugdidi")} />
-                  <Hub city="პოტი / Poti" place={t("tos_hub_poti")} />
-                  <Hub city="გორი / Gori" place={t("tos_hub_gori")} />
+                  <Hub city="თბილისი / Tbilisi"  place={t("tos_hub_tbilisi")} />
+                  <Hub city="ბათუმი / Batumi"    place={t("tos_hub_batumi")} />
+                  <Hub city="ქუთაისი / Kutaisi"  place={t("tos_hub_kutaisi")} />
+                  <Hub city="რუსთავი / Rustavi"  place={t("tos_hub_rustavi")} />
+                  <Hub city="ზუგდიდი / Zugdidi"  place={t("tos_hub_zugdidi")} />
+                  <Hub city="პოტი / Poti"        place={t("tos_hub_poti")} />
+                  <Hub city="გორი / Gori"        place={t("tos_hub_gori")} />
                 </div>
               </div>
 
@@ -261,12 +363,14 @@ export default function TermsAndSafety() {
                 {t("tos_jurisdiction")}
               </div>
 
-              <Section icon={ScrollText} titleKey="tos_t1_title" accent="primary">
+              <Section icon={ScrollText}    titleKey="tos_t1_title" accent="primary"
+                open={!!openSections["tos_t1_title"]} onToggle={() => toggleSection("tos_t1_title")}>
                 <p>{t("tos_t1_p1")}</p>
                 <p>{t("tos_t1_p2")}</p>
               </Section>
 
-              <Section icon={Users} titleKey="tos_t2_title" accent="primary">
+              <Section icon={Users}         titleKey="tos_t2_title" accent="primary"
+                open={!!openSections["tos_t2_title"]} onToggle={() => toggleSection("tos_t2_title")}>
                 <div className="space-y-2">
                   <Rule n={1}>{t("tos_t2_r1")}</Rule>
                   <Rule n={2}>{t("tos_t2_r2")}</Rule>
@@ -276,7 +380,8 @@ export default function TermsAndSafety() {
                 </div>
               </Section>
 
-              <Section icon={MapPin} titleKey="tos_t3_title" accent="secondary">
+              <Section icon={MapPin}        titleKey="tos_t3_title" accent="secondary"
+                open={!!openSections["tos_t3_title"]} onToggle={() => toggleSection("tos_t3_title")}>
                 <p>{t("tos_t3_p1")}</p>
                 <div className="space-y-2 mt-2">
                   <Rule n={1}>{t("tos_t3_r1")}</Rule>
@@ -285,7 +390,8 @@ export default function TermsAndSafety() {
                 </div>
               </Section>
 
-              <Section icon={ShieldCheck} titleKey="tos_t4_title" accent="accent">
+              <Section icon={ShieldCheck}   titleKey="tos_t4_title" accent="accent"
+                open={!!openSections["tos_t4_title"]} onToggle={() => toggleSection("tos_t4_title")}>
                 <p>{t("tos_t4_p1")}</p>
                 <div className="space-y-2 mt-2">
                   <Rule n={1}>{t("tos_t4_r1")}</Rule>
@@ -296,7 +402,8 @@ export default function TermsAndSafety() {
                 </div>
               </Section>
 
-              <Section icon={AlertTriangle} titleKey="tos_t5_title" accent="warn">
+              <Section icon={AlertTriangle} titleKey="tos_t5_title" accent="warn"
+                open={!!openSections["tos_t5_title"]} onToggle={() => toggleSection("tos_t5_title")}>
                 <p>{t("tos_t5_p1")}</p>
                 <div className="space-y-2 mt-2">
                   <Rule n={1}>{t("tos_t5_r1")}</Rule>
@@ -305,7 +412,8 @@ export default function TermsAndSafety() {
                 </div>
               </Section>
 
-              <Section icon={Star} titleKey="tos_t6_title" accent="secondary">
+              <Section icon={Star}          titleKey="tos_t6_title" accent="secondary"
+                open={!!openSections["tos_t6_title"]} onToggle={() => toggleSection("tos_t6_title")}>
                 <p>{t("tos_t6_p1")}</p>
                 <div className="space-y-2 mt-2">
                   <Rule n={1}>{t("tos_t6_r1")}</Rule>
@@ -314,12 +422,14 @@ export default function TermsAndSafety() {
                 </div>
               </Section>
 
-              <Section icon={ScrollText} titleKey="tos_t7_title" accent="primary">
+              <Section icon={ScrollText}    titleKey="tos_t7_title" accent="primary"
+                open={!!openSections["tos_t7_title"]} onToggle={() => toggleSection("tos_t7_title")}>
                 <p>{t("tos_t7_p1")}</p>
                 <p className="mt-1">{t("tos_t7_p2")}</p>
               </Section>
 
-              <Section icon={ScrollText} titleKey="tos_t8_title" accent="primary">
+              <Section icon={ScrollText}    titleKey="tos_t8_title" accent="primary"
+                open={!!openSections["tos_t8_title"]} onToggle={() => toggleSection("tos_t8_title")}>
                 <p>{t("tos_t8_p1")}</p>
                 <div className="space-y-2 mt-2">
                   <Rule n={1}>{t("tos_t8_r1")}</Rule>
@@ -328,11 +438,13 @@ export default function TermsAndSafety() {
                 </div>
               </Section>
 
-              <Section icon={AlertTriangle} titleKey="tos_t9_title" accent="warn">
+              <Section icon={AlertTriangle} titleKey="tos_t9_title" accent="warn"
+                open={!!openSections["tos_t9_title"]} onToggle={() => toggleSection("tos_t9_title")}>
                 <p>{t("tos_t9_p1")}</p>
               </Section>
 
-              <Section icon={ScrollText} titleKey="tos_t10_title" accent="primary">
+              <Section icon={ScrollText}    titleKey="tos_t10_title" accent="primary"
+                open={!!openSections["tos_t10_title"]} onToggle={() => toggleSection("tos_t10_title")}>
                 <p>{t("tos_t10_p1")}</p>
                 <p className="mt-1">{t("tos_t10_p2")}</p>
               </Section>
