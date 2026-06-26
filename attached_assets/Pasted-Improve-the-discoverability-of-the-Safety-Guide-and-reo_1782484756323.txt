@@ -1,0 +1,86 @@
+Improve the discoverability of the Safety Guide and reorganize the Profile screen to better match Kosmeo's focus on safe, in-person trading.
+
+## Goals
+
+The Safety Guide is one of Kosmeo's most important features. It should be easy for every user to find before arranging a meetup, rather than being hidden inside Settings.
+
+## 1. Improve the Profile screen
+
+Reorganize the Profile page into clear sections with better information hierarchy.
+
+Suggested structure:
+
+* My Listings
+* Favorites
+* Reviews (if available)
+
+Divider
+
+* 🛡️ Safety Guide
+* 📜 Terms of Service
+* ❓ Help / FAQ (if available)
+
+Divider
+
+* ⚙️ Settings
+* 🚪 Log Out
+
+The Safety Guide should appear as a primary navigation item, not buried inside Settings.
+
+If the current "Safety & Terms" page contains both tabs, keep that functionality, but rename the entry in the profile to **Safety Guide**, opening the existing page with the Safety tab selected by default.
+
+## 2. Make the Safety Guide more visible throughout the app
+
+Without changing existing functionality, improve discoverability by adding navigation to the Safety Guide from appropriate places.
+
+Recommended locations:
+
+* Register page:
+
+  * Under the age confirmation checkbox, add a subtle "Read our Safety Guide" link that opens `/terms`.
+
+* Home page:
+
+  * Add a dismissible informational card near the top for new users:
+
+    * Title: "🛡️ New to Kosmeo?"
+    * Subtitle: "Learn how to trade safely and avoid common scams."
+    * Button: "Open Safety Guide"
+
+* Chat:
+
+  * Any existing safety warning banners should include a "Learn more" action that opens the Safety Guide.
+
+* Listing Details:
+
+  * Near meetup information, add a small reminder:
+    "Meet in a public place."
+    "Read the Safety Guide."
+
+These additions should be informative without becoming intrusive.
+
+## 3. Keep Terms accessible
+
+The existing Terms of Service should remain available as the second tab inside the existing page. Do not remove or rewrite the legal content.
+
+## 4. Polish
+
+Ensure the new navigation matches the existing Kosmeo design system:
+
+* Existing spacing
+* Existing colors
+* Existing typography
+* Existing icons
+* Existing animations
+* Mobile-first layout
+* Proper touch targets
+
+Do not introduce new dependencies or redesign unrelated pages.
+
+Finally, verify:
+
+* All new links navigate correctly.
+* The Safety Guide always opens successfully.
+* The page still defaults to the Safety tab.
+* The Terms tab continues to function normally.
+* No existing functionality or routes are broken.

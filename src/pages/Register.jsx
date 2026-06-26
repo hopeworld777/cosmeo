@@ -212,6 +212,11 @@ export default function Register() {
                 {t("ageConfirmRequired")}
               </p>
             )}
+            <p className="text-center text-xs text-muted-foreground -mt-1">
+              <Link href="/terms" className="text-primary font-semibold hover:underline">
+                🛡️ {t("readSafetyGuide")}
+              </Link>
+            </p>
             <Button
               type="submit"
               className="w-full h-12 rounded-2xl text-base font-bold bg-gradient-to-r from-primary to-secondary"

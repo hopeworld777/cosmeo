@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Search, X } from "lucide-react";
-import { Link } from "wouter";
+import { Search, X, ShieldCheck } from "lucide-react";
+import { Link, useLocation } from "wouter";
 import ListingCard from "@/components/ListingCard";
 import { api } from "@/lib/api";
 import { useAuth } from "@/hooks/useAuth";
@@ -13,10 +13,19 @@ const CAT_MAP = { costume: "outfit", armor: "outfit", wig: "wig", prop: "prop", 
 export default function Home() {
   const { t } = useTranslation();
   const { user } = useAuth();
+  const [, setLocation] = useLocation();
   const [activeCategory, setActiveCategory] = useState("all");
   const [query, setQuery] = useState("");
   const [apiItems, setApiItems] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [safetyCardClosed, setSafetyCardClosed] = useState(
+    () => localStorage.getItem("kosmeo_safety_card_v1") === "1"
+  );
+
+  function dismissSafetyCard() {
+    localStorage.setItem("kosmeo_safety_card_v1", "1");
+    setSafetyCardClosed(true);
+  }
 
   const CATEGORIES = [
     { id: "all",      emoji: "✨", tKey: "all"       },
@@ -154,6 +163,39 @@ export default function Home() {
 
       {/* ── Results grid ──────────────────────────────────────────── */}
       <div className="flex-1 px-4 pt-5 pb-8 md:max-w-6xl md:mx-auto md:w-full">
+
+        {/* Safety card — dismissible, shown to guests and new users */}
+        <AnimatePresence>
+          {!safetyCardClosed && !user && (
+            <motion.div
+              initial={{ opacity: 0, y: -8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8, height: 0, marginBottom: 0 }}
+              transition={{ duration: 0.22 }}
+              className="flex items-start gap-3 bg-gradient-to-r from-primary/10 to-secondary/10 border border-primary/20 rounded-2xl px-4 py-3.5 mb-5"
+            >
+              <ShieldCheck className="h-5 w-5 text-primary shrink-0 mt-0.5" />
+              <div className="flex-1 min-w-0">
+                <p className="font-extrabold text-sm text-foreground leading-tight">{t("newToKosmeo")}</p>
+                <p className="text-xs text-muted-foreground font-medium mt-0.5">{t("newToKosmeoDesc")}</p>
+                <button
+                  onClick={() => setLocation("/terms")}
+                  className="mt-2 text-xs font-bold text-primary hover:underline"
+                >
+                  {t("openSafetyGuide")} →
+                </button>
+              </div>
+              <button
+                onClick={dismissSafetyCard}
+                className="shrink-0 text-muted-foreground hover:text-foreground transition-colors mt-0.5"
+                aria-label="Dismiss"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
         <div className="flex items-center justify-between mb-4 px-1">
           <p className="text-lg font-black text-foreground tracking-tight">
             {t("freshDrops")} ✨

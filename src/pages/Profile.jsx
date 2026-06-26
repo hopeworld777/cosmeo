@@ -1,7 +1,7 @@
 import {
   Settings, LogOut, Package, Star, ShoppingBag, Heart, ChevronRight,
   Wallet, ArrowDownToLine, CheckCircle2, Trash2, Tag, X, Loader2,
-  AlertCircle, TrendingUp
+  AlertCircle, TrendingUp, ShieldCheck, ScrollText
 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -549,7 +549,7 @@ export default function Profile() {
     setLocation("/login");
   };
 
-  const menuItems = [
+  const section1Items = [
     {
       title: t("wishlistLabel"),
       icon: Heart,
@@ -557,17 +557,35 @@ export default function Profile() {
       href: "/wishlist",
     },
     {
-      title: t("purchasesRentals"),
-      icon: ShoppingBag,
-      color: "bg-amber-100 text-amber-600",
-      href: null,
-    },
-    {
       title: t("reviewsCount"),
       icon: Star,
       count: user.review_count || null,
       color: "bg-yellow-100 text-yellow-600",
       href: null,
+    },
+  ];
+
+  const section2Items = [
+    {
+      title: t("safetyGuideLabel"),
+      icon: ShieldCheck,
+      color: "bg-green-100 text-green-600",
+      href: "/terms",
+    },
+    {
+      title: t("termsLabel"),
+      icon: ScrollText,
+      color: "bg-blue-100 text-blue-600",
+      href: "/terms?tab=terms",
+    },
+  ];
+
+  const section3Items = [
+    {
+      title: t("settingsLabel"),
+      icon: Settings,
+      color: "bg-muted text-muted-foreground",
+      href: "/settings",
     },
   ];
 
@@ -749,9 +767,9 @@ export default function Profile() {
           </AnimatePresence>
         </motion.div>
 
-        {/* Other menu items */}
+        {/* Section 1: Listings & Reviews */}
         <div className="flex flex-col gap-3">
-          {menuItems.map((item, idx) => {
+          {section1Items.map((item, idx) => {
             const Icon = item.icon;
             return (
               <motion.div
@@ -778,6 +796,66 @@ export default function Profile() {
                   )}
                   {item.href && <ChevronRight className="h-4 w-4 text-muted-foreground" />}
                 </div>
+              </motion.div>
+            );
+          })}
+        </div>
+
+        {/* Divider */}
+        <div className="flex items-center gap-3 px-1">
+          <div className="flex-1 h-px bg-border/50" />
+        </div>
+
+        {/* Section 2: Safety & Legal */}
+        <div className="flex flex-col gap-3">
+          {section2Items.map((item, idx) => {
+            const Icon = item.icon;
+            return (
+              <motion.div
+                key={idx}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.24 + idx * 0.05 }}
+                onClick={() => setLocation(item.href)}
+                className="flex items-center justify-between p-5 bg-white rounded-3xl card-shadow cursor-pointer hover:-translate-y-0.5 active:scale-[0.98] transition-all"
+              >
+                <div className="flex items-center gap-4">
+                  <div className={`h-12 w-12 rounded-2xl flex items-center justify-center ${item.color}`}>
+                    <Icon className="h-5 w-5" />
+                  </div>
+                  <span className="font-extrabold text-base text-foreground">{item.title}</span>
+                </div>
+                <ChevronRight className="h-4 w-4 text-muted-foreground" />
+              </motion.div>
+            );
+          })}
+        </div>
+
+        {/* Divider */}
+        <div className="flex items-center gap-3 px-1">
+          <div className="flex-1 h-px bg-border/50" />
+        </div>
+
+        {/* Section 3: Settings */}
+        <div className="flex flex-col gap-3">
+          {section3Items.map((item, idx) => {
+            const Icon = item.icon;
+            return (
+              <motion.div
+                key={idx}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.34 + idx * 0.05 }}
+                onClick={() => setLocation(item.href)}
+                className="flex items-center justify-between p-5 bg-white rounded-3xl card-shadow cursor-pointer hover:-translate-y-0.5 active:scale-[0.98] transition-all"
+              >
+                <div className="flex items-center gap-4">
+                  <div className={`h-12 w-12 rounded-2xl flex items-center justify-center ${item.color}`}>
+                    <Icon className="h-5 w-5" />
+                  </div>
+                  <span className="font-extrabold text-base text-foreground">{item.title}</span>
+                </div>
+                <ChevronRight className="h-4 w-4 text-muted-foreground" />
               </motion.div>
             );
           })}

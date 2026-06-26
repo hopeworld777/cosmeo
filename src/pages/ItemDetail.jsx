@@ -263,11 +263,21 @@ export default function ItemDetail() {
           </div>
 
           {/* Hand-to-Hand Exchange Banner */}
-          <div className="flex items-start gap-3 bg-amber-50 border border-amber-200/60 rounded-2xl px-4 py-3 mb-6">
+          <div className="flex items-start gap-3 bg-amber-50 border border-amber-200/60 rounded-2xl px-4 py-3 mb-3">
             <span className="text-lg leading-none mt-0.5 shrink-0">📍</span>
             <p className="text-[13px] font-semibold text-amber-800 leading-snug">
               {t("handoffBanner")}
             </p>
+          </div>
+
+          {/* Safety reminder */}
+          <div className="flex items-center gap-2 mb-6 px-1">
+            <span className="text-xs font-semibold text-muted-foreground">🛡️ {t("safetyMeetReminder")}</span>
+            <Link href="/terms">
+              <span className="text-xs font-bold text-primary hover:underline cursor-pointer">
+                {t("readSafetyGuide")} →
+              </span>
+            </Link>
           </div>
 
           {/* Description */}
