@@ -90,5 +90,13 @@
   "continueToKosmeo": "Continue to Kosmeo",
   "resendEmail": "Didn't get it? Resend email",
   "sending": "Sending...",
-  "creatingAccount": "Creating account..."
+  "creatingAccount": "Creating account...",
+  "signInTitle": "Welcome back to Kosmeo",
+  "signInBtn": "Sign In",
+  "signingIn": "Signing in...",
+  "forgotPassword": "Forgot password?",
+  "dontHaveAccount": "Don't have an account? Sign up",
+  "emailPlaceholder": "Enter your email address",
+  "passwordPlaceholder": "Enter your password",
+  "usernamePlaceholder": "Choose a username"
 }

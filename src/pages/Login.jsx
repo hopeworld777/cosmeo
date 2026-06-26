@@ -7,8 +7,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
+import { useTranslation } from "react-i18next";
+import LanguageSwitcher from "@/components/LanguageSwitcher";
 
 export default function Login() {
+  const { t } = useTranslation();
   const { login } = useAuth();
   const [, setLocation] = useLocation();
   const { toast } = useToast();
@@ -32,7 +35,12 @@ export default function Login() {
   };
 
   return (
-    <div className="flex flex-col min-h-full bg-background px-6 pb-12 pt-16 justify-center">
+    <div className="relative flex flex-col min-h-full bg-background px-6 pb-12 pt-16 justify-center">
+      {/* Language switcher — top-right */}
+      <div className="absolute top-12 right-6 z-50">
+        <LanguageSwitcher />
+      </div>
+
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -44,17 +52,17 @@ export default function Login() {
             <Sparkles className="h-7 w-7 text-primary" />
             <h1 className="text-3xl font-black text-foreground">Kosmeo</h1>
           </div>
-          <p className="text-muted-foreground text-sm font-medium">Welcome back, cosplayer</p>
+          <p className="text-muted-foreground text-sm font-medium">{t("signInTitle")}</p>
         </div>
 
         <div className="bg-white rounded-3xl p-6 card-shadow space-y-1">
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="login-email" className="font-bold">Email</Label>
+              <Label htmlFor="login-email" className="font-bold">{t("email")}</Label>
               <Input
                 id="login-email"
                 type="email"
-                placeholder="you@example.com"
+                placeholder={t("emailPlaceholder")}
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 autoComplete="email"
@@ -64,10 +72,10 @@ export default function Login() {
             </div>
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <Label htmlFor="login-password" className="font-bold">Password</Label>
+                <Label htmlFor="login-password" className="font-bold">{t("password")}</Label>
                 <Link href="/forgot-password">
                   <span className="text-xs text-primary font-semibold hover:underline cursor-pointer">
-                    Forgot password?
+                    {t("forgotPassword")}
                   </span>
                 </Link>
               </div>
@@ -75,7 +83,7 @@ export default function Login() {
                 <Input
                   id="login-password"
                   type={showPassword ? "text" : "password"}
-                  placeholder="••••••••"
+                  placeholder={t("passwordPlaceholder")}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   autoComplete="current-password"
@@ -97,15 +105,16 @@ export default function Login() {
               disabled={loading}
               data-testid="btn-login-submit"
             >
-              {loading ? "Signing in..." : "Sign In"}
+              {loading ? t("signingIn") : t("signInBtn")}
             </Button>
           </form>
         </div>
 
         <p className="text-center mt-6 text-sm text-muted-foreground">
-          Don't have an account?{" "}
           <Link href="/register">
-            <span className="text-primary font-semibold cursor-pointer hover:underline">Sign up free</span>
+            <span className="text-primary font-semibold cursor-pointer hover:underline">
+              {t("dontHaveAccount")}
+            </span>
           </Link>
         </p>
       </motion.div>

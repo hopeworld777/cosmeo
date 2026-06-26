@@ -90,5 +90,13 @@
   "continueToKosmeo": "Kosmeo-ს გაგრძელება",
   "resendEmail": "არ მიგიღიათ? ხელახლა გაგზავნა",
   "sending": "იგზავნება...",
-  "creatingAccount": "ანგარიში იქმნება..."
+  "creatingAccount": "ანგარიში იქმნება...",
+  "signInTitle": "კეთილი იყოს თქვენი მობრუნება",
+  "signInBtn": "შესვლა",
+  "signingIn": "შესვლა...",
+  "forgotPassword": "პაროლი დაგავიწყდათ?",
+  "dontHaveAccount": "არ გაქვთ ანგარიში? რეგისტრაცია",
+  "emailPlaceholder": "შეიყვანეთ ელ.ფოსტა",
+  "passwordPlaceholder": "შეიყვანეთ პაროლი",
+  "usernamePlaceholder": "აირჩიეთ მომხმარებლის სახელი"
 }

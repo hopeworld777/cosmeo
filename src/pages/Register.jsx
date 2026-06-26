@@ -133,7 +133,7 @@ export default function Register() {
               <Label htmlFor="reg-username" className="font-bold">{t("username")}</Label>
               <Input
                 id="reg-username"
-                placeholder="CosplayCrafter"
+                placeholder={t("usernamePlaceholder")}
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 autoComplete="username"
@@ -146,7 +146,7 @@ export default function Register() {
               <Input
                 id="reg-email"
                 type="email"
-                placeholder="you@example.com"
+                placeholder={t("emailPlaceholder")}
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 autoComplete="email"
@@ -160,7 +160,7 @@ export default function Register() {
                 <Input
                   id="reg-password"
                   type={showPassword ? "text" : "password"}
-                  placeholder="Min. 6 characters"
+                  placeholder={t("passwordPlaceholder")}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   autoComplete="new-password"
