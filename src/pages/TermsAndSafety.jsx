@@ -103,7 +103,7 @@ export default function TermsAndSafety() {
       {/* Header */}
       <div className="sticky top-0 z-40 bg-background/95 backdrop-blur-sm border-b border-border/40 px-4 py-3 flex items-center gap-3">
         <button
-          onClick={() => setLocation(-1)}
+          onClick={() => window.history.length > 1 ? window.history.back() : setLocation("/")}
           className="p-1.5 rounded-xl hover:bg-muted transition-colors"
         >
           <ArrowLeft size={20} className="text-foreground/70" />
