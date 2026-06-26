@@ -67,6 +67,12 @@ export const api = {
       request("/wallet/withdraw", { method: "POST", body: JSON.stringify(body) }),
   },
 
+  reviews: {
+    forSeller: (userId) => request(`/reviews/${userId}`),
+    submit: (body) =>
+      request("/reviews", { method: "POST", body: JSON.stringify(body) }),
+  },
+
   favorites: {
     list: () => request("/favorites"),
     add: (listing_id) =>

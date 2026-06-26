@@ -223,10 +223,149 @@ function WithdrawModal({ balance, onClose, onSuccess }) {
   );
 }
 
+// ── Review Modal ───────────────────────────────────────────────────────────────
+function ReviewModal({ listing, onClose, onSubmitted }) {
+  const [rating, setRating] = useState(0);
+  const [hovered, setHovered] = useState(0);
+  const [comment, setComment] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [done, setDone] = useState(false);
+  const { toast } = useToast();
+  const { user } = useAuth();
+
+  async function submit() {
+    if (rating === 0) { toast({ title: "Pick a star rating", variant: "destructive" }); return; }
+    setLoading(true);
+    try {
+      await api.reviews.submit({
+        listing_id: listing.id,
+        seller_id: user.id,   // seller reviews themselves as mock buyer flow
+        rating,
+        comment: comment.trim() || null,
+      });
+      setDone(true);
+      onSubmitted(rating);
+    } catch (err) {
+      toast({ title: "Failed to submit", description: err.message, variant: "destructive" });
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  const labels = ["", "Poor", "Fair", "Good", "Great", "Excellent"];
+
+  return (
+    <>
+      <motion.div key="rv-bg" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+        onClick={onClose} className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50" />
+      <motion.div key="rv-sheet"
+        initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }}
+        transition={{ type: "spring", damping: 30, stiffness: 300 }}
+        className="fixed bottom-0 left-0 right-0 max-w-[430px] mx-auto z-50 bg-white rounded-t-[2rem] shadow-2xl"
+      >
+        <div className="flex justify-center pt-3 pb-1">
+          <div className="w-10 h-1.5 rounded-full bg-muted-foreground/20" />
+        </div>
+        <div className="px-6 pt-2 pb-10">
+          <AnimatePresence mode="wait">
+            {done ? (
+              <motion.div key="rv-done" initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }}
+                className="flex flex-col items-center py-8 text-center">
+                <div className="h-20 w-20 rounded-full bg-amber-50 flex items-center justify-center mb-4">
+                  <Star className="h-10 w-10 text-amber-400 fill-amber-400" />
+                </div>
+                <h3 className="text-2xl font-black text-foreground mb-2">Review Saved!</h3>
+                <p className="text-muted-foreground font-medium">
+                  You rated this transaction <span className="text-foreground font-extrabold">{rating}/5 ★</span>
+                </p>
+                <p className="text-xs text-muted-foreground mt-1">Your seller rating has been updated.</p>
+                <Button onClick={onClose}
+                  className="mt-8 w-full h-14 rounded-2xl bg-gradient-to-r from-primary to-secondary text-white font-bold text-base">
+                  Done
+                </Button>
+              </motion.div>
+            ) : (
+              <motion.div key="rv-form" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+                <div className="flex items-start justify-between mb-5">
+                  <div>
+                    <h3 className="text-2xl font-black text-foreground">Rate the Sale</h3>
+                    <p className="text-sm text-muted-foreground font-medium mt-0.5 line-clamp-1">
+                      {listing.title}
+                    </p>
+                  </div>
+                  <button onClick={onClose}
+                    className="h-9 w-9 rounded-full bg-muted flex items-center justify-center shrink-0">
+                    <X className="h-4 w-4 text-muted-foreground" />
+                  </button>
+                </div>
+
+                {/* Stars */}
+                <div className="flex flex-col items-center mb-6">
+                  <div className="flex gap-3 mb-2">
+                    {[1, 2, 3, 4, 5].map((s) => (
+                      <motion.button key={s} whileTap={{ scale: 0.85 }}
+                        onClick={() => setRating(s)}
+                        onMouseEnter={() => setHovered(s)}
+                        onMouseLeave={() => setHovered(0)}
+                      >
+                        <Star className={`h-10 w-10 transition-all ${
+                          s <= (hovered || rating)
+                            ? "fill-amber-400 text-amber-400 scale-110"
+                            : "text-muted-foreground/30"
+                        }`} />
+                      </motion.button>
+                    ))}
+                  </div>
+                  <AnimatePresence mode="wait">
+                    {(hovered || rating) > 0 && (
+                      <motion.p key={hovered || rating}
+                        initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
+                        className="text-sm font-extrabold text-amber-500">
+                        {labels[hovered || rating]}
+                      </motion.p>
+                    )}
+                  </AnimatePresence>
+                </div>
+
+                {/* Comment */}
+                <div className="mb-6">
+                  <label className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-2 block">
+                    Comment (optional)
+                  </label>
+                  <textarea
+                    value={comment}
+                    onChange={(e) => setComment(e.target.value)}
+                    placeholder="How did the transaction go? Fast delivery, item as described…"
+                    rows={3}
+                    className="w-full px-4 py-3 rounded-2xl bg-muted text-sm font-medium text-foreground outline-none focus:ring-2 focus:ring-primary/30 transition-shadow placeholder:text-muted-foreground/50 placeholder:font-normal resize-none"
+                  />
+                </div>
+
+                <div className="flex gap-3 bg-primary/5 rounded-2xl p-3 mb-5">
+                  <AlertCircle className="h-4 w-4 text-primary shrink-0 mt-0.5" />
+                  <p className="text-xs text-primary/70 font-medium leading-snug">
+                    This simulates a buyer review to update your seller rating on the platform.
+                  </p>
+                </div>
+
+                <Button onClick={submit} disabled={loading || rating === 0}
+                  className="w-full h-14 rounded-2xl bg-gradient-to-r from-amber-400 to-orange-400 text-white font-bold text-base shadow-md hover:opacity-90 disabled:opacity-40">
+                  {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : "⭐ Submit Review"}
+                </Button>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+      </motion.div>
+    </>
+  );
+}
+
 // ── My Listings Panel ──────────────────────────────────────────────────────────
 function MyListings() {
   const [listings, setListings] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [reviewListing, setReviewListing] = useState(null);
   const { toast } = useToast();
   const [, setLocation] = useLocation();
 
@@ -237,13 +376,14 @@ function MyListings() {
       .finally(() => setLoading(false));
   }, []);
 
-  const handleMarkSold = async (id) => {
+  const handleMarkSold = async (listing) => {
     try {
-      await api.listings.markSold(id);
+      await api.listings.markSold(listing.id);
       setListings((prev) =>
-        prev.map((l) => l.id === id ? { ...l, status: "sold", is_active: false } : l)
+        prev.map((l) => l.id === listing.id ? { ...l, status: "sold", is_active: false } : l)
       );
-      toast({ title: "Marked as sold!", description: "Your listing has been closed." });
+      toast({ title: "Marked as sold! ✅", description: "Now rate the transaction." });
+      setReviewListing(listing);
     } catch (err) {
       toast({ title: "Error", description: err.message, variant: "destructive" });
     }
@@ -342,7 +482,7 @@ function MyListings() {
               {isActive && (
                 <div className="flex flex-col gap-1.5 shrink-0">
                   <button
-                    onClick={() => handleMarkSold(l.id)}
+                    onClick={() => handleMarkSold(l)}
                     className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-green-50 text-green-700 text-[11px] font-bold hover:bg-green-100 transition-colors whitespace-nowrap"
                   >
                     <CheckCircle2 className="h-3 w-3" />
@@ -360,6 +500,17 @@ function MyListings() {
             </motion.div>
           );
         })}
+      </AnimatePresence>
+
+      {/* Review modal — appears after marking sold */}
+      <AnimatePresence>
+        {reviewListing && (
+          <ReviewModal
+            listing={reviewListing}
+            onClose={() => setReviewListing(null)}
+            onSubmitted={() => setTimeout(() => setReviewListing(null), 2500)}
+          />
+        )}
       </AnimatePresence>
     </div>
   );

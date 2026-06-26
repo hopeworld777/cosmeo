@@ -8,8 +8,11 @@ const router = Router();
 router.get("/", requireAuth, async (req, res) => {
   try {
     const result = await pool.query(`
-      SELECT l.*, 
+      SELECT l.*,
              u.username as seller_username, u.avatar_url as seller_avatar,
+             u.rating as seller_rating, u.review_count as seller_review_count,
+             u.location as seller_location,
+             true as is_favorited,
              (SELECT json_agg(image_url ORDER BY sort_order) FROM listing_images WHERE listing_id = l.id) as images,
              (SELECT COUNT(*) FROM favorites WHERE listing_id = l.id) as favorited_count
       FROM favorites f
