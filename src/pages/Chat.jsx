@@ -6,12 +6,14 @@ import { useState, useEffect, useRef } from "react";
 import { api } from "@/lib/api";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
+import { useTranslation } from "react-i18next";
 
 export default function Chat() {
   const { id } = useParams();
   const { user } = useAuth();
   const { toast } = useToast();
   const [, setLocation] = useLocation();
+  const { t } = useTranslation();
 
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -54,7 +56,7 @@ export default function Chat() {
       setMessages((prev) => [...prev, msg]);
       setText("");
     } catch (err) {
-      toast({ title: "Failed to send", description: err.message, variant: "destructive" });
+      toast({ title: t("failedToSend"), description: err.message, variant: "destructive" });
     } finally {
       setSending(false);
     }
@@ -67,7 +69,7 @@ export default function Chat() {
     }
   }
 
-  const otherName = convMeta?.other_username || "Seller";
+  const otherName = convMeta?.other_username || t("seller");
   const otherAvatar = convMeta?.other_avatar || null;
   const otherInitial = otherName.slice(0, 2).toUpperCase();
   const listingTitle = convMeta?.listing_title || "";
@@ -122,8 +124,8 @@ export default function Chat() {
             className="flex flex-col items-center justify-center py-24 text-center"
           >
             <div className="text-5xl mb-4">👋</div>
-            <p className="font-bold text-foreground mb-1">Start the conversation</p>
-            <p className="text-sm text-muted-foreground">Ask about availability, size, or shipping.</p>
+            <p className="font-bold text-foreground mb-1">{t("startConversation")}</p>
+            <p className="text-sm text-muted-foreground">{t("chatStartHint")}</p>
           </motion.div>
         ) : (
           messages.map((msg, i) => {
@@ -190,7 +192,7 @@ export default function Chat() {
             value={text}
             onChange={(e) => setText(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder="Type a message…"
+            placeholder={t("typeMessage")}
             className="flex-1 bg-transparent text-sm font-medium outline-none placeholder:text-muted-foreground/60"
             disabled={sending}
           />

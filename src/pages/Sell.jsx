@@ -12,14 +12,14 @@ import { useLocation } from "wouter";
 import { api } from "@/lib/api";
 import { useAuth } from "@/hooks/useAuth";
 import { useTranslation } from "react-i18next";
+import LanguageSwitcher from "@/components/LanguageSwitcher";
 
-// ── Category config ────────────────────────────────────────────────────────────
 const CATEGORIES = [
-  { id: "outfit",   emoji: "👗", label: "Full Outfit",   bg: "bg-pink-50",   border: "border-pink-300",   text: "text-pink-600",   activeBg: "bg-pink-100"   },
-  { id: "wig",      emoji: "💇", label: "Wig",           bg: "bg-purple-50", border: "border-purple-300", text: "text-purple-600", activeBg: "bg-purple-100" },
-  { id: "shoes",    emoji: "🥾", label: "Shoes",         bg: "bg-amber-50",  border: "border-amber-300",  text: "text-amber-600",  activeBg: "bg-amber-100"  },
-  { id: "prop",     emoji: "⚔️",  label: "Prop",          bg: "bg-blue-50",   border: "border-blue-300",   text: "text-blue-600",   activeBg: "bg-blue-100"   },
-  { id: "crafting", emoji: "🧵", label: "Crafting/DIY",  bg: "bg-green-50",  border: "border-green-300",  text: "text-green-600",  activeBg: "bg-green-100"  },
+  { id: "outfit",   emoji: "👗", labelKey: "cat_outfit",   bg: "bg-pink-50",   border: "border-pink-300",   text: "text-pink-600",   activeBg: "bg-pink-100"   },
+  { id: "wig",      emoji: "💇", labelKey: "cat_wig",      bg: "bg-purple-50", border: "border-purple-300", text: "text-purple-600", activeBg: "bg-purple-100" },
+  { id: "shoes",    emoji: "🥾", labelKey: "cat_shoes",    bg: "bg-amber-50",  border: "border-amber-300",  text: "text-amber-600",  activeBg: "bg-amber-100"  },
+  { id: "prop",     emoji: "⚔️",  labelKey: "cat_prop",     bg: "bg-blue-50",   border: "border-blue-300",   text: "text-blue-600",   activeBg: "bg-blue-100"   },
+  { id: "crafting", emoji: "🧵", labelKey: "cat_crafting", bg: "bg-green-50",  border: "border-green-300",  text: "text-green-600",  activeBg: "bg-green-100"  },
 ];
 
 const PLACEHOLDER = {
@@ -30,13 +30,7 @@ const PLACEHOLDER = {
   crafting: "https://images.unsplash.com/photo-1518609878373-06d740f60d8b?w=600&q=80",
 };
 
-const STEPS = ["Category", "Details", "Pricing"];
-
-const detailsSchema = z.object({
-  title:       z.string().min(5, "Title must be at least 5 characters"),
-  description: z.string().min(10, "Add a bit more detail for buyers"),
-  fandom:      z.string().optional(),
-});
+const STEP_KEYS = ["stepCategory", "stepDetails", "stepPricing"];
 
 const slide = {
   enter:  (dir) => ({ x: dir > 0 ? 50 : -50, opacity: 0 }),
@@ -44,11 +38,17 @@ const slide = {
   exit:   (dir) => ({ x: dir < 0 ? 50 : -50, opacity: 0, transition: { duration: 0.16, ease: "easeIn" } }),
 };
 
-// ── Main Sell page ─────────────────────────────────────────────────────────────
 export default function Sell() {
   const { user } = useAuth();
   const { toast } = useToast();
   const [, setLocation] = useLocation();
+  const { t } = useTranslation();
+
+  const detailsSchema = z.object({
+    title:       z.string().min(5, t("titleMin")),
+    description: z.string().min(10, t("descriptionMin")),
+    fandom:      z.string().optional(),
+  });
 
   const [step, setStep]         = useState(0);
   const [direction, setDir]     = useState(1);
@@ -70,9 +70,11 @@ export default function Sell() {
     mode: "onBlur",
   });
 
+  const STEP_LABELS = [t("stepCategory"), t("stepDetails"), t("stepPricing")];
+
   const goNext = async () => {
     if (step === 0 && !category) {
-      toast({ title: "Pick a category first!", variant: "destructive" });
+      toast({ title: t("pickCategoryFirst"), variant: "destructive" });
       return;
     }
     if (step === 1) {
@@ -93,7 +95,7 @@ export default function Sell() {
       const { urls } = await api.upload.multiple(files);
       setUploadedImages(prev => [...prev, ...urls]);
     } catch (err) {
-      toast({ title: "Upload failed", description: err.message, variant: "destructive" });
+      toast({ title: t("uploadFailed"), description: err.message, variant: "destructive" });
     } finally {
       setUploading(false);
     }
@@ -103,15 +105,15 @@ export default function Sell() {
 
   const onPublish = async () => {
     if (!isForSale && !isForRent) {
-      toast({ title: "Choose how to sell", description: "Toggle For Sale and/or For Rent.", variant: "destructive" });
+      toast({ title: t("chooseHowToSell"), description: t("toggleSaleRent"), variant: "destructive" });
       return;
     }
     if (isForSale && (!salePrice || Number(salePrice) <= 0)) {
-      toast({ title: "Enter a sale price", variant: "destructive" });
+      toast({ title: t("enterSalePrice"), variant: "destructive" });
       return;
     }
     if (isForRent && (!rentPrice || Number(rentPrice) <= 0)) {
-      toast({ title: "Enter a rental price", variant: "destructive" });
+      toast({ title: t("enterRentalPrice"), variant: "destructive" });
       return;
     }
 
@@ -133,10 +135,10 @@ export default function Sell() {
         images,
       });
       setSuccess(true);
-      toast({ title: "Listing published! 🎉", description: "Your item is now live." });
+      toast({ title: t("listingPublished"), description: t("itemIsLive") });
       setTimeout(() => setLocation("/"), 2200);
     } catch (err) {
-      toast({ title: "Could not publish", description: err.message, variant: "destructive" });
+      toast({ title: t("couldNotSave"), description: err.message, variant: "destructive" });
       setSubmitting(false);
     }
   };
@@ -161,9 +163,9 @@ export default function Sell() {
               className="absolute -top-1 -right-1 text-2xl"
             >✨</motion.div>
           </div>
-          <h1 className="text-2xl font-black text-foreground mb-2">Listed!</h1>
-          <p className="text-muted-foreground font-medium">Your item is live in the CosMeo marketplace.</p>
-          <p className="text-xs text-muted-foreground mt-3">Taking you to the feed…</p>
+          <h1 className="text-2xl font-black text-foreground mb-2">{t("listed")}</h1>
+          <p className="text-muted-foreground font-medium">{t("itemIsLive")}</p>
+          <p className="text-xs text-muted-foreground mt-3">{t("takingToFeed")}</p>
         </motion.div>
       </div>
     );
@@ -190,12 +192,15 @@ export default function Sell() {
             </div>
           )}
           <div className="flex-1">
-            <h1 className="text-xl font-black text-foreground leading-tight">List an Item</h1>
-            <p className="text-xs text-muted-foreground font-medium">Step {step + 1} of {STEPS.length} · {STEPS[step]}</p>
+            <h1 className="text-xl font-black text-foreground leading-tight">{t("listAnItem")}</h1>
+            <p className="text-xs text-muted-foreground font-medium">
+              {t("stepLabel")} {step + 1} {t("ofLabel")} {STEP_LABELS.length} · {STEP_LABELS[step]}
+            </p>
           </div>
+          <LanguageSwitcher />
         </div>
         <div className="flex gap-1.5">
-          {STEPS.map((_, i) => (
+          {STEP_LABELS.map((_, i) => (
             <div key={i} className={`h-1.5 flex-1 rounded-full transition-all duration-300 ${i <= step ? "bg-primary" : "bg-muted"}`} />
           ))}
         </div>
@@ -211,15 +216,15 @@ export default function Sell() {
             initial="enter"
             animate="center"
             exit="exit"
-            className="p-5 pb-28 flex flex-col gap-5"
+            className="p-5 pb-36 flex flex-col gap-5"
           >
 
             {/* ══ STEP 0: Category + Photos ══════════════════════════════ */}
             {step === 0 && (
               <>
                 <div>
-                  <h2 className="text-2xl font-black text-foreground mb-1">What are you selling?</h2>
-                  <p className="text-sm text-muted-foreground font-medium">Pick the category that best fits your item.</p>
+                  <h2 className="text-2xl font-black text-foreground mb-1">{t("whatAreYouSelling")}</h2>
+                  <p className="text-sm text-muted-foreground font-medium">{t("pickCategory")}</p>
                 </div>
 
                 <div className="grid grid-cols-2 gap-3">
@@ -236,10 +241,10 @@ export default function Sell() {
                         } ${cat.id === "crafting" ? "col-span-2" : ""}`}
                       >
                         <span className="text-3xl">{cat.emoji}</span>
-                        <span className={`text-sm font-bold ${active ? cat.text : "text-foreground"}`}>{cat.label}</span>
+                        <span className={`text-sm font-bold ${active ? cat.text : "text-foreground"}`}>{t(cat.labelKey)}</span>
                         {active && (
                           <span className={`text-[10px] font-bold ${cat.text} bg-white/60 px-2 py-0.5 rounded-full`}>
-                            Selected ✓
+                            {t("selectedMark")}
                           </span>
                         )}
                       </motion.button>
@@ -249,8 +254,8 @@ export default function Sell() {
 
                 <div>
                   <p className="text-sm font-bold text-foreground mb-3">
-                    Photos
-                    <span className="text-muted-foreground font-normal ml-2 text-xs">optional — we'll use a placeholder if skipped</span>
+                    {t("photos")}
+                    <span className="text-muted-foreground font-normal ml-2 text-xs">{t("photosOptional")}</span>
                   </p>
                   <input type="file" multiple accept="image/*" className="hidden" ref={fileInputRef} onChange={handleFileSelect} />
                   <div className="flex gap-3 overflow-x-auto no-scrollbar pb-1">
@@ -263,7 +268,7 @@ export default function Sell() {
                       {uploading ? (
                         <span className="h-5 w-5 rounded-full border-2 border-primary/40 border-t-primary animate-spin" />
                       ) : (
-                        <><Camera className="h-6 w-6" /><span className="text-xs font-bold">Add Photo</span></>
+                        <><Camera className="h-6 w-6" /><span className="text-xs font-bold">{t("addPhoto")}</span></>
                       )}
                     </button>
                     {uploadedImages.map((url, i) => (
@@ -283,16 +288,16 @@ export default function Sell() {
             {step === 1 && (
               <>
                 <div>
-                  <h2 className="text-2xl font-black text-foreground mb-1">Tell buyers more</h2>
+                  <h2 className="text-2xl font-black text-foreground mb-1">{t("tellBuyersMore")}</h2>
                   <p className="text-sm text-muted-foreground font-medium">
-                    {activeCat && <>{activeCat.emoji} {activeCat.label} · </>}Good titles get more views!
+                    {activeCat && <>{activeCat.emoji} {t(activeCat.labelKey)} · </>}{t("goodTitles")}
                   </p>
                 </div>
 
                 <div className="bg-white rounded-3xl card-shadow p-5 flex flex-col gap-5">
                   {/* Title */}
                   <div className="flex flex-col gap-1.5">
-                    <label className="text-sm font-bold text-foreground">Title <span className="text-red-400">*</span></label>
+                    <label className="text-sm font-bold text-foreground">{t("titleLabel")} <span className="text-red-400">*</span></label>
                     <Input
                       {...register("title")}
                       placeholder="e.g. Sailor Moon Wig – Silver, Long"
@@ -303,7 +308,7 @@ export default function Sell() {
 
                   {/* Description */}
                   <div className="flex flex-col gap-1.5">
-                    <label className="text-sm font-bold text-foreground">Description <span className="text-red-400">*</span></label>
+                    <label className="text-sm font-bold text-foreground">{t("descriptionLabel")} <span className="text-red-400">*</span></label>
                     <textarea
                       {...register("description")}
                       placeholder="Describe the size, condition, materials, what's included…"
@@ -316,8 +321,8 @@ export default function Sell() {
                   {/* Fandom */}
                   <div className="flex flex-col gap-1.5">
                     <label className="text-sm font-bold text-foreground">
-                      Fandom / Series
-                      <span className="text-muted-foreground font-normal ml-2 text-xs">optional</span>
+                      {t("fandomLabel")}
+                      <span className="text-muted-foreground font-normal ml-2 text-xs">{t("optional")}</span>
                     </label>
                     <Input
                       {...register("fandom")}
@@ -326,11 +331,11 @@ export default function Sell() {
                     />
                   </div>
 
-                  {/* Location — City Picker */}
+                  {/* Location */}
                   <div className="flex flex-col gap-1.5">
                     <label className="text-sm font-bold text-foreground">
-                      Location
-                      <span className="text-muted-foreground font-normal ml-2 text-xs">where to meet for handoff</span>
+                      {t("locationLabel")}
+                      <span className="text-muted-foreground font-normal ml-2 text-xs">{t("locationHint")}</span>
                     </label>
                     <CityPicker value={city} onChange={setCity} />
                   </div>
@@ -342,16 +347,16 @@ export default function Sell() {
             {step === 2 && (
               <>
                 <div>
-                  <h2 className="text-2xl font-black text-foreground mb-1">Set your price</h2>
-                  <p className="text-sm text-muted-foreground font-medium">You can offer both options at once.</p>
+                  <h2 className="text-2xl font-black text-foreground mb-1">{t("setYourPrice")}</h2>
+                  <p className="text-sm text-muted-foreground font-medium">{t("pricingBothOptions")}</p>
                 </div>
 
                 {/* For Sale */}
                 <div className={`bg-white rounded-3xl card-shadow p-5 flex flex-col gap-4 transition-all ${isForSale ? "ring-2 ring-primary/30" : ""}`}>
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="font-extrabold text-foreground">For Sale</p>
-                      <p className="text-xs text-muted-foreground font-medium mt-0.5">One-time purchase</p>
+                      <p className="font-extrabold text-foreground">{t("forSale")}</p>
+                      <p className="text-xs text-muted-foreground font-medium mt-0.5">{t("oneTimePurchase")}</p>
                     </div>
                     <button type="button" onClick={() => setIsForSale(v => !v)} className={`w-12 h-6 rounded-full transition-colors relative ${isForSale ? "bg-primary" : "bg-muted"}`}>
                       <span className={`absolute top-1 h-4 w-4 rounded-full bg-white shadow transition-all ${isForSale ? "left-7" : "left-1"}`} />
@@ -373,8 +378,8 @@ export default function Sell() {
                 <div className={`bg-white rounded-3xl card-shadow p-5 flex flex-col gap-4 transition-all ${isForRent ? "ring-2 ring-secondary/30" : ""}`}>
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="font-extrabold text-foreground">For Rent</p>
-                      <p className="text-xs text-muted-foreground font-medium mt-0.5">Daily rental rate</p>
+                      <p className="font-extrabold text-foreground">{t("forRent")}</p>
+                      <p className="text-xs text-muted-foreground font-medium mt-0.5">{t("dailyRentalRate")}</p>
                     </div>
                     <button type="button" onClick={() => setIsForRent(v => !v)} className={`w-12 h-6 rounded-full transition-colors relative ${isForRent ? "bg-secondary" : "bg-muted"}`}>
                       <span className={`absolute top-1 h-4 w-4 rounded-full bg-white shadow transition-all ${isForRent ? "left-7" : "left-1"}`} />
@@ -386,7 +391,7 @@ export default function Sell() {
                         <div className="relative">
                           <span className="absolute left-4 top-1/2 -translate-y-1/2 text-lg font-black text-secondary">₾</span>
                           <input type="number" min="0" step="1" value={rentPrice} onChange={e => setRentPrice(e.target.value)} placeholder="0" className="w-full h-14 rounded-2xl bg-muted border-none pl-10 pr-4 text-2xl font-black text-foreground outline-none focus:ring-2 focus:ring-secondary/25" />
-                          <span className="absolute right-4 top-1/2 -translate-y-1/2 text-sm text-muted-foreground font-bold">/ day</span>
+                          <span className="absolute right-4 top-1/2 -translate-y-1/2 text-sm text-muted-foreground font-bold">{t("perDay")}</span>
                         </div>
                       </motion.div>
                     )}
@@ -396,20 +401,20 @@ export default function Sell() {
                 {/* Preview card */}
                 {(getValues("title") || category) && (
                   <div className="bg-white rounded-3xl card-shadow p-4">
-                    <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-3">Preview</p>
+                    <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-3">{t("preview")}</p>
                     <div className="flex items-center gap-3">
                       <div className="h-14 w-14 rounded-2xl overflow-hidden bg-muted shrink-0">
                         <img src={uploadedImages[0] || PLACEHOLDER[category]} alt="" className="h-full w-full object-cover" />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="font-bold text-foreground text-sm line-clamp-1">{getValues("title") || "Your listing title"}</p>
+                        <p className="font-bold text-foreground text-sm line-clamp-1">{getValues("title") || t("yourListingTitle")}</p>
                         <p className="text-xs text-muted-foreground font-medium mt-0.5">
-                          {activeCat?.emoji} {activeCat?.label}
+                          {activeCat?.emoji} {activeCat && t(activeCat.labelKey)}
                           {city && <> · 📍 {city}</>}
                         </p>
                         <div className="flex gap-2 mt-1.5">
                           {isForSale && salePrice && <span className="text-xs font-bold bg-primary/10 text-primary px-2 py-0.5 rounded-full">₾{salePrice}</span>}
-                          {isForRent && rentPrice && <span className="text-xs font-bold bg-secondary/10 text-secondary px-2 py-0.5 rounded-full">₾{rentPrice}/d</span>}
+                          {isForRent && rentPrice && <span className="text-xs font-bold bg-secondary/10 text-secondary px-2 py-0.5 rounded-full">₾{rentPrice}{t("perDay")}</span>}
                         </div>
                       </div>
                     </div>
@@ -427,7 +432,7 @@ export default function Sell() {
                     {submitting ? (
                       <span className="h-5 w-5 rounded-full border-2 border-white/40 border-t-white animate-spin" />
                     ) : (
-                      "🚀 Publish Listing"
+                      t("publishListing")
                     )}
                   </Button>
                 </motion.div>
@@ -440,14 +445,14 @@ export default function Sell() {
 
       {/* ── Sticky bottom Next button (steps 0 & 1) ──────────────────── */}
       {step < 2 && (
-        <div className="absolute bottom-0 left-0 right-0 z-30 p-5 bg-gradient-to-t from-background via-background/95 to-transparent pt-10">
+        <div className="sticky bottom-0 left-0 right-0 z-30 p-5 bg-gradient-to-t from-background via-background/95 to-transparent pt-10">
           <motion.div whileTap={{ scale: 0.97 }}>
             <Button
               type="button"
               onClick={goNext}
               className="w-full h-14 rounded-2xl bg-gradient-to-r from-primary to-secondary text-white font-extrabold text-base shadow-[0_4px_20px_rgba(124,58,237,0.3)] hover:opacity-90 transition-opacity flex items-center justify-center gap-2"
             >
-              {step === 1 ? "Next: Set Price" : "Next: Details"}
+              {step === 1 ? t("nextSetPrice") : t("nextDetails")}
               <ArrowRight className="h-5 w-5" />
             </Button>
           </motion.div>

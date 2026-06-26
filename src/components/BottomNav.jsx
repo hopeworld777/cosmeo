@@ -48,7 +48,7 @@ export default function BottomNav() {
     { href: "/profile",  icon: User,          labelKey: "profile",  testId: "nav-profile"  },
   ];
 
-  if (location.startsWith("/item/")) return null;
+  if (location.startsWith("/item/") || location === "/sell") return null;
 
   return (
     <nav

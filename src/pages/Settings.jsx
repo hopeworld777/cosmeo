@@ -11,33 +11,29 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { api } from "@/lib/api";
+import { useTranslation } from "react-i18next";
 
 const GEO_CITIES = [
-  "Tbilisi",
-  "Kutaisi",
-  "Batumi",
-  "Rustavi",
-  "Gori",
-  "Zugdidi",
-  "Poti",
-  "Akhaltsikhe",
+  "Tbilisi", "Kutaisi", "Batumi", "Rustavi",
+  "Gori", "Zugdidi", "Poti", "Akhaltsikhe",
 ];
-
-const schema = z.object({
-  username: z
-    .string()
-    .min(2, "Must be at least 2 characters")
-    .max(30, "Must be 30 characters or fewer")
-    .regex(/^[a-zA-Z0-9_]+$/, "Letters, numbers and underscores only"),
-  bio: z.string().max(200, "Keep it under 200 characters"),
-  location: z.string(),
-});
 
 export default function Settings() {
   const { user, setUser } = useAuth();
   const { toast } = useToast();
   const [, setLocation] = useLocation();
   const [saved, setSaved] = useState(false);
+  const { t } = useTranslation();
+
+  const schema = z.object({
+    username: z
+      .string()
+      .min(2, t("usernameMin"))
+      .max(30, t("usernameMax"))
+      .regex(/^[a-zA-Z0-9_]+$/, t("usernamePattern")),
+    bio: z.string().max(200, t("bioMax")),
+    location: z.string(),
+  });
 
   const {
     register,
@@ -68,7 +64,6 @@ export default function Settings() {
         location: data.location || null,
       });
       setUser(updated);
-      // Reset form so isDirty = false again, with new saved values
       reset({
         username: updated.username,
         bio: updated.bio || "",
@@ -76,13 +71,13 @@ export default function Settings() {
       });
       setSaved(true);
       toast({
-        title: "Profile updated!",
-        description: "Your changes have been saved successfully.",
+        title: t("profileUpdated"),
+        description: t("changesSavedDesc"),
       });
       setTimeout(() => setSaved(false), 3000);
     } catch (err) {
       toast({
-        title: "Could not save changes",
+        title: t("couldNotSave"),
         description: err.message,
         variant: "destructive",
       });
@@ -101,7 +96,7 @@ export default function Settings() {
         >
           <ArrowLeft className="h-5 w-5 text-foreground" />
         </button>
-        <h1 className="text-2xl font-black text-foreground">Edit Profile</h1>
+        <h1 className="text-2xl font-black text-foreground">{t("editProfile")}</h1>
       </div>
 
       <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-5 p-5 pt-6">
@@ -119,18 +114,18 @@ export default function Settings() {
               <Camera className="h-3.5 w-3.5 text-white" />
             </div>
           </div>
-          <p className="text-xs text-muted-foreground font-medium">Avatar editing coming soon 💜</p>
+          <p className="text-xs text-muted-foreground font-medium">{t("avatarComingSoon")}</p>
         </div>
 
         {/* ── Profile info card ─────────────────────────────────────── */}
         <div className="bg-white rounded-3xl card-shadow p-5 flex flex-col gap-5">
           <h2 className="text-sm font-extrabold text-muted-foreground uppercase tracking-wider">
-            Profile Info
+            {t("profileInfo")}
           </h2>
 
           {/* Username */}
           <div className="flex flex-col gap-1.5">
-            <label className="text-sm font-bold text-foreground">Username</label>
+            <label className="text-sm font-bold text-foreground">{t("username")}</label>
             <div className="relative">
               <span className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground font-semibold text-sm select-none">
                 @
@@ -148,7 +143,7 @@ export default function Settings() {
               <p className="text-xs text-red-500 font-medium">{errors.username.message}</p>
             ) : (
               <p className="text-xs text-muted-foreground font-medium">
-                This is your public handle visible to other users.
+                {t("usernameHint")}
               </p>
             )}
           </div>
@@ -157,8 +152,8 @@ export default function Settings() {
           <div className="flex flex-col gap-1.5">
             <div className="flex items-center justify-between">
               <label className="text-sm font-bold text-foreground">
-                Bio
-                <span className="text-muted-foreground font-normal ml-2 text-xs">optional</span>
+                {t("bio")}
+                <span className="text-muted-foreground font-normal ml-2 text-xs">{t("optional")}</span>
               </label>
               <span className={`text-xs font-bold ${bioValue.length > 180 ? "text-amber-500" : "text-muted-foreground"}`}>
                 {bioValue.length}/200
@@ -166,7 +161,7 @@ export default function Settings() {
             </div>
             <textarea
               {...register("bio")}
-              placeholder="Tell the community about your cosplay style…"
+              placeholder={t("bioPlaceholder")}
               rows={3}
               className="w-full rounded-xl bg-muted border-none p-3.5 text-sm font-medium resize-none outline-none focus:ring-2 focus:ring-primary/25 placeholder:text-muted-foreground/50 transition-shadow leading-relaxed"
             />
@@ -179,21 +174,20 @@ export default function Settings() {
           <div className="flex flex-col gap-1.5">
             <label className="text-sm font-bold text-foreground flex items-center gap-1.5">
               <MapPin className="h-3.5 w-3.5 text-primary" />
-              City
+              {t("cityLabel")}
             </label>
             <div className="relative">
               <select
                 {...register("location")}
                 className="w-full h-12 rounded-xl bg-muted border-none px-4 text-sm font-medium outline-none focus:ring-2 focus:ring-primary/25 transition-shadow appearance-none cursor-pointer text-foreground"
               >
-                <option value="">— Select your city —</option>
+                <option value="">{t("selectYourCity")}</option>
                 {GEO_CITIES.map((city) => (
                   <option key={city} value={city}>
                     {city}
                   </option>
                 ))}
               </select>
-              {/* Custom dropdown arrow */}
               <div className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2">
                 <svg width="12" height="7" viewBox="0 0 12 7" fill="none">
                   <path d="M1 1L6 6L11 1" stroke="#94a3b8" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
@@ -209,24 +203,24 @@ export default function Settings() {
         {/* ── Account info card (read-only) ─────────────────────────── */}
         <div className="bg-white rounded-3xl card-shadow p-5 flex flex-col gap-1">
           <h2 className="text-sm font-extrabold text-muted-foreground uppercase tracking-wider mb-3">
-            Account
+            {t("accountSection")}
           </h2>
 
           <div className="flex items-center justify-between py-2.5 border-b border-border/30">
-            <span className="text-sm font-medium text-muted-foreground">Email</span>
+            <span className="text-sm font-medium text-muted-foreground">{t("email")}</span>
             <span className="text-sm font-bold text-foreground truncate max-w-[180px]">{user.email}</span>
           </div>
 
           <div className="flex items-center justify-between py-2.5">
-            <span className="text-sm font-medium text-muted-foreground">Email verified</span>
+            <span className="text-sm font-medium text-muted-foreground">{t("emailVerified")}</span>
             {user.email_verified ? (
               <span className="flex items-center gap-1 text-xs font-bold bg-green-100 text-green-700 px-2.5 py-1 rounded-full">
                 <Check className="h-3 w-3" />
-                Verified
+                {t("verified")}
               </span>
             ) : (
               <span className="text-xs font-bold bg-amber-100 text-amber-700 px-2.5 py-1 rounded-full">
-                Pending
+                {t("pending")}
               </span>
             )}
           </div>
@@ -235,18 +229,18 @@ export default function Settings() {
         {/* ── Stats card (read-only) ────────────────────────────────── */}
         <div className="bg-white rounded-3xl card-shadow p-5">
           <h2 className="text-sm font-extrabold text-muted-foreground uppercase tracking-wider mb-4">
-            Stats
+            {t("statsSection")}
           </h2>
           <div className="grid grid-cols-3 gap-3">
             {[
-              { label: "Rating", value: user.rating || "New" },
-              { label: "Sales", value: user.sales_count || 0 },
-              { label: "Reviews", value: user.review_count || 0 },
+              { labelKey: "rating",       value: user.rating || "New" },
+              { labelKey: "salesLabel",   value: user.sales_count || 0 },
+              { labelKey: "reviewsCount", value: user.review_count || 0 },
             ].map((stat) => (
-              <div key={stat.label} className="flex flex-col items-center bg-muted/50 rounded-2xl p-3">
+              <div key={stat.labelKey} className="flex flex-col items-center bg-muted/50 rounded-2xl p-3">
                 <span className="text-xl font-black text-foreground">{stat.value}</span>
                 <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wide mt-0.5">
-                  {stat.label}
+                  {t(stat.labelKey)}
                 </span>
               </div>
             ))}
@@ -267,23 +261,22 @@ export default function Settings() {
             {isSubmitting ? (
               <span className="flex items-center gap-2.5">
                 <span className="h-4 w-4 rounded-full border-2 border-white/40 border-t-white animate-spin" />
-                Saving…
+                {t("saving")}
               </span>
             ) : saved ? (
               <span className="flex items-center gap-2.5">
                 <Check className="h-5 w-5" />
-                Changes Saved!
+                {t("changesSaved")}
               </span>
             ) : (
-              "Save Changes"
+              t("saveChanges")
             )}
           </Button>
         </motion.div>
 
-        {/* Hint when no changes */}
         {!isDirty && !saved && (
           <p className="text-xs text-center text-muted-foreground font-medium -mt-2">
-            Make a change above to enable saving
+            {t("makeAChange")}
           </p>
         )}
 
