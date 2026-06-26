@@ -9,60 +9,13 @@ import { useTranslation } from "react-i18next";
 
 const CAT_MAP = { costume: "outfit", armor: "outfit", wig: "wig", prop: "prop", accessories: "prop" };
 
-const SEED_ITEMS = [
-  {
-    id: "g1",
-    title: "Sailor Moon Wig – Long Silver",
-    category: "wig",
-    price: 45, is_for_sale: true, is_for_rent: true, rent_price: 12,
-    images: ["https://images.unsplash.com/photo-1589998059171-988d887df646?w=400&q=80"],
-    seller_username: "TbilisiCrafter", seller_rating: 4.8, seller_review_count: 23,
-    location: "Tbilisi", fandom: "Sailor Moon", size: "One Size",
-  },
-  {
-    id: "g2",
-    title: "Genshin Impact – Hu Tao Full Costume",
-    category: "outfit",
-    price: 120, is_for_sale: true, is_for_rent: true, rent_price: 25,
-    images: ["https://images.unsplash.com/photo-1578632767115-351597cf2477?w=400&q=80"],
-    seller_username: "KutaisiCos", seller_rating: 4.9, seller_review_count: 41,
-    location: "Kutaisi", fandom: "Genshin Impact", size: "S/M",
-  },
-  {
-    id: "g3",
-    title: "EVA Foam Sheets Pack – 5mm, A3 × 10",
-    category: "crafting",
-    price: 15, is_for_sale: true, is_for_rent: false, rent_price: null,
-    images: ["https://images.unsplash.com/photo-1518609878373-06d740f60d8b?w=400&q=80"],
-    seller_username: "BatumiProps", seller_rating: 4.7, seller_review_count: 18,
-    location: "Batumi", fandom: "DIY / Crafting", size: "A3",
-  },
-  {
-    id: "g4",
-    title: "Naruto Shippuden – Orange Jumpsuit Set",
-    category: "outfit",
-    price: 85, is_for_sale: true, is_for_rent: true, rent_price: 20,
-    images: ["https://images.unsplash.com/photo-1545558014-8692077e9b5c?w=400&q=80"],
-    seller_username: "RustaviNinja", seller_rating: 4.6, seller_review_count: 29,
-    location: "Rustavi", fandom: "Naruto", size: "M",
-  },
-  {
-    id: "g5",
-    title: "Platform Anime Boots – Black, EU 38",
-    category: "shoes",
-    price: 60, is_for_sale: true, is_for_rent: false, rent_price: null,
-    images: ["https://images.unsplash.com/photo-1530103862676-de8c9debad1d?w=400&q=80"],
-    seller_username: "TbilisiCrafter", seller_rating: 4.8, seller_review_count: 23,
-    location: "Tbilisi", fandom: "General", size: "EU 38",
-  },
-];
-
 export default function Home() {
   const { t } = useTranslation();
   const { user } = useAuth();
   const [activeCategory, setActiveCategory] = useState("all");
   const [query, setQuery] = useState("");
   const [apiItems, setApiItems] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   const CATEGORIES = [
     { id: "all",      emoji: "✨", tKey: "all"       },
@@ -74,7 +27,8 @@ export default function Home() {
   ];
 
   useEffect(() => {
-    api.listings.list({ limit: 20 })
+    setLoading(true);
+    api.listings.list({ limit: 40 })
       .then(data => {
         const normalised = (data || []).map(l => ({
           ...l,
@@ -83,15 +37,12 @@ export default function Home() {
         }));
         setApiItems(normalised);
       })
-      .catch(() => {});
+      .catch(() => {})
+      .finally(() => setLoading(false));
   }, []);
 
   const filtered = useMemo(() => {
-    const all = [
-      ...SEED_ITEMS,
-      ...apiItems.filter(i => !SEED_ITEMS.some(s => s.id === String(i.id))),
-    ];
-    return all.filter(item => {
+    return apiItems.filter(item => {
       const catMatch = activeCategory === "all" || item.category === activeCategory;
       const q = query.trim().toLowerCase();
       const textMatch = !q || [item.title, item.fandom, item.location, item.seller_username]
@@ -201,17 +152,34 @@ export default function Home() {
           <p className="text-lg font-black text-foreground tracking-tight">
             {t("freshDrops")} ✨
           </p>
-          <p className="text-sm font-bold text-muted-foreground">
-            <span className="text-foreground">{filtered.length}</span>{" "}
-            {filtered.length === 1 ? t("item") : t("items")}
-            {activeCategory !== "all" && activeCat && (
-              <span className="text-muted-foreground"> · {t(activeCat.tKey)}</span>
-            )}
-          </p>
+          {!loading && (
+            <p className="text-sm font-bold text-muted-foreground">
+              <span className="text-foreground">{filtered.length}</span>{" "}
+              {filtered.length === 1 ? t("item") : t("items")}
+              {activeCategory !== "all" && activeCat && (
+                <span className="text-muted-foreground"> · {t(activeCat.tKey)}</span>
+              )}
+            </p>
+          )}
         </div>
 
+        {/* Loading skeleton grid */}
+        {loading && (
+          <div className="grid grid-cols-2 gap-4">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <div key={i} className="rounded-3xl overflow-hidden bg-white card-shadow">
+                <div className="aspect-[3/4] bg-muted animate-pulse" />
+                <div className="p-3 space-y-2">
+                  <div className="h-3 bg-muted rounded-full animate-pulse w-4/5" />
+                  <div className="h-3 bg-muted rounded-full animate-pulse w-2/5" />
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
         <AnimatePresence mode="popLayout">
-          {filtered.length === 0 ? (
+          {!loading && filtered.length === 0 && (
             <motion.div
               key="empty"
               initial={{ opacity: 0 }}
@@ -219,19 +187,38 @@ export default function Home() {
               exit={{ opacity: 0 }}
               className="flex flex-col items-center justify-center py-24 text-center"
             >
-              <span className="text-5xl mb-4">🔍</span>
-              <p className="text-lg font-bold text-foreground mb-1">{t("noItemsFound")}</p>
-              <p className="text-sm text-muted-foreground">
-                {t("tryDifferentSearch")}
-              </p>
-              <button
-                onClick={() => { setQuery(""); setActiveCategory("all"); }}
-                className="mt-5 px-5 py-2.5 rounded-xl bg-primary/10 text-primary text-sm font-bold hover:bg-primary/20 transition-colors"
-              >
-                {t("clearFilters")}
-              </button>
+              {apiItems.length === 0 ? (
+                <>
+                  <span className="text-5xl mb-4">🌟</span>
+                  <p className="text-lg font-bold text-foreground mb-1">{t("noListingsYet")}</p>
+                  <p className="text-sm text-muted-foreground mb-6">
+                    {t("beFirstToList")}
+                  </p>
+                  <Link href="/sell">
+                    <button className="px-6 py-3 rounded-2xl bg-primary text-white text-sm font-bold hover:bg-primary/90 transition-colors shadow-md">
+                      {t("sellSomething")}
+                    </button>
+                  </Link>
+                </>
+              ) : (
+                <>
+                  <span className="text-5xl mb-4">🔍</span>
+                  <p className="text-lg font-bold text-foreground mb-1">{t("noItemsFound")}</p>
+                  <p className="text-sm text-muted-foreground">
+                    {t("tryDifferentSearch")}
+                  </p>
+                  <button
+                    onClick={() => { setQuery(""); setActiveCategory("all"); }}
+                    className="mt-5 px-5 py-2.5 rounded-xl bg-primary/10 text-primary text-sm font-bold hover:bg-primary/20 transition-colors"
+                  >
+                    {t("clearFilters")}
+                  </button>
+                </>
+              )}
             </motion.div>
-          ) : (
+          )}
+
+          {!loading && filtered.length > 0 && (
             <motion.div
               key={`${activeCategory}-${query}`}
               className="grid grid-cols-2 gap-4"
