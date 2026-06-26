@@ -65,5 +65,6 @@
   "searchCities": "Search cities…",
   "noCitiesFound": "No cities found",
   "results": "results",
-  "result": "result"
+  "result": "result",
+  "noMessages": "No messages yet. Start a conversation from a listing page!"
 }

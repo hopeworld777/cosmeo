@@ -5,8 +5,10 @@ import { Link } from "wouter";
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { api } from "@/lib/api";
+import { useTranslation } from "react-i18next";
 
 export default function Messages() {
+  const { t } = useTranslation();
   const [conversations, setConversations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -77,12 +79,10 @@ export default function Messages() {
               <MessageCircle className="h-9 w-9 text-primary" />
             </div>
             <p className="font-extrabold text-foreground text-xl mb-2">
-              {search ? "No results" : "No messages yet"}
+              {search ? t("noResults") : t("noMessages").split(".")[0]}
             </p>
             <p className="text-sm text-muted-foreground max-w-[220px]">
-              {search
-                ? "Try a different name or keyword"
-                : 'Browse listings and tap 💬 Chat with Seller to start a conversation.'}
+              {search ? t("tryDifferentSearch") : t("noMessages").split(". ").slice(1).join(". ")}
             </p>
             {!search && (
               <Link href="/browse">
