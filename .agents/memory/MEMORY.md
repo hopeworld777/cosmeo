@@ -1,1 +1,2 @@
 - [Kosmeo stack](kosmeo-stack.md) — Express 3001 + Vite 5000, pg pool, JWT auth, multer uploads; Vite proxies /api and /uploads to backend
+- [Database schema](kosmeo-schema.md) — Schema was missing entirely; created server/schema.sql with all 9 tables; must run it manually against the DB if reset

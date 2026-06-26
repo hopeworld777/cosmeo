@@ -337,5 +337,13 @@
   "openSafetyGuide": "Open Safety Guide",
   "readSafetyGuide": "Read our Safety Guide",
   "chatSafetyLearnMore": "Learn more",
-  "safetyMeetReminder": "Meet in a public place."
+  "safetyMeetReminder": "Meet in a public place.",
+  "usernameRequired": "Username is required",
+  "emailRequired": "Email is required",
+  "emailInvalid": "Enter a valid email address",
+  "passwordRequired": "Password is required",
+  "passwordTooShort": "Password must be at least 6 characters",
+  "networkError": "Could not reach the server. Check your connection and try again.",
+  "emailAlreadyInUse": "That email or username is already registered. Try logging in.",
+  "registrationFailed": "Registration failed"
 }

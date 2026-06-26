@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link, useLocation } from "wouter";
 import { motion } from "framer-motion";
-import { Sparkles, Eye, EyeOff, Mail, CheckCircle2 } from "lucide-react";
+import { Sparkles, Eye, EyeOff, Mail, CheckCircle2, Loader2 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { api } from "@/lib/api";
 import { Button } from "@/components/ui/button";
@@ -10,6 +10,10 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { useTranslation } from "react-i18next";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
+
+function isValidEmail(str) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(str.trim());
+}
 
 export default function Register() {
   const { t } = useTranslation();
@@ -26,25 +30,63 @@ export default function Register() {
   const [resending, setResending] = useState(false);
   const [ageConfirmed, setAgeConfirmed] = useState(false);
   const [ageError, setAgeError] = useState(false);
+  const [fieldErrors, setFieldErrors] = useState({ username: "", email: "", password: "" });
+
+  function clearFieldError(field) {
+    setFieldErrors((prev) => ({ ...prev, [field]: "" }));
+  }
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!username || !email || !password) return;
-    if (password.length < 6) {
-      toast({ title: "Password too short", description: "Must be at least 6 characters", variant: "destructive" });
+
+    // Client-side field validation — never fail silently
+    const errors = { username: "", email: "", password: "" };
+    if (!username.trim()) {
+      errors.username = t("usernameRequired") || "Username is required";
+    }
+    if (!email.trim()) {
+      errors.email = t("emailRequired") || "Email is required";
+    } else if (!isValidEmail(email)) {
+      errors.email = t("emailInvalid") || "Enter a valid email address";
+    }
+    if (!password) {
+      errors.password = t("passwordRequired") || "Password is required";
+    } else if (password.length < 6) {
+      errors.password = t("passwordTooShort") || "Password must be at least 6 characters";
+    }
+
+    const hasErrors = errors.username || errors.email || errors.password;
+    if (hasErrors) {
+      setFieldErrors(errors);
       return;
     }
+
     if (!ageConfirmed) {
       setAgeError(true);
       return;
     }
+
+    setFieldErrors({ username: "", email: "", password: "" });
     setAgeError(false);
     setLoading(true);
+
     try {
-      await register(username, email, password);
+      await register(username.trim(), email.trim(), password);
       setRegistered(true);
     } catch (err) {
-      toast({ title: "Registration failed", description: err.message, variant: "destructive" });
+      // Friendlify network errors
+      const raw = err.message || "";
+      let description = raw;
+      if (raw.toLowerCase().includes("failed to fetch") || raw.toLowerCase().includes("networkerror")) {
+        description = t("networkError") || "Could not reach the server. Check your connection and try again.";
+      } else if (raw.toLowerCase().includes("already in use") || raw.toLowerCase().includes("already registered")) {
+        description = t("emailAlreadyInUse") || "That email or username is already registered. Try logging in.";
+      }
+      toast({
+        title: t("registrationFailed") || "Registration failed",
+        description,
+        variant: "destructive",
+      });
     } finally {
       setLoading(false);
     }
@@ -65,7 +107,6 @@ export default function Register() {
   if (registered) {
     return (
       <div className="flex flex-col min-h-full bg-background px-6 py-16 justify-center">
-        {/* Language switcher */}
         <div className="absolute top-12 right-6 z-50">
           <LanguageSwitcher />
         </div>
@@ -114,7 +155,6 @@ export default function Register() {
 
   return (
     <div className="relative flex flex-col min-h-full bg-background px-6 pb-12 pt-16 justify-center">
-      {/* Language switcher — top-right */}
       <div className="absolute top-12 right-6 z-50">
         <LanguageSwitcher />
       </div>
@@ -124,7 +164,6 @@ export default function Register() {
         animate={{ opacity: 1, y: 0 }}
         className="w-full max-w-sm mx-auto"
       >
-        {/* Header */}
         <div className="text-center mb-10">
           <div className="flex items-center justify-center gap-2 mb-3">
             <Sparkles className="h-7 w-7 text-primary" />
@@ -133,35 +172,47 @@ export default function Register() {
           <p className="text-muted-foreground text-sm font-medium">{t("authTitle")}</p>
         </div>
 
-        {/* Form card */}
         <div className="bg-white rounded-3xl p-6 card-shadow space-y-4">
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="space-y-2">
+          <form onSubmit={handleSubmit} noValidate className="space-y-4">
+            {/* Username */}
+            <div className="space-y-1">
               <Label htmlFor="reg-username" className="font-bold">{t("username")}</Label>
               <Input
                 id="reg-username"
                 placeholder={t("usernamePlaceholder")}
                 value={username}
-                onChange={(e) => setUsername(e.target.value)}
+                onChange={(e) => { setUsername(e.target.value); clearFieldError("username"); }}
                 autoComplete="username"
-                className="h-12 rounded-2xl"
+                className={`h-12 rounded-2xl ${fieldErrors.username ? "border-destructive focus-visible:ring-destructive" : ""}`}
+                disabled={loading}
                 data-testid="input-register-username"
               />
+              {fieldErrors.username && (
+                <p className="text-xs text-destructive font-medium pl-1">{fieldErrors.username}</p>
+              )}
             </div>
-            <div className="space-y-2">
+
+            {/* Email */}
+            <div className="space-y-1">
               <Label htmlFor="reg-email" className="font-bold">{t("email")}</Label>
               <Input
                 id="reg-email"
                 type="email"
                 placeholder={t("emailPlaceholder")}
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={(e) => { setEmail(e.target.value); clearFieldError("email"); }}
                 autoComplete="email"
-                className="h-12 rounded-2xl"
+                className={`h-12 rounded-2xl ${fieldErrors.email ? "border-destructive focus-visible:ring-destructive" : ""}`}
+                disabled={loading}
                 data-testid="input-register-email"
               />
+              {fieldErrors.email && (
+                <p className="text-xs text-destructive font-medium pl-1">{fieldErrors.email}</p>
+              )}
             </div>
-            <div className="space-y-2">
+
+            {/* Password */}
+            <div className="space-y-1">
               <Label htmlFor="reg-password" className="font-bold">{t("password")}</Label>
               <div className="relative">
                 <Input
@@ -169,20 +220,27 @@ export default function Register() {
                   type={showPassword ? "text" : "password"}
                   placeholder={t("passwordPlaceholder")}
                   value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  onChange={(e) => { setPassword(e.target.value); clearFieldError("password"); }}
                   autoComplete="new-password"
-                  className="h-12 rounded-2xl pr-11"
+                  className={`h-12 rounded-2xl pr-11 ${fieldErrors.password ? "border-destructive focus-visible:ring-destructive" : ""}`}
+                  disabled={loading}
                   data-testid="input-register-password"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                  tabIndex={-1}
                 >
                   {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
               </div>
+              {fieldErrors.password && (
+                <p className="text-xs text-destructive font-medium pl-1">{fieldErrors.password}</p>
+              )}
             </div>
+
+            {/* Age confirmation */}
             <div
               className={`flex items-start gap-3 rounded-2xl border p-3 ${
                 ageError ? "border-destructive bg-destructive/5" : "border-border/50 bg-muted/40"
@@ -196,6 +254,7 @@ export default function Register() {
                   setAgeConfirmed(e.target.checked);
                   if (e.target.checked) setAgeError(false);
                 }}
+                disabled={loading}
                 className="mt-0.5 h-4 w-4 accent-primary shrink-0 cursor-pointer"
               />
               <label
@@ -212,18 +271,27 @@ export default function Register() {
                 {t("ageConfirmRequired")}
               </p>
             )}
+
             <p className="text-center text-xs text-muted-foreground -mt-1">
               <Link href="/terms" className="text-primary font-semibold hover:underline">
                 🛡️ {t("readSafetyGuide")}
               </Link>
             </p>
+
             <Button
               type="submit"
               className="w-full h-12 rounded-2xl text-base font-bold bg-gradient-to-r from-primary to-secondary"
               disabled={loading}
               data-testid="btn-register-submit"
             >
-              {loading ? t("creatingAccount") : t("createAccountBtn")}
+              {loading ? (
+                <span className="flex items-center gap-2">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  {t("creatingAccount")}
+                </span>
+              ) : (
+                t("createAccountBtn")
+              )}
             </Button>
           </form>
           <p className="text-center text-xs text-muted-foreground pt-1">
@@ -235,7 +303,6 @@ export default function Register() {
           </p>
         </div>
 
-        {/* Sign-in link */}
         <p className="text-center mt-6 text-sm text-muted-foreground">
           <Link href="/login">
             <span className="text-primary font-semibold cursor-pointer hover:underline">
