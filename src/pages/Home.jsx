@@ -6,6 +6,7 @@ import ListingCard from "@/components/ListingCard";
 import { api } from "@/lib/api";
 import { useAuth } from "@/hooks/useAuth";
 import { useTranslation } from "react-i18next";
+import LanguageSwitcher from "@/components/LanguageSwitcher";
 
 const CAT_MAP = { costume: "outfit", armor: "outfit", wig: "wig", prop: "prop", accessories: "prop" };
 
@@ -70,24 +71,29 @@ export default function Home() {
                 ქოსფლეი + მეორადი 💜
               </p>
             </div>
-            {user ? (
-              <Link href="/profile">
-                <motion.div
-                  whileTap={{ scale: 0.92 }}
-                  className="h-10 w-10 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center shadow-md cursor-pointer"
-                >
-                  <span className="text-white font-black text-base">
-                    {user.username?.charAt(0).toUpperCase()}
-                  </span>
-                </motion.div>
-              </Link>
-            ) : (
-              <Link href="/login">
-                <button className="px-4 py-2 rounded-xl bg-primary/10 text-primary text-sm font-bold hover:bg-primary/20 transition-colors">
-                  {t("signIn")}
-                </button>
-              </Link>
-            )}
+
+            {/* Right controls — language switcher + avatar/sign-in */}
+            <div className="flex items-center gap-3">
+              <LanguageSwitcher />
+              {user ? (
+                <Link href="/profile">
+                  <motion.div
+                    whileTap={{ scale: 0.92 }}
+                    className="h-11 w-11 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center shadow-md cursor-pointer shrink-0"
+                  >
+                    <span className="text-white font-black text-base">
+                      {user.username?.charAt(0).toUpperCase()}
+                    </span>
+                  </motion.div>
+                </Link>
+              ) : (
+                <Link href="/login">
+                  <button className="min-h-[44px] px-4 rounded-xl bg-primary/10 text-primary text-sm font-bold hover:bg-primary/20 transition-colors">
+                    {t("signIn")}
+                  </button>
+                </Link>
+              )}
+            </div>
           </div>
 
           {/* Search bar */}

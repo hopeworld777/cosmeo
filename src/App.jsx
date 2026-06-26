@@ -54,16 +54,20 @@ function OnboardingGuard() {
   return null;
 }
 
+// Routes where each page manages its own language switcher inline
+const OWN_LANG_ROUTES = ["/"];
+
 function AppShell() {
   const [location] = useLocation();
   const hideNav = NO_BOTTOM_NAV.some(r => location.startsWith(r));
+  const showFloatLang = !hideNav && !OWN_LANG_ROUTES.includes(location);
 
   return (
     <div className="flex justify-center bg-background min-h-[100dvh] w-full">
       <div className="flex h-[100dvh] w-full max-w-[430px] flex-col overflow-hidden bg-background relative border-x border-border/30 shadow-2xl">
         <OnboardingGuard />
-        {!hideNav && (
-          <div className="absolute top-3 right-3 z-[60]">
+        {showFloatLang && (
+          <div className="absolute top-3 right-3 z-[60] min-h-[44px] flex items-center">
             <LanguageSwitcher />
           </div>
         )}
