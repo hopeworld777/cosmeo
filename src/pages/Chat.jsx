@@ -1,4 +1,4 @@
-import { useParams, useLocation } from "wouter";
+import { useParams, useLocation, Link } from "wouter";
 import {
   ChevronLeft, Send, Loader2, ShieldCheck,
   Flag, AlertTriangle, X, CheckCircle2,
@@ -53,9 +53,16 @@ function SafetyBanner({ warnKey, onDismiss }) {
           className="mx-4 mb-2 rounded-2xl border border-amber-300 bg-amber-50 px-3 py-2.5 flex items-start gap-2.5 shadow-sm"
         >
           <AlertTriangle size={15} className="text-amber-500 shrink-0 mt-0.5" />
-          <p className="flex-1 text-[12.5px] leading-snug text-amber-800 font-medium">
-            {t(warnKey)}
-          </p>
+          <div className="flex-1 min-w-0">
+            <p className="text-[12.5px] leading-snug text-amber-800 font-medium">
+              {t(warnKey)}
+            </p>
+            <Link href="/terms">
+              <span className="text-[11.5px] font-bold text-amber-600 hover:text-amber-800 transition-colors underline underline-offset-2 mt-0.5 inline-block">
+                {t("chatSafetyLearnMore")} →
+              </span>
+            </Link>
+          </div>
           <button
             onClick={onDismiss}
             className="shrink-0 text-amber-400 hover:text-amber-600 transition-colors"

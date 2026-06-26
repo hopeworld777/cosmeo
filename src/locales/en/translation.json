@@ -328,5 +328,14 @@
   "tos_safety_s4_r2": "Bring a parent, guardian, or trusted adult to every meetup whenever possible.",
   "tos_safety_s4_r3": "Never agree to meet at a location chosen by the other party if it feels secluded or unfamiliar.",
   "tos_safety_s4_r4": "Never pay a deposit or transfer money before physically receiving the item.",
-  "tos_safety_s4_r5": "Keep all communication inside Kosmeo — do not share personal contact details with other users."
+  "tos_safety_s4_r5": "Keep all communication inside Kosmeo — do not share personal contact details with other users.",
+  "safetyGuideLabel": "Safety Guide",
+  "termsLabel": "Terms of Service",
+  "settingsLabel": "Settings",
+  "newToKosmeo": "New to Kosmeo? 🛡️",
+  "newToKosmeoDesc": "Learn how to trade safely and avoid common scams.",
+  "openSafetyGuide": "Open Safety Guide",
+  "readSafetyGuide": "Read our Safety Guide",
+  "chatSafetyLearnMore": "Learn more",
+  "safetyMeetReminder": "Meet in a public place."
 }

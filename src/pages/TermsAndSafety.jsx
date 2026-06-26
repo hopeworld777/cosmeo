@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useTranslation } from "react-i18next";
-import { useLocation } from "wouter";
+import { useLocation, useSearch } from "wouter";
 import {
   ArrowLeft,
   ShieldCheck,
@@ -94,7 +94,9 @@ function Hub({ city, place }) {
 export default function TermsAndSafety() {
   const { t } = useTranslation();
   const [, setLocation] = useLocation();
-  const [tab, setTab] = useState("safety");
+  const search = useSearch();
+  const initialTab = new URLSearchParams(search).get("tab") === "terms" ? "terms" : "safety";
+  const [tab, setTab] = useState(initialTab);
 
   return (
     <div className="min-h-screen bg-background">
