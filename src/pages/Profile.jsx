@@ -575,7 +575,7 @@ export default function Profile() {
     <div className="flex flex-col min-h-full bg-background pb-28">
 
       {/* Header */}
-      <div className="sticky top-0 z-30 bg-white/95 backdrop-blur-xl pt-12 pb-4 px-5 flex justify-between items-center border-b border-border/20">
+      <div className="sticky top-0 z-30 bg-white/95 backdrop-blur-xl pt-14 pb-4 px-5 flex justify-between items-center border-b border-border/20">
         <h1 className="text-3xl font-black text-foreground">{t("profile")}</h1>
         <button
           onClick={() => setLocation("/settings")}
@@ -790,7 +790,7 @@ export default function Profile() {
           className="w-full h-14 rounded-2xl border-none bg-red-50 text-red-500 hover:bg-red-100 hover:text-red-600 font-bold text-base card-shadow mt-1"
         >
           <LogOut className="h-5 w-5 mr-2.5" />
-          Log Out
+          {t("logout")}
         </Button>
       </div>
 

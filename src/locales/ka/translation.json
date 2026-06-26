@@ -117,5 +117,6 @@
   "passwordMismatch": "პაროლები არ ემთხვევა",
   "linkExpiredTitle": "ლინკი ვადაგასულია",
   "linkExpiredDesc": "ეს ლინკი არასწორია ან უკვე გამოყენებულია. მოითხოვეთ ახალი.",
-  "requestNewLink": "ახალი ლინკის მოთხოვნა"
+  "requestNewLink": "ახალი ლინკის მოთხოვნა",
+  "logout": "გამოსვლა"
 }

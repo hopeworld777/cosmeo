@@ -117,5 +117,6 @@
   "passwordMismatch": "Passwords don't match",
   "linkExpiredTitle": "Link expired",
   "linkExpiredDesc": "This reset link is invalid or has already been used. Request a new one.",
-  "requestNewLink": "Request New Link"
+  "requestNewLink": "Request New Link",
+  "logout": "Log Out"
 }
