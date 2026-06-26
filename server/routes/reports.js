@@ -131,11 +131,17 @@ router.patch("/admin/:id", requireAuth, async (req, res) => {
     );
 
     if (action === "warn_user" && r.reported_user_id) {
+      // Age policy note: if the warned account is confirmed to belong to a user
+      // under 16, escalate directly to suspension rather than issuing a warning.
+      // Repeat violations of the 16+ age policy may result in a permanent ban.
       await client.query(
         "UPDATE users SET warning_count = warning_count + 1 WHERE id = $1",
         [r.reported_user_id]
       );
     } else if (action === "ban_user" && r.reported_user_id) {
+      // Age policy note: accounts confirmed to belong to users under 16 must be
+      // suspended immediately. Permanent bans apply for repeat age-policy violations
+      // or for any account found sharing exploitative content involving minors.
       await client.query(
         "UPDATE users SET is_banned = true WHERE id = $1",
         [r.reported_user_id]

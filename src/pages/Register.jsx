@@ -24,6 +24,8 @@ export default function Register() {
   const [loading, setLoading] = useState(false);
   const [registered, setRegistered] = useState(false);
   const [resending, setResending] = useState(false);
+  const [ageConfirmed, setAgeConfirmed] = useState(false);
+  const [ageError, setAgeError] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -32,6 +34,11 @@ export default function Register() {
       toast({ title: "Password too short", description: "Must be at least 6 characters", variant: "destructive" });
       return;
     }
+    if (!ageConfirmed) {
+      setAgeError(true);
+      return;
+    }
+    setAgeError(false);
     setLoading(true);
     try {
       await register(username, email, password);
@@ -176,6 +183,35 @@ export default function Register() {
                 </button>
               </div>
             </div>
+            <div
+              className={`flex items-start gap-3 rounded-2xl border p-3 ${
+                ageError ? "border-destructive bg-destructive/5" : "border-border/50 bg-muted/40"
+              }`}
+            >
+              <input
+                id="age-confirm"
+                type="checkbox"
+                checked={ageConfirmed}
+                onChange={(e) => {
+                  setAgeConfirmed(e.target.checked);
+                  if (e.target.checked) setAgeError(false);
+                }}
+                className="mt-0.5 h-4 w-4 accent-primary shrink-0 cursor-pointer"
+              />
+              <label
+                htmlFor="age-confirm"
+                className={`text-xs leading-snug cursor-pointer select-none ${
+                  ageError ? "text-destructive font-medium" : "text-muted-foreground"
+                }`}
+              >
+                {t("ageConfirmCheckbox")}
+              </label>
+            </div>
+            {ageError && (
+              <p className="text-xs text-destructive text-center -mt-1 font-medium">
+                {t("ageConfirmRequired")}
+              </p>
+            )}
             <Button
               type="submit"
               className="w-full h-12 rounded-2xl text-base font-bold bg-gradient-to-r from-primary to-secondary"

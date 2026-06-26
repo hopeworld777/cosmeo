@@ -277,7 +277,7 @@
   "tos_t1_p1": "Kosmeo (\"Platform\") is a peer-to-peer marketplace built for the Georgian cosplay and gaming community. It is operated as a community service and does not act as a seller, buyer, broker, or auctioneer in any transaction.",
   "tos_t1_p2": "By registering an account or browsing the Platform you agree to these Terms of Service and our Safety Guidelines. If you do not agree, please do not use Kosmeo.",
   "tos_t2_title": "2. Eligibility & Accounts",
-  "tos_t2_r1": "You must be 16 years of age or older to register. Users under 18 should have a parent or guardian review these Terms.",
+  "tos_t2_r1": "Minimum age to register is 16 years old. Users aged 16–17 require explicit permission from a parent or legal guardian before creating an account.",
   "tos_t2_r2": "You are responsible for keeping your password secure. Any activity that occurs under your account is your responsibility.",
   "tos_t2_r3": "You agree to provide accurate information during registration and keep your profile up to date.",
   "tos_t2_r4": "Kosmeo may suspend or permanently ban accounts that violate these Terms, without prior notice, where circumstances require it.",
@@ -315,5 +315,15 @@
   "tos_t10_title": "10. Governing Law",
   "tos_t10_p1": "These Terms are governed by the laws of Georgia (საქართველო). Any disputes shall be subject to the exclusive jurisdiction of the courts of Tbilisi, Georgia.",
   "tos_t10_p2": "These Terms are provided in English and Georgian. In the event of any inconsistency, the Georgian-language version shall prevail.",
-  "tos_contactLine": "Questions about these Terms? Email us:"
+  "tos_contactLine": "Questions about these Terms? Email us:",
+  "ageConfirmCheckbox": "I confirm that I am at least 16 years old. If I am 16–17 years old, I have permission from my parent or legal guardian to use Kosmeo.",
+  "ageConfirmRequired": "You must confirm your age before creating an account.",
+  "tos_t2_r5": "By creating an account you confirm that you meet the minimum age requirement, and that a parent or legal guardian has given permission if you are aged 16–17.",
+  "tos_t4_r5": "Any content involving minors that is exploitative, abusive, or sexualized is strictly prohibited and will result in permanent account suspension.",
+  "tos_safety_s4_title": "Young Cosplayers (16–17)",
+  "tos_safety_s4_r1": "Meet only in busy, well-lit public places — never at a private residence.",
+  "tos_safety_s4_r2": "Bring a parent, guardian, or trusted adult to every meetup whenever possible.",
+  "tos_safety_s4_r3": "Never agree to meet at a location chosen by the other party if it feels secluded or unfamiliar.",
+  "tos_safety_s4_r4": "Never pay a deposit or transfer money before physically receiving the item.",
+  "tos_safety_s4_r5": "Keep all communication inside Kosmeo — do not share personal contact details with other users."
 }

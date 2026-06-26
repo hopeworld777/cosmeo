@@ -192,6 +192,16 @@ export default function TermsAndSafety() {
                 </div>
               </Section>
 
+              <Section icon={Users} titleKey="tos_safety_s4_title" accent="secondary">
+                <div className="space-y-2">
+                  <Rule n={1}>{t("tos_safety_s4_r1")}</Rule>
+                  <Rule n={2}>{t("tos_safety_s4_r2")}</Rule>
+                  <Rule n={3}>{t("tos_safety_s4_r3")}</Rule>
+                  <Rule n={4}>{t("tos_safety_s4_r4")}</Rule>
+                  <Rule n={5}>{t("tos_safety_s4_r5")}</Rule>
+                </div>
+              </Section>
+
               <div className="mb-3">
                 <p className="font-extrabold text-[13px] text-foreground/60 uppercase tracking-wider mb-2 px-1">
                   {t("tos_safety_tips_title")}
@@ -260,6 +270,7 @@ export default function TermsAndSafety() {
                   <Rule n={2}>{t("tos_t2_r2")}</Rule>
                   <Rule n={3}>{t("tos_t2_r3")}</Rule>
                   <Rule n={4}>{t("tos_t2_r4")}</Rule>
+                  <Rule n={5}>{t("tos_t2_r5")}</Rule>
                 </div>
               </Section>
 
@@ -279,6 +290,7 @@ export default function TermsAndSafety() {
                   <Rule n={2}>{t("tos_t4_r2")}</Rule>
                   <Rule n={3}>{t("tos_t4_r3")}</Rule>
                   <Rule n={4}>{t("tos_t4_r4")}</Rule>
+                  <Rule n={5}>{t("tos_t4_r5")}</Rule>
                 </div>
               </Section>
 
