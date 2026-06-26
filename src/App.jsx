@@ -1,5 +1,5 @@
 import { Switch, Route, useLocation, Link } from "wouter";
-import { useEffect } from "react";
+import { useEffect, useLayoutEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { Toaster } from "@/components/ui/toaster";
 import BottomNav from "@/components/BottomNav";
@@ -120,28 +120,29 @@ function DesktopNav() {
 function AppShell() {
   const [location] = useLocation();
   const hideNav = NO_BOTTOM_NAV.some(r => location.startsWith(r));
-  // On mobile only: show a floating lang switcher on non-home app pages
   const showMobileFloatLang = !hideNav && !OWN_LANG_ROUTES.includes(location);
-
-  // Auth/legal routes stay in the narrow phone frame on all screen sizes.
-  // App routes expand to full width on desktop.
   const isAuthRoute = hideNav;
+
+  // Always scroll the app container back to the top on every route change.
+  // useLayoutEffect fires synchronously before any child useEffect, so pages
+  // that want to restore their own scroll position (e.g. TermsAndSafety) can
+  // do so in their own useEffect and it will run *after* this reset.
+  const scrollRef = useRef(null);
+  useLayoutEffect(() => {
+    if (scrollRef.current) scrollRef.current.scrollTop = 0;
+  }, [location]);
 
   return (
     <div className="flex justify-center bg-background min-h-[100dvh] w-full">
-      {/* Desktop nav — only on app routes, hidden on auth/legal */}
       {!hideNav && <DesktopNav />}
 
       <div className={[
         "flex flex-col w-full relative bg-background",
-        // ── Mobile / auth: phone frame ──────────────────────────────────
         "max-w-[430px] h-[100dvh] overflow-hidden border-x border-border/30 shadow-2xl",
-        // ── Desktop app routes: remove frame, add top-nav spacing ────────
         !isAuthRoute && "md:max-w-none md:h-auto md:min-h-[100dvh] md:overflow-visible md:border-x-0 md:shadow-none md:pt-16",
       ].filter(Boolean).join(" ")}>
         <OnboardingGuard />
 
-        {/* Mobile-only floating lang switcher (non-home pages) */}
         {showMobileFloatLang && (
           <div className="md:hidden absolute top-3 right-3 z-[60] min-h-[44px] flex items-center">
             <LanguageSwitcher />
