@@ -71,7 +71,7 @@ export default function ItemDetail() {
   }
 
   if (error || !listing) {
-    return <div className="p-8 text-center text-foreground font-bold">Item not found</div>;
+    return <div className="p-8 text-center text-foreground font-bold">{t("itemNotFound")}</div>;
   }
 
   const handleLikeToggle = async () => {
@@ -242,7 +242,7 @@ export default function ItemDetail() {
             )}
             <span className="flex items-center gap-1.5">
               <Eye className="h-4 w-4 text-secondary" />
-              {listing.views || 0} viewed
+              {listing.views || 0} {t("viewedLabel")}
             </span>
           </div>
 
@@ -256,7 +256,7 @@ export default function ItemDetail() {
             )}
             {listing.is_for_rent && listing.rent_price && (
               <div className="flex flex-col ml-4 pl-4 border-l border-border">
-                <span className="text-xs font-bold text-muted-foreground uppercase tracking-wide">Rent/day</span>
+                <span className="text-xs font-bold text-muted-foreground uppercase tracking-wide">{t("rentDay")}</span>
                 <span className="text-2xl font-black text-secondary">{formatGEL(listing.rent_price)}</span>
               </div>
             )}
@@ -279,7 +279,7 @@ export default function ItemDetail() {
 
           {/* Seller Card */}
           <div className="mb-6 bg-gradient-to-br from-primary/5 to-secondary/5 p-5 rounded-3xl border border-border/40">
-            <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-3">Seller</p>
+            <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-3">{t("seller")}</p>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-4">
                 <Avatar className="h-14 w-14 border-2 border-primary/20">
@@ -291,7 +291,7 @@ export default function ItemDetail() {
                   <div className="flex items-center gap-1.5 text-sm font-bold text-muted-foreground mt-1">
                     <Star className="h-4 w-4 fill-amber-400 text-amber-400" />
                     <span className="text-foreground">{listing.seller_rating ? Number(listing.seller_rating).toFixed(1) : "New"}</span>
-                    <span>({listing.seller_review_count || 0} reviews)</span>
+                    <span>({listing.seller_review_count || 0} {t("reviewsLabel")})</span>
                   </div>
                 </div>
               </div>
@@ -300,7 +300,6 @@ export default function ItemDetail() {
               </div>
             </div>
 
-            {/* Chat CTA inside seller card */}
             {(!user || listing.seller_id !== user.id) && (
               <motion.button
                 whileTap={{ scale: 0.96 }}
@@ -317,13 +316,13 @@ export default function ItemDetail() {
           <div className="grid grid-cols-2 gap-4">
             {listing.size && (
               <div className="bg-muted/50 p-5 rounded-3xl">
-                <p className="text-sm text-muted-foreground font-bold mb-1">Size</p>
+                <p className="text-sm text-muted-foreground font-bold mb-1">{t("size")}</p>
                 <p className="font-extrabold text-lg text-foreground">{listing.size}</p>
               </div>
             )}
             {listing.category && (
               <div className="bg-muted/50 p-5 rounded-3xl">
-                <p className="text-sm text-muted-foreground font-bold mb-1">Category</p>
+                <p className="text-sm text-muted-foreground font-bold mb-1">{t("category")}</p>
                 <p className="font-extrabold text-lg text-foreground capitalize">{listing.category}</p>
               </div>
             )}
@@ -340,7 +339,7 @@ export default function ItemDetail() {
             onClick={() => handleAction("rent")}
           >
             <div className="flex flex-col items-center">
-              <span className="text-xs font-bold opacity-80 uppercase tracking-wide">Rent</span>
+              <span className="text-xs font-bold opacity-80 uppercase tracking-wide">{t("rentDay")}</span>
               <span className="font-black text-lg">{formatGEL(listing.rent_price)}<span className="text-xs font-bold opacity-70">/d</span></span>
             </div>
           </Button>
@@ -350,7 +349,7 @@ export default function ItemDetail() {
             className="flex-[2] h-16 rounded-2xl bg-gradient-to-r from-primary to-secondary text-white font-black text-xl shadow-[0_8px_20px_rgba(139,92,246,0.3)] hover:opacity-90 transition-opacity"
             onClick={() => handleAction("buy")}
           >
-            Buy for {formatGEL(listing.price)}
+            {t("buyFor")} {formatGEL(listing.price)}
           </Button>
         )}
       </div>
@@ -359,7 +358,6 @@ export default function ItemDetail() {
       <AnimatePresence>
         {chatOpen && (
           <>
-            {/* Backdrop */}
             <motion.div
               key="backdrop"
               initial={{ opacity: 0 }}
@@ -369,7 +367,6 @@ export default function ItemDetail() {
               className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50"
             />
 
-            {/* Chat Panel */}
             <motion.div
               key="panel"
               initial={{ y: "100%" }}
@@ -379,12 +376,10 @@ export default function ItemDetail() {
               className="fixed bottom-0 left-0 right-0 max-w-[430px] mx-auto z-50 bg-white rounded-t-[2rem] shadow-2xl flex flex-col"
               style={{ maxHeight: "75vh" }}
             >
-              {/* Handle */}
               <div className="flex justify-center pt-3 pb-1">
                 <div className="w-10 h-1.5 rounded-full bg-muted-foreground/20" />
               </div>
 
-              {/* Header */}
               <div className="flex items-center justify-between px-5 py-3 border-b border-border/30">
                 <div className="flex items-center gap-3">
                   <Avatar className="h-10 w-10 border border-primary/20">
@@ -404,7 +399,6 @@ export default function ItemDetail() {
                 </button>
               </div>
 
-              {/* Messages */}
               <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3 min-h-[120px]">
                 {chatLoading ? (
                   <div className="flex justify-center py-6">
@@ -441,7 +435,6 @@ export default function ItemDetail() {
                 <div ref={chatEndRef} />
               </div>
 
-              {/* Input */}
               <div className="px-4 pb-6 pt-3 border-t border-border/20">
                 <div className="flex items-center gap-2 bg-muted rounded-2xl px-4 py-2">
                   <input

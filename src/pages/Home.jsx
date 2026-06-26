@@ -7,10 +7,8 @@ import { api } from "@/lib/api";
 import { useAuth } from "@/hooks/useAuth";
 import { useTranslation } from "react-i18next";
 
-// Map DB category slugs → category ids
 const CAT_MAP = { costume: "outfit", armor: "outfit", wig: "wig", prop: "prop", accessories: "prop" };
 
-// ─── Georgian seed items (shown immediately, no API wait) ─────────────────────
 const SEED_ITEMS = [
   {
     id: "g1",
@@ -66,7 +64,6 @@ export default function Home() {
   const [query, setQuery] = useState("");
   const [apiItems, setApiItems] = useState([]);
 
-  // ─── Categories defined inside component so t() is available ─────────────
   const CATEGORIES = [
     { id: "all",      emoji: "✨", tKey: "all"       },
     { id: "outfit",   emoji: "👗", tKey: "outfits"   },
@@ -76,7 +73,6 @@ export default function Home() {
     { id: "crafting", emoji: "🧵", tKey: "materials" },
   ];
 
-  // Fetch real listings from the API in background
   useEffect(() => {
     api.listings.list({ limit: 20 })
       .then(data => {
@@ -90,7 +86,6 @@ export default function Home() {
       .catch(() => {});
   }, []);
 
-  // Merge seed + API, deduplicate by id, then filter
   const filtered = useMemo(() => {
     const all = [
       ...SEED_ITEMS,
@@ -138,7 +133,7 @@ export default function Home() {
             ) : (
               <Link href="/login">
                 <button className="px-4 py-2 rounded-xl bg-primary/10 text-primary text-sm font-bold hover:bg-primary/20 transition-colors">
-                  Sign in
+                  {t("signIn")}
                 </button>
               </Link>
             )}
@@ -149,7 +144,7 @@ export default function Home() {
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-primary pointer-events-none" />
             <input
               type="text"
-              placeholder="ძიება… costumes, wigs, props"
+              placeholder={t("searchBrowsePlaceholder")}
               value={query}
               onChange={e => setQuery(e.target.value)}
               className="w-full h-13 pl-12 pr-10 py-3.5 rounded-2xl bg-muted text-base font-medium placeholder:text-muted-foreground/60 border-none outline-none focus:ring-2 focus:ring-primary/25 transition-shadow"
@@ -171,7 +166,7 @@ export default function Home() {
           </div>
         </div>
 
-        {/* ── Categories label + bubbles ────────────────────────────── */}
+        {/* ── Categories label + bubbles ─────────────────────────── */}
         <div className="px-5 pt-1 pb-1">
           <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">
             {t("categories")}
@@ -200,16 +195,15 @@ export default function Home() {
         </div>
       </div>
 
-      {/* ── Results grid ─────────────────────────────────────────────── */}
+      {/* ── Results grid ──────────────────────────────────────────── */}
       <div className="flex-1 px-4 pt-5 pb-8">
-        {/* Section header */}
         <div className="flex items-center justify-between mb-4 px-1">
           <p className="text-lg font-black text-foreground tracking-tight">
             {t("freshDrops")} ✨
           </p>
           <p className="text-sm font-bold text-muted-foreground">
             <span className="text-foreground">{filtered.length}</span>{" "}
-            {filtered.length === 1 ? "item" : "items"}
+            {filtered.length === 1 ? t("item") : t("items")}
             {activeCategory !== "all" && activeCat && (
               <span className="text-muted-foreground"> · {t(activeCat.tKey)}</span>
             )}
@@ -226,15 +220,15 @@ export default function Home() {
               className="flex flex-col items-center justify-center py-24 text-center"
             >
               <span className="text-5xl mb-4">🔍</span>
-              <p className="text-lg font-bold text-foreground mb-1">No items found</p>
+              <p className="text-lg font-bold text-foreground mb-1">{t("noItemsFound")}</p>
               <p className="text-sm text-muted-foreground">
-                Try a different category or search term
+                {t("tryDifferentSearch")}
               </p>
               <button
                 onClick={() => { setQuery(""); setActiveCategory("all"); }}
                 className="mt-5 px-5 py-2.5 rounded-xl bg-primary/10 text-primary text-sm font-bold hover:bg-primary/20 transition-colors"
               >
-                Clear filters
+                {t("clearFilters")}
               </button>
             </motion.div>
           ) : (

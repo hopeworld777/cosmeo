@@ -3,7 +3,8 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { motion, AnimatePresence } from "framer-motion";
-import { Camera, CheckCircle2, ArrowLeft, ArrowRight, X, Sparkles, MapPin, Search, ChevronDown } from "lucide-react";
+import { Camera, CheckCircle2, ArrowLeft, ArrowRight, X, Sparkles } from "lucide-react";
+import CityPicker from "@/components/CityPicker";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
@@ -11,17 +12,6 @@ import { useLocation } from "wouter";
 import { api } from "@/lib/api";
 import { useAuth } from "@/hooks/useAuth";
 import { useTranslation } from "react-i18next";
-
-// ── City data ──────────────────────────────────────────────────────────────────
-const CITIES = [
-  { key: "city_tbilisi", en: "Tbilisi",  flag: "🏙️" },
-  { key: "city_batumi",  en: "Batumi",   flag: "🌊" },
-  { key: "city_kutaisi", en: "Kutaisi",  flag: "🏛️" },
-  { key: "city_rustavi", en: "Rustavi",  flag: "🏗️" },
-  { key: "city_zugdidi", en: "Zugdidi",  flag: "🌿" },
-  { key: "city_poti",    en: "Poti",     flag: "⚓" },
-  { key: "city_gori",    en: "Gori",     flag: "🏔️" },
-];
 
 // ── Category config ────────────────────────────────────────────────────────────
 const CATEGORIES = [
@@ -53,115 +43,6 @@ const slide = {
   center: { x: 0, opacity: 1, transition: { duration: 0.22, ease: "easeOut" } },
   exit:   (dir) => ({ x: dir < 0 ? 50 : -50, opacity: 0, transition: { duration: 0.16, ease: "easeIn" } }),
 };
-
-// ── City Picker ────────────────────────────────────────────────────────────────
-function CityPicker({ value, onChange }) {
-  const { t } = useTranslation();
-  const [open, setOpen] = useState(false);
-  const [query, setQuery] = useState("");
-
-  const filtered = CITIES.filter(c =>
-    t(c.key).toLowerCase().includes(query.toLowerCase()) ||
-    c.en.toLowerCase().includes(query.toLowerCase())
-  );
-
-  const selected = CITIES.find(c => c.en === value);
-
-  function pick(city) {
-    onChange(city.en);
-    setOpen(false);
-    setQuery("");
-  }
-
-  return (
-    <div className="relative">
-      {/* Trigger button */}
-      <button
-        type="button"
-        onClick={() => setOpen(v => !v)}
-        className={`w-full h-12 rounded-xl bg-muted border-none px-4 flex items-center justify-between text-sm font-medium transition-all ${
-          open ? "ring-2 ring-primary/30" : ""
-        }`}
-      >
-        <span className="flex items-center gap-2.5">
-          <MapPin className={`h-4 w-4 shrink-0 ${selected ? "text-primary" : "text-muted-foreground/50"}`} />
-          {selected ? (
-            <span className="text-foreground font-bold">
-              {selected.flag} {t(selected.key)}
-            </span>
-          ) : (
-            <span className="text-muted-foreground/60">Select your city…</span>
-          )}
-        </span>
-        <motion.div animate={{ rotate: open ? 180 : 0 }} transition={{ duration: 0.2 }}>
-          <ChevronDown className="h-4 w-4 text-muted-foreground" />
-        </motion.div>
-      </button>
-
-      {/* Dropdown */}
-      <AnimatePresence>
-        {open && (
-          <motion.div
-            initial={{ opacity: 0, y: -6, scale: 0.98 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -6, scale: 0.98 }}
-            transition={{ duration: 0.15, ease: "easeOut" }}
-            className="absolute left-0 right-0 top-[calc(100%+6px)] z-50 bg-white rounded-2xl shadow-[0_8px_32px_rgba(0,0,0,0.12)] border border-border/30 overflow-hidden"
-          >
-            {/* Search */}
-            <div className="px-3 pt-3 pb-2">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground/60" />
-                <input
-                  autoFocus
-                  type="text"
-                  value={query}
-                  onChange={e => setQuery(e.target.value)}
-                  placeholder="Search cities…"
-                  className="w-full h-9 pl-8 pr-3 rounded-xl bg-muted text-sm font-medium outline-none placeholder:text-muted-foreground/50"
-                />
-              </div>
-            </div>
-
-            {/* City list */}
-            <div className="max-h-52 overflow-y-auto no-scrollbar pb-2">
-              {filtered.length === 0 ? (
-                <p className="text-center text-xs text-muted-foreground py-4 font-medium">No cities found</p>
-              ) : (
-                filtered.map(city => {
-                  const isActive = city.en === value;
-                  return (
-                    <button
-                      key={city.key}
-                      type="button"
-                      onClick={() => pick(city)}
-                      className={`w-full flex items-center gap-3 px-4 py-3 text-left transition-colors ${
-                        isActive
-                          ? "bg-primary/8 text-primary"
-                          : "hover:bg-muted/60 text-foreground"
-                      }`}
-                    >
-                      <span className="text-lg leading-none">{city.flag}</span>
-                      <div className="flex-1 min-w-0">
-                        <p className={`text-sm font-bold leading-tight ${isActive ? "text-primary" : "text-foreground"}`}>
-                          {t(city.key)}
-                        </p>
-                        <p className="text-[11px] text-muted-foreground font-medium">{city.en}</p>
-                      </div>
-                      {isActive && (
-                        <span className="text-xs font-black text-primary">✓</span>
-                      )}
-                    </button>
-                  );
-                })
-              )}
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </div>
-  );
-}
 
 // ── Main Sell page ─────────────────────────────────────────────────────────────
 export default function Sell() {

@@ -364,6 +364,7 @@ function ReviewModal({ listing, onClose, onSubmitted }) {
 
 // ── My Listings Panel ──────────────────────────────────────────────────────────
 function MyListings({ onSold }) {
+  const { t } = useTranslation();
   const [listings, setListings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [reviewListing, setReviewListing] = useState(null);
@@ -418,13 +419,13 @@ function MyListings({ onSold }) {
         <div className="h-16 w-16 rounded-3xl bg-primary/10 flex items-center justify-center mb-3">
           <Package className="h-7 w-7 text-primary" />
         </div>
-        <p className="font-extrabold text-foreground mb-1">No listings yet</p>
-        <p className="text-sm text-muted-foreground mb-4">Start selling your cosplay items!</p>
+        <p className="font-extrabold text-foreground mb-1">{t("noListingsYet")}</p>
+        <p className="text-sm text-muted-foreground mb-4">{t("startSelling")}</p>
         <button
           onClick={() => setLocation("/sell")}
           className="px-6 py-3 rounded-2xl bg-gradient-to-r from-primary to-secondary text-white font-bold text-sm shadow-md hover:opacity-90 transition-opacity"
         >
-          + Create Listing
+          {t("createListing")}
         </button>
       </div>
     );
@@ -550,19 +551,19 @@ export default function Profile() {
 
   const menuItems = [
     {
-      title: "Wishlist",
+      title: t("wishlistLabel"),
       icon: Heart,
       color: "bg-secondary/10 text-secondary",
       href: "/wishlist",
     },
     {
-      title: "Purchases & Rentals",
+      title: t("purchasesRentals"),
       icon: ShoppingBag,
       color: "bg-amber-100 text-amber-600",
       href: null,
     },
     {
-      title: "Reviews",
+      title: t("reviewsCount"),
       icon: Star,
       count: user.review_count || null,
       color: "bg-yellow-100 text-yellow-600",
@@ -575,7 +576,7 @@ export default function Profile() {
 
       {/* Header */}
       <div className="sticky top-0 z-30 bg-white/95 backdrop-blur-xl pt-12 pb-4 px-5 flex justify-between items-center border-b border-border/20">
-        <h1 className="text-3xl font-black text-foreground">Profile</h1>
+        <h1 className="text-3xl font-black text-foreground">{t("profile")}</h1>
         <button
           onClick={() => setLocation("/settings")}
           className="h-11 w-11 rounded-full bg-muted flex items-center justify-center hover:bg-muted/70 transition-colors"
@@ -611,9 +612,9 @@ export default function Profile() {
             {/* Stats */}
             <div className="flex w-full justify-around mt-5 pt-5 border-t border-border/30">
               {[
-                { label: "Rating", value: user.rating ? Number(user.rating).toFixed(1) : "New" },
-                { label: "Sales", value: user.sales_count || 0 },
-                { label: "Reviews", value: user.review_count || 0 },
+                { label: t("rating"), value: user.rating ? Number(user.rating).toFixed(1) : "New" },
+                { label: t("salesLabel"), value: user.sales_count || 0 },
+                { label: t("reviewsCount"), value: user.review_count || 0 },
               ].map((stat, i) => (
                 <div key={i} className="flex flex-col items-center">
                   <span className="text-xl font-black text-foreground">{stat.value}</span>
@@ -632,7 +633,7 @@ export default function Profile() {
           className="w-full h-12 rounded-2xl border-2 border-primary/30 text-primary font-bold text-sm hover:bg-primary/5 transition-colors flex items-center justify-center gap-2"
         >
           <Settings className="h-4 w-4" />
-          Edit Profile & Settings
+          {t("editProfileSettings")}
         </button>
 
         {/* ── Wallet Card ──────────────────────────────────────────────── */}
@@ -712,7 +713,7 @@ export default function Profile() {
               <div className="h-11 w-11 rounded-2xl bg-primary/10 flex items-center justify-center">
                 <Package className="h-5 w-5 text-primary" />
               </div>
-              <span className="font-extrabold text-base text-foreground">My Listings</span>
+              <span className="font-extrabold text-base text-foreground">{t("myListings")}</span>
             </div>
             <div className="flex items-center gap-2">
               <button
