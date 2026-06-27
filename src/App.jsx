@@ -27,7 +27,7 @@ import LanguageSwitcher from "@/components/LanguageSwitcher";
 const AUTH_ROUTES = ["/login", "/register", "/onboarding", "/forgot-password", "/reset-password", "/verify-email"];
 
 // Routes that additionally hide the bottom tab bar (but NOT the desktop nav)
-const HIDE_BOTTOM_NAV_EXTRA = ["/chat/", "/terms"];
+const HIDE_BOTTOM_NAV_EXTRA = ["/chat/", "/terms", "/item/"];
 
 // Routes where the page renders its own LanguageSwitcher — suppress the
 // floating mobile one to avoid duplication.  Prefix-matched for /settings/*.
