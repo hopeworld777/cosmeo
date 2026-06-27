@@ -1,7 +1,7 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { ChevronLeft, MapPin, Check, Camera } from "lucide-react";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
@@ -18,6 +18,33 @@ const GEO_CITIES = [
   "Tbilisi", "Kutaisi", "Batumi", "Rustavi",
   "Gori", "Zugdidi", "Poti", "Akhaltsikhe",
 ];
+
+function getScrollEl() {
+  if (typeof window === "undefined") return null;
+  if (window.matchMedia("(min-width: 768px)").matches) return window;
+  return document.querySelector("[data-scroll-container]") || window;
+}
+function getScrollTop() {
+  const el = getScrollEl();
+  if (!el) return 0;
+  return el === window ? window.scrollY : el.scrollTop;
+}
+function restoreScrollTop(top) {
+  const el = getScrollEl();
+  if (!el) return;
+  if (el === window) window.scrollTo({ top, behavior: "instant" });
+  else el.scrollTop = top;
+}
+
+let _savedScrollTop = 0;
+let _scrollSaved = false;
+let _goingToSubpage = false;
+
+function markSubpageNav() {
+  _savedScrollTop = getScrollTop();
+  _scrollSaved = true;
+  _goingToSubpage = true;
+}
 
 export default function Settings() {
   const { user, setUser } = useAuth();
@@ -52,6 +79,19 @@ export default function Settings() {
   });
 
   const bioValue = watch("bio") || "";
+
+  useEffect(() => {
+    if (_scrollSaved) {
+      restoreScrollTop(_savedScrollTop);
+    }
+    return () => {
+      if (_goingToSubpage) {
+        _goingToSubpage = false;
+      } else {
+        _scrollSaved = false;
+      }
+    };
+  }, []);
 
   if (!user) return null;
 
@@ -282,7 +322,11 @@ export default function Settings() {
           </p>
         )}
 
-        <Link href="/terms" className="text-xs text-muted-foreground underline mt-4 block text-center">
+        <Link
+          href="/terms"
+          onClick={markSubpageNav}
+          className="text-xs text-muted-foreground underline mt-4 block text-center"
+        >
           {t("tos_pageTitle")}
         </Link>
 
