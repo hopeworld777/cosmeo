@@ -19,6 +19,7 @@ import VerifyEmail from "@/pages/VerifyEmail";
 import Settings from "@/pages/Settings";
 import Chat from "@/pages/Chat";
 import TermsAndSafety from "@/pages/TermsAndSafety";
+import Admin from "@/pages/Admin";
 import { AuthProvider } from "@/context/AuthContext";
 import { useAuth } from "@/hooks/useAuth";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
@@ -27,12 +28,12 @@ import LanguageSwitcher from "@/components/LanguageSwitcher";
 const AUTH_ROUTES = ["/login", "/register", "/onboarding", "/forgot-password", "/reset-password", "/verify-email"];
 
 // Routes that additionally hide the bottom tab bar (but NOT the desktop nav)
-const HIDE_BOTTOM_NAV_EXTRA = ["/chat/", "/terms", "/item/"];
+const HIDE_BOTTOM_NAV_EXTRA = ["/chat/", "/terms", "/item/", "/admin"];
 
 // Routes where the page renders its own LanguageSwitcher — suppress the
 // floating mobile one to avoid duplication.  Prefix-matched for /settings/*.
 // /chat is also listed here so the floating switcher is never shown inside chat.
-const OWN_LANG_ROUTES = ["/", "/sell", "/browse", "/messages", "/profile", "/wishlist", "/settings", "/terms", "/item", "/chat"];
+const OWN_LANG_ROUTES = ["/", "/sell", "/browse", "/messages", "/profile", "/wishlist", "/settings", "/terms", "/item", "/chat", "/admin"];
 
 function ownsLangSwitcher(location) {
   return OWN_LANG_ROUTES.some((r) => {
@@ -51,6 +52,21 @@ function ProtectedRoute({ component: Component, ...rest }) {
 
   if (loading) return null;
   if (!user) return null;
+  return <Component {...rest} />;
+}
+
+function AdminRoute({ component: Component, ...rest }) {
+  const { user, loading } = useAuth();
+  const [, setLocation] = useLocation();
+
+  useEffect(() => {
+    if (loading) return;
+    if (!user) setLocation("/login");
+    else if (!user.is_admin) setLocation("/");
+  }, [loading, user]);
+
+  if (loading) return null;
+  if (!user || !user.is_admin) return null;
   return <Component {...rest} />;
 }
 
@@ -196,6 +212,7 @@ function AppShell() {
             <Route path="/profile"><ProtectedRoute component={Profile} /></Route>
             <Route path="/wishlist"><ProtectedRoute component={Wishlist} /></Route>
             <Route path="/terms" component={TermsAndSafety} />
+            <Route path="/admin"><AdminRoute component={Admin} /></Route>
             <Route>
               <div className="flex h-full items-center justify-center p-8 text-center text-muted-foreground">
                 404 - Lost in the multiverse

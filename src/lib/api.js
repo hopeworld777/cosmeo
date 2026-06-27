@@ -122,6 +122,22 @@ export const api = {
     },
   },
 
+  admin: {
+    reports: (params = {}) => {
+      const qs = new URLSearchParams(
+        Object.entries(params).filter(([, v]) => v != null && v !== "")
+      ).toString();
+      return request(`/admin/reports${qs ? `?${qs}` : ""}`);
+    },
+    reportReasons: () => request("/admin/reports/reasons"),
+    updateReport: (id, body) =>
+      request(`/admin/reports/${id}`, { method: "PATCH", body: JSON.stringify(body) }),
+    warnUser:    (id) => request(`/admin/users/${id}/warn`,    { method: "POST" }),
+    suspendUser: (id) => request(`/admin/users/${id}/suspend`, { method: "POST" }),
+    banUser:     (id) => request(`/admin/users/${id}/ban`,     { method: "POST" }),
+    unbanUser:   (id) => request(`/admin/users/${id}/unban`,   { method: "POST" }),
+  },
+
   upload: {
     single: async (file) => {
       const formData = new FormData();
