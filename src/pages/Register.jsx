@@ -30,29 +30,31 @@ export default function Register() {
   const [resending, setResending] = useState(false);
   const [ageConfirmed, setAgeConfirmed] = useState(false);
   const [ageError, setAgeError] = useState(false);
-  const [fieldErrors, setFieldErrors] = useState({ username: "", email: "", password: "" });
+  const [fieldErrors, setFieldErrors] = useState({ username: "", email: "", password: "", general: "" });
+  const [emailTaken, setEmailTaken] = useState(false);
 
   function clearFieldError(field) {
     setFieldErrors((prev) => ({ ...prev, [field]: "" }));
+    if (field === "email") setEmailTaken(false);
   }
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Client-side field validation — never fail silently
-    const errors = { username: "", email: "", password: "" };
+    // Client-side field validation
+    const errors = { username: "", email: "", password: "", general: "" };
     if (!username.trim()) {
-      errors.username = t("usernameRequired") || "Username is required";
+      errors.username = "Username is required";
     }
     if (!email.trim()) {
-      errors.email = t("emailRequired") || "Email is required";
+      errors.email = "Email is required";
     } else if (!isValidEmail(email)) {
-      errors.email = t("emailInvalid") || "Enter a valid email address";
+      errors.email = "Enter a valid email address";
     }
     if (!password) {
-      errors.password = t("passwordRequired") || "Password is required";
+      errors.password = "Password is required";
     } else if (password.length < 6) {
-      errors.password = t("passwordTooShort") || "Password must be at least 6 characters";
+      errors.password = "Password must be at least 6 characters";
     }
 
     const hasErrors = errors.username || errors.email || errors.password;
@@ -66,7 +68,8 @@ export default function Register() {
       return;
     }
 
-    setFieldErrors({ username: "", email: "", password: "" });
+    setFieldErrors({ username: "", email: "", password: "", general: "" });
+    setEmailTaken(false);
     setAgeError(false);
     setLoading(true);
 
@@ -74,19 +77,30 @@ export default function Register() {
       await register(username.trim(), email.trim(), password);
       setRegistered(true);
     } catch (err) {
-      // Friendlify network errors
       const raw = err.message || "";
-      let description = raw;
-      if (raw.toLowerCase().includes("failed to fetch") || raw.toLowerCase().includes("networkerror")) {
-        description = t("networkError") || "Could not reach the server. Check your connection and try again.";
-      } else if (raw.toLowerCase().includes("already in use") || raw.toLowerCase().includes("already registered")) {
-        description = t("emailAlreadyInUse") || "That email or username is already registered. Try logging in.";
+
+      if (raw === "email_taken") {
+        setEmailTaken(true);
+        setFieldErrors((prev) => ({
+          ...prev,
+          email: "An account with this email already exists.",
+        }));
+      } else if (raw === "username_taken") {
+        setFieldErrors((prev) => ({
+          ...prev,
+          username: "This username is already taken.",
+        }));
+      } else if (raw.toLowerCase().includes("failed to fetch") || raw.toLowerCase().includes("networkerror")) {
+        setFieldErrors((prev) => ({
+          ...prev,
+          general: "Could not reach the server. Check your connection and try again.",
+        }));
+      } else {
+        setFieldErrors((prev) => ({
+          ...prev,
+          general: raw || "Something went wrong. Please try again.",
+        }));
       }
-      toast({
-        title: t("registrationFailed") || "Registration failed",
-        description,
-        variant: "destructive",
-      });
     } finally {
       setLoading(false);
     }
@@ -207,7 +221,16 @@ export default function Register() {
                 data-testid="input-register-email"
               />
               {fieldErrors.email && (
-                <p className="text-xs text-destructive font-medium pl-1">{fieldErrors.email}</p>
+                <div className="pl-1">
+                  <p className="text-xs text-destructive font-medium">{fieldErrors.email}</p>
+                  {emailTaken && (
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      <Link href="/login" className="text-primary font-semibold hover:underline">
+                        Log in instead →
+                      </Link>
+                    </p>
+                  )}
+                </div>
               )}
             </div>
 
@@ -277,6 +300,12 @@ export default function Register() {
                 🛡️ {t("readSafetyGuide")}
               </Link>
             </p>
+
+            {fieldErrors.general && (
+              <div className="rounded-2xl bg-destructive/10 border border-destructive/20 px-4 py-3">
+                <p className="text-xs text-destructive font-medium">{fieldErrors.general}</p>
+              </div>
+            )}
 
             <Button
               type="submit"

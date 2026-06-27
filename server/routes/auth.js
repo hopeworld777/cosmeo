@@ -31,12 +31,19 @@ router.post("/register", async (req, res) => {
     return res.status(400).json({ error: "Password must be at least 6 characters" });
   }
   try {
-    const existing = await pool.query(
-      "SELECT id FROM users WHERE email = $1 OR username = $2",
-      [email.toLowerCase(), username]
+    const emailCheck = await pool.query(
+      "SELECT id FROM users WHERE email = $1",
+      [email.toLowerCase()]
     );
-    if (existing.rows.length > 0) {
-      return res.status(409).json({ error: "Email or username already in use" });
+    if (emailCheck.rows.length > 0) {
+      return res.status(409).json({ error: "email_taken" });
+    }
+    const usernameCheck = await pool.query(
+      "SELECT id FROM users WHERE username = $1",
+      [username]
+    );
+    if (usernameCheck.rows.length > 0) {
+      return res.status(409).json({ error: "username_taken" });
     }
     const hashedPassword = await bcrypt.hash(password, 12);
     const result = await pool.query(
