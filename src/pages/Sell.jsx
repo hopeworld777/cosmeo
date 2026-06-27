@@ -3,7 +3,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { motion, AnimatePresence } from "framer-motion";
-import { Camera, CheckCircle2, ChevronLeft, ArrowRight, X, Sparkles } from "lucide-react";
+import { Camera, CheckCircle2, ChevronLeft, ArrowRight, X, Sparkles, MailCheck, RefreshCw } from "lucide-react";
 import CityPicker from "@/components/CityPicker";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -39,10 +39,147 @@ const slide = {
 };
 
 export default function Sell() {
-  const { user } = useAuth();
+  const { user, setUser } = useAuth();
   const { toast } = useToast();
   const [, setLocation] = useLocation();
   const { t } = useTranslation();
+
+  // ── Email verification gate ───────────────────────────────────────────────
+  const [resending, setResending]   = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const handleResend = async () => {
+    setResending(true);
+    try {
+      await api.auth.resendVerification();
+      toast({
+        title: t("verificationEmailSent") || "Verification email sent",
+        description: t("checkYourInbox") || "Check your inbox and click the link.",
+      });
+    } catch (err) {
+      toast({ title: t("error") || "Error", description: err.message, variant: "destructive" });
+    } finally {
+      setResending(false);
+    }
+  };
+
+  const handleRefreshStatus = async () => {
+    setRefreshing(true);
+    try {
+      const me = await api.auth.me();
+      setUser(me);
+      if (me.email_verified) {
+        toast({ title: t("emailVerified") || "Email verified!", description: t("youCanNowList") || "You can now create listings." });
+      } else {
+        toast({ title: t("notYetVerified") || "Not yet verified", description: t("checkInboxAndRefresh") || "Please click the link in your email first.", variant: "destructive" });
+      }
+    } catch (err) {
+      toast({ title: t("error") || "Error", description: err.message, variant: "destructive" });
+    } finally {
+      setRefreshing(false);
+    }
+  };
+
+  if (user && !user.email_verified) {
+    return (
+      <div className="flex flex-col h-full bg-background">
+        {/* Header */}
+        <div className="sticky top-0 z-30 bg-white/95 backdrop-blur-xl pt-11 pb-4 px-5 border-b border-border/20">
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => { window.history.length > 1 ? window.history.back() : setLocation("/"); }}
+              className="h-11 w-11 rounded-full bg-muted flex items-center justify-center shrink-0 hover:bg-muted/70 transition-colors"
+              data-testid="button-go-back"
+            >
+              <ChevronLeft className="h-5 w-5 text-foreground" />
+            </button>
+            <h1 className="text-xl font-black text-foreground leading-tight">{t("listAnItem")}</h1>
+          </div>
+        </div>
+
+        {/* Gate content */}
+        <div className="flex-1 overflow-y-auto flex items-center justify-center p-6">
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3 }}
+            className="w-full max-w-sm flex flex-col items-center text-center gap-5"
+          >
+            {/* Icon */}
+            <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center">
+              <MailCheck className="w-9 h-9 text-primary" />
+            </div>
+
+            {/* Copy */}
+            <div className="flex flex-col gap-2">
+              <h2 className="text-[22px] font-black text-foreground leading-tight">
+                {t("verifyEmailTitle") || "Verify your email first"}
+              </h2>
+              <p className="text-[14px] text-muted-foreground leading-relaxed">
+                {t("verifyEmailBody") ||
+                  "Please verify your email before listing items on Kosmeo. Email verification helps protect buyers and sellers from spam and fraudulent accounts."}
+              </p>
+              <p className="text-[12.5px] text-muted-foreground/70 font-medium">
+                {t("verifyEmailSentTo") || "A verification link was sent to"}{" "}
+                <span className="font-bold text-foreground">{user?.email}</span>
+              </p>
+            </div>
+
+            {/* Actions */}
+            <div className="w-full flex flex-col gap-3 mt-1">
+              <Button
+                onClick={handleResend}
+                disabled={resending}
+                data-testid="button-resend-verification"
+                className="w-full h-12 rounded-2xl bg-gradient-to-r from-primary to-secondary text-white font-extrabold text-[14px] shadow-[0_4px_20px_rgba(124,58,237,0.25)] hover:opacity-90 transition-opacity disabled:opacity-60"
+              >
+                {resending ? (
+                  <span className="flex items-center gap-2">
+                    <span className="h-4 w-4 rounded-full border-2 border-white/40 border-t-white animate-spin" />
+                    {t("sending") || "Sending…"}
+                  </span>
+                ) : (
+                  <span className="flex items-center gap-2">
+                    <MailCheck className="h-4 w-4" />
+                    {t("resendVerificationEmail") || "Resend verification email"}
+                  </span>
+                )}
+              </Button>
+
+              <Button
+                onClick={handleRefreshStatus}
+                disabled={refreshing}
+                variant="outline"
+                data-testid="button-refresh-status"
+                className="w-full h-12 rounded-2xl border-border/60 font-bold text-[14px] hover:bg-muted/60 transition-colors disabled:opacity-60"
+              >
+                {refreshing ? (
+                  <span className="flex items-center gap-2">
+                    <RefreshCw className="h-4 w-4 animate-spin" />
+                    {t("checking") || "Checking…"}
+                  </span>
+                ) : (
+                  <span className="flex items-center gap-2">
+                    <RefreshCw className="h-4 w-4" />
+                    {t("refreshVerificationStatus") || "Refresh verification status"}
+                  </span>
+                )}
+              </Button>
+
+              <button
+                onClick={() => { window.history.length > 1 ? window.history.back() : setLocation("/"); }}
+                data-testid="button-go-back-gate"
+                className="text-[13.5px] text-muted-foreground font-semibold py-2 hover:text-foreground transition-colors"
+              >
+                {t("goBack") || "Go back"}
+              </button>
+            </div>
+          </motion.div>
+        </div>
+      </div>
+    );
+  }
+  // ── End gate ──────────────────────────────────────────────────────────────
 
   const detailsSchema = z.object({
     title:       z.string().min(5, t("titleMin")),

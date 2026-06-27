@@ -189,6 +189,15 @@ router.get("/:id", optionalAuth, async (req, res) => {
 
 // POST /api/listings
 router.post("/", requireAuth, async (req, res) => {
+  // Email verification gate — enforced server-side so the frontend cannot be bypassed
+  const verifyCheck = await pool.query(
+    "SELECT email_verified FROM users WHERE id = $1",
+    [req.userId]
+  );
+  if (!verifyCheck.rows[0]?.email_verified) {
+    return res.status(403).json({ error: "email_not_verified" });
+  }
+
   // Zod validation
   const parsed = createListingSchema.safeParse(req.body);
   if (!parsed.success) {
