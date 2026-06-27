@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { useTranslation } from "react-i18next";
-import LanguageSwitcher from "@/components/LanguageSwitcher";
+import AuthLayout from "@/components/AuthLayout";
 
 function isValidEmail(str) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(str.trim());
@@ -40,33 +40,18 @@ export default function Register() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
-    // Client-side field validation
     const errors = { username: "", email: "", password: "", general: "" };
-    if (!username.trim()) {
-      errors.username = "Username is required";
-    }
-    if (!email.trim()) {
-      errors.email = "Email is required";
-    } else if (!isValidEmail(email)) {
-      errors.email = "Enter a valid email address";
-    }
-    if (!password) {
-      errors.password = "Password is required";
-    } else if (password.length < 6) {
-      errors.password = "Password must be at least 6 characters";
-    }
+    if (!username.trim()) errors.username = t("usernameRequired");
+    if (!email.trim()) errors.email = t("emailRequired");
+    else if (!isValidEmail(email)) errors.email = t("emailInvalid");
+    if (!password) errors.password = t("passwordRequired");
+    else if (password.length < 6) errors.password = t("passwordTooShort");
 
-    const hasErrors = errors.username || errors.email || errors.password;
-    if (hasErrors) {
+    if (errors.username || errors.email || errors.password) {
       setFieldErrors(errors);
       return;
     }
-
-    if (!ageConfirmed) {
-      setAgeError(true);
-      return;
-    }
+    if (!ageConfirmed) { setAgeError(true); return; }
 
     setFieldErrors({ username: "", email: "", password: "", general: "" });
     setEmailTaken(false);
@@ -78,28 +63,15 @@ export default function Register() {
       setRegistered(true);
     } catch (err) {
       const raw = err.message || "";
-
       if (raw === "email_taken") {
         setEmailTaken(true);
-        setFieldErrors((prev) => ({
-          ...prev,
-          email: "An account with this email already exists.",
-        }));
+        setFieldErrors((prev) => ({ ...prev, email: "An account with this email already exists." }));
       } else if (raw === "username_taken") {
-        setFieldErrors((prev) => ({
-          ...prev,
-          username: "This username is already taken.",
-        }));
+        setFieldErrors((prev) => ({ ...prev, username: "This username is already taken." }));
       } else if (raw.toLowerCase().includes("failed to fetch") || raw.toLowerCase().includes("networkerror")) {
-        setFieldErrors((prev) => ({
-          ...prev,
-          general: "Could not reach the server. Check your connection and try again.",
-        }));
+        setFieldErrors((prev) => ({ ...prev, general: t("networkError") }));
       } else {
-        setFieldErrors((prev) => ({
-          ...prev,
-          general: raw || "Something went wrong. Please try again.",
-        }));
+        setFieldErrors((prev) => ({ ...prev, general: raw || "Something went wrong. Please try again." }));
       }
     } finally {
       setLoading(false);
@@ -110,7 +82,7 @@ export default function Register() {
     setResending(true);
     try {
       await api.auth.resendVerification();
-      toast({ title: "Verification email sent", description: "Check your inbox again." });
+      toast({ title: t("verificationEmailSent"), description: t("checkYourInboxLink") });
     } catch (err) {
       toast({ title: "Failed to resend", description: err.message, variant: "destructive" });
     } finally {
@@ -120,16 +92,12 @@ export default function Register() {
 
   if (registered) {
     return (
-      <div className="flex flex-col min-h-full bg-background px-6 py-16 justify-center">
-        <div className="absolute top-12 right-6 z-50">
-          <LanguageSwitcher />
-        </div>
-
+      <AuthLayout>
         <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ type: "spring", duration: 0.5 }}
-          className="w-full max-w-sm mx-auto text-center"
+          className="w-full text-center"
         >
           <div className="w-24 h-24 rounded-[2rem] bg-primary/10 flex items-center justify-center mx-auto mb-6 shadow-lg">
             <Mail className="h-12 w-12 text-primary" strokeWidth={1.5} />
@@ -138,7 +106,7 @@ export default function Register() {
           <p className="text-muted-foreground text-sm mb-1 font-medium">{t("verificationSentTo")}</p>
           <p className="text-primary font-bold text-sm mb-8">{email}</p>
 
-          <div className="bg-white rounded-3xl p-6 card-shadow space-y-4 text-left mb-6">
+          <div className="bg-white rounded-3xl p-6 card-shadow md:bg-muted/30 space-y-4 text-left mb-6">
             <div className="flex items-start gap-3">
               <CheckCircle2 className="h-5 w-5 text-green-500 shrink-0 mt-0.5" />
               <p className="text-sm text-muted-foreground font-medium">{t("verifyClickLink")}</p>
@@ -153,7 +121,7 @@ export default function Register() {
             onClick={() => setLocation("/")}
             className="w-full h-12 rounded-2xl text-base font-bold bg-gradient-to-r from-primary to-secondary mb-3"
           >
-            {t("continueToKosmeo")}
+            {t("continueToCosmeo")}
           </Button>
           <button
             onClick={handleResend}
@@ -163,22 +131,19 @@ export default function Register() {
             {resending ? t("sending") : t("resendEmail")}
           </button>
         </motion.div>
-      </div>
+      </AuthLayout>
     );
   }
 
   return (
-    <div className="relative flex flex-col min-h-full bg-background px-6 pb-12 pt-16 justify-center">
-      <div className="absolute top-12 right-6 z-50">
-        <LanguageSwitcher />
-      </div>
-
+    <AuthLayout>
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="w-full max-w-sm mx-auto"
+        className="w-full"
       >
-        <div className="text-center mb-10">
+        {/* Logo — mobile only */}
+        <div className="md:hidden text-center mb-10">
           <div className="flex items-center justify-center gap-2 mb-3">
             <Sparkles className="h-7 w-7 text-primary" />
             <h1 className="text-3xl font-black text-foreground">Cosmeo</h1>
@@ -186,9 +151,14 @@ export default function Register() {
           <p className="text-muted-foreground text-sm font-medium">{t("authTitle")}</p>
         </div>
 
-        <div className="bg-white rounded-3xl p-6 card-shadow space-y-4">
+        {/* Desktop heading */}
+        <div className="hidden md:block mb-8">
+          <h2 className="text-3xl font-black text-foreground mb-2">{t("authTitle")}</h2>
+        </div>
+
+        {/* Form card */}
+        <div className="bg-white rounded-3xl p-6 card-shadow md:bg-transparent md:p-0 md:shadow-none md:rounded-none space-y-4">
           <form onSubmit={handleSubmit} noValidate className="space-y-4">
-            {/* Username */}
             <div className="space-y-1">
               <Label htmlFor="reg-username" className="font-bold">{t("username")}</Label>
               <Input
@@ -206,7 +176,6 @@ export default function Register() {
               )}
             </div>
 
-            {/* Email */}
             <div className="space-y-1">
               <Label htmlFor="reg-email" className="font-bold">{t("email")}</Label>
               <Input
@@ -234,7 +203,6 @@ export default function Register() {
               )}
             </div>
 
-            {/* Password */}
             <div className="space-y-1">
               <Label htmlFor="reg-password" className="font-bold">{t("password")}</Label>
               <div className="relative">
@@ -263,7 +231,6 @@ export default function Register() {
               )}
             </div>
 
-            {/* Age confirmation */}
             <div
               className={`flex items-start gap-3 rounded-2xl border p-3 ${
                 ageError ? "border-destructive bg-destructive/5" : "border-border/50 bg-muted/40"
@@ -273,26 +240,19 @@ export default function Register() {
                 id="age-confirm"
                 type="checkbox"
                 checked={ageConfirmed}
-                onChange={(e) => {
-                  setAgeConfirmed(e.target.checked);
-                  if (e.target.checked) setAgeError(false);
-                }}
+                onChange={(e) => { setAgeConfirmed(e.target.checked); if (e.target.checked) setAgeError(false); }}
                 disabled={loading}
                 className="mt-0.5 h-4 w-4 accent-primary shrink-0 cursor-pointer"
               />
               <label
                 htmlFor="age-confirm"
-                className={`text-xs leading-snug cursor-pointer select-none ${
-                  ageError ? "text-destructive font-medium" : "text-muted-foreground"
-                }`}
+                className={`text-xs leading-snug cursor-pointer select-none ${ageError ? "text-destructive font-medium" : "text-muted-foreground"}`}
               >
                 {t("ageConfirmCheckbox")}
               </label>
             </div>
             {ageError && (
-              <p className="text-xs text-destructive text-center -mt-1 font-medium">
-                {t("ageConfirmRequired")}
-              </p>
+              <p className="text-xs text-destructive text-center -mt-1 font-medium">{t("ageConfirmRequired")}</p>
             )}
 
             <p className="text-center text-xs text-muted-foreground -mt-1">
@@ -318,11 +278,10 @@ export default function Register() {
                   <Loader2 className="h-4 w-4 animate-spin" />
                   {t("creatingAccount")}
                 </span>
-              ) : (
-                t("createAccountBtn")
-              )}
+              ) : t("createAccountBtn")}
             </Button>
           </form>
+
           <p className="text-center text-xs text-muted-foreground pt-1">
             {t("termsNoticePrefix")}{" "}
             <Link href="/terms" className="underline text-primary font-semibold">
@@ -340,6 +299,6 @@ export default function Register() {
           </Link>
         </p>
       </motion.div>
-    </div>
+    </AuthLayout>
   );
 }

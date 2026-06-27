@@ -5,6 +5,7 @@ import { CheckCircle2, XCircle, Loader2 } from "lucide-react";
 import { api } from "@/lib/api";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
+import AuthLayout from "@/components/AuthLayout";
 
 export default function VerifyEmail() {
   const search = useSearch();
@@ -12,7 +13,7 @@ export default function VerifyEmail() {
   const token = params.get("token");
   const { setUser } = useAuth();
   const [, setLocation] = useLocation();
-  const [status, setStatus] = useState("loading"); // loading | success | error
+  const [status, setStatus] = useState("loading");
 
   useEffect(() => {
     if (!token) { setStatus("error"); return; }
@@ -27,11 +28,11 @@ export default function VerifyEmail() {
   }, [token]);
 
   return (
-    <div className="flex flex-col min-h-full bg-background px-6 py-16 justify-center">
+    <AuthLayout>
       <motion.div
         initial={{ opacity: 0, scale: 0.9 }}
         animate={{ opacity: 1, scale: 1 }}
-        className="w-full max-w-sm mx-auto text-center"
+        className="w-full text-center"
       >
         {status === "loading" && (
           <>
@@ -77,6 +78,6 @@ export default function VerifyEmail() {
           </>
         )}
       </motion.div>
-    </div>
+    </AuthLayout>
   );
 }

@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { useTranslation } from "react-i18next";
-import LanguageSwitcher from "@/components/LanguageSwitcher";
+import AuthLayout from "@/components/AuthLayout";
 
 export default function ForgotPassword() {
   const { t } = useTranslation();
@@ -35,33 +35,23 @@ export default function ForgotPassword() {
 
   if (sent) {
     return (
-      <div className="relative flex flex-col min-h-full bg-background px-6 py-16 justify-center">
-        <div className="absolute top-12 right-6 z-50">
-          <LanguageSwitcher />
-        </div>
-
+      <AuthLayout backHref="/login" backLabel={t("backToSignIn")}>
         <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ type: "spring", duration: 0.5 }}
-          className="w-full max-w-sm mx-auto text-center"
+          className="w-full text-center"
         >
           <div className="w-24 h-24 rounded-[2rem] bg-primary/10 flex items-center justify-center mx-auto mb-6 shadow-lg">
             <Mail className="h-12 w-12 text-primary" strokeWidth={1.5} />
           </div>
-
-          <h2 className="text-2xl font-black text-foreground mb-4">
-            {t("successResetEmail")}
-          </h2>
+          <h2 className="text-2xl font-black text-foreground mb-4">{t("successResetEmail")}</h2>
           <p className="text-primary font-bold text-sm mb-8">{email}</p>
 
           {devLink && (
             <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 mb-6 text-left">
               <p className="text-xs font-bold text-amber-700 mb-2">Dev mode — no SMTP configured</p>
-              <a
-                href={devLink}
-                className="text-xs text-primary font-semibold break-all hover:underline"
-              >
+              <a href={devLink} className="text-xs text-primary font-semibold break-all hover:underline">
                 {devLink}
               </a>
             </div>
@@ -73,39 +63,33 @@ export default function ForgotPassword() {
             </Button>
           </Link>
         </motion.div>
-      </div>
+      </AuthLayout>
     );
   }
 
   return (
-    <div className="relative flex flex-col min-h-full bg-background px-6 pb-12 pt-16 justify-center">
-      {/* Language switcher — top-right */}
-      <div className="absolute top-12 right-6 z-50">
-        <LanguageSwitcher />
-      </div>
-
+    <AuthLayout backHref="/login" backLabel={t("backToSignIn")}>
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="w-full max-w-sm mx-auto"
+        className="w-full"
       >
+        {/* Back link — mobile only (desktop uses AuthLayout's back link) */}
         <Link href="/login">
-          <button className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors mb-8 font-semibold text-sm">
+          <button className="md:hidden flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors mb-8 font-semibold text-sm">
             <ArrowLeft className="h-4 w-4" />
             {t("backToSignIn")}
           </button>
         </Link>
 
+        {/* Heading */}
         <div className="mb-8">
-          <h1 className="text-2xl font-black text-foreground mb-2">
-            {t("forgotPasswordTitle")}
-          </h1>
-          <p className="text-muted-foreground text-sm font-medium">
-            {t("forgotPasswordDesc")}
-          </p>
+          <h1 className="text-2xl font-black text-foreground mb-2">{t("forgotPasswordTitle")}</h1>
+          <p className="text-muted-foreground text-sm font-medium">{t("forgotPasswordDesc")}</p>
         </div>
 
-        <div className="bg-white rounded-3xl p-6 card-shadow">
+        {/* Form card */}
+        <div className="bg-white rounded-3xl p-6 card-shadow md:bg-transparent md:p-0 md:shadow-none md:rounded-none">
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="forgot-email" className="font-bold">{t("email")}</Label>
@@ -129,6 +113,6 @@ export default function ForgotPassword() {
           </form>
         </div>
       </motion.div>
-    </div>
+    </AuthLayout>
   );
 }

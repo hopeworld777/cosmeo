@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { useTranslation } from "react-i18next";
-import LanguageSwitcher from "@/components/LanguageSwitcher";
+import AuthLayout from "@/components/AuthLayout";
 
 export default function Login() {
   const { t } = useTranslation();
@@ -35,19 +35,14 @@ export default function Login() {
   };
 
   return (
-    <div className="relative flex flex-col min-h-full bg-background px-6 pb-12 pt-16 justify-center">
-      {/* Language switcher — top-right */}
-      <div className="absolute top-12 right-6 z-50">
-        <LanguageSwitcher />
-      </div>
-
+    <AuthLayout>
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="w-full max-w-sm mx-auto"
+        className="w-full"
       >
-        {/* Logo */}
-        <div className="text-center mb-10">
+        {/* Logo — mobile only */}
+        <div className="md:hidden text-center mb-10">
           <div className="flex items-center justify-center gap-2 mb-3">
             <Sparkles className="h-7 w-7 text-primary" />
             <h1 className="text-3xl font-black text-foreground">Cosmeo</h1>
@@ -55,7 +50,13 @@ export default function Login() {
           <p className="text-muted-foreground text-sm font-medium">{t("signInTitle")}</p>
         </div>
 
-        <div className="bg-white rounded-3xl p-6 card-shadow space-y-1">
+        {/* Desktop heading */}
+        <div className="hidden md:block mb-8">
+          <h2 className="text-3xl font-black text-foreground mb-2">{t("signInTitle")}</h2>
+        </div>
+
+        {/* Form card */}
+        <div className="bg-white rounded-3xl p-6 card-shadow md:bg-transparent md:p-0 md:shadow-none md:rounded-none space-y-1">
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="login-email" className="font-bold">{t("email")}</Label>
@@ -118,6 +119,6 @@ export default function Login() {
           </Link>
         </p>
       </motion.div>
-    </div>
+    </AuthLayout>
   );
 }

@@ -168,19 +168,18 @@ function AppShell() {
     if (scrollRef.current) scrollRef.current.scrollTop = 0;
   }, [location]);
 
-  // Whether this route should expand to full desktop width (non-auth + onboarding)
-  const expandsOnDesktop = !isAuthRoute;
-
   return (
     <div className="flex justify-center bg-background min-h-[100dvh] w-full">
-      {/* Desktop nav is shown on every non-auth, non-onboarding route */}
+      {/* Desktop nav only for logged-in app pages */}
       {!isAuthRoute && !isOnboardingRoute && <DesktopNav />}
 
       <div className={[
         "flex flex-col w-full relative bg-background",
         "max-w-[430px] h-[100dvh] overflow-hidden border-x border-border/30 shadow-2xl",
-        expandsOnDesktop && !isOnboardingRoute && "md:max-w-none md:h-auto md:min-h-[100dvh] md:overflow-visible md:border-x-0 md:shadow-none md:pt-16",
-        isOnboardingRoute && "md:max-w-none md:h-auto md:min-h-[100dvh] md:overflow-visible md:border-x-0 md:shadow-none md:pt-0",
+        // Non-auth app pages: expand + add top padding for the fixed DesktopNav
+        !isAuthRoute && !isOnboardingRoute && "md:max-w-none md:h-auto md:min-h-[100dvh] md:overflow-visible md:border-x-0 md:shadow-none md:pt-16",
+        // Auth + onboarding pages: expand but no top padding (they own their layout)
+        (isAuthRoute || isOnboardingRoute) && "md:max-w-none md:h-auto md:min-h-[100dvh] md:overflow-visible md:border-x-0 md:shadow-none",
       ].filter(Boolean).join(" ")}>
         <OnboardingGuard />
 

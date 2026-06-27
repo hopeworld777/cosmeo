@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { useTranslation } from "react-i18next";
-import LanguageSwitcher from "@/components/LanguageSwitcher";
+import AuthLayout from "@/components/AuthLayout";
 
 export default function ResetPassword() {
   const { t } = useTranslation();
@@ -60,26 +60,23 @@ export default function ResetPassword() {
     }
   };
 
-  /* ── Loading spinner ─────────────────────────────────────────── */
   if (validating) {
     return (
-      <div className="flex items-center justify-center min-h-full bg-background">
-        <div className="w-8 h-8 rounded-full border-2 border-primary border-t-transparent animate-spin" />
-      </div>
+      <AuthLayout>
+        <div className="flex items-center justify-center py-20">
+          <div className="w-8 h-8 rounded-full border-2 border-primary border-t-transparent animate-spin" />
+        </div>
+      </AuthLayout>
     );
   }
 
-  /* ── Invalid / expired token ─────────────────────────────────── */
   if (!token || !tokenValid) {
     return (
-      <div className="relative flex flex-col min-h-full bg-background px-6 py-16 justify-center">
-        <div className="absolute top-12 right-6 z-[60]">
-          <LanguageSwitcher />
-        </div>
+      <AuthLayout backHref="/forgot-password" backLabel={t("requestNewLink")}>
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          className="w-full max-w-sm mx-auto text-center"
+          className="w-full text-center"
         >
           <div className="w-24 h-24 rounded-[2rem] bg-destructive/10 flex items-center justify-center mx-auto mb-6">
             <XCircle className="h-12 w-12 text-destructive" strokeWidth={1.5} />
@@ -93,21 +90,17 @@ export default function ResetPassword() {
             {t("requestNewLink")}
           </Button>
         </motion.div>
-      </div>
+      </AuthLayout>
     );
   }
 
-  /* ── Success state ───────────────────────────────────────────── */
   if (success) {
     return (
-      <div className="relative flex flex-col min-h-full bg-background px-6 py-16 justify-center">
-        <div className="absolute top-12 right-6 z-[60]">
-          <LanguageSwitcher />
-        </div>
+      <AuthLayout>
         <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
-          className="w-full max-w-sm mx-auto text-center"
+          className="w-full text-center"
         >
           <div className="w-24 h-24 rounded-[2rem] bg-green-100 flex items-center justify-center mx-auto mb-6">
             <CheckCircle2 className="h-12 w-12 text-green-500" strokeWidth={1.5} />
@@ -115,24 +108,18 @@ export default function ResetPassword() {
           <h2 className="text-2xl font-black text-foreground mb-2">{t("passwordSuccessTitle")}</h2>
           <p className="text-muted-foreground text-sm">{t("passwordSuccessDesc")}</p>
         </motion.div>
-      </div>
+      </AuthLayout>
     );
   }
 
-  /* ── Main form ───────────────────────────────────────────────── */
   return (
-    <div className="relative flex flex-col min-h-full bg-background px-6 pb-12 pt-16 justify-center">
-      {/* Language switcher — top-right */}
-      <div className="absolute top-12 right-6 z-[60]">
-        <LanguageSwitcher />
-      </div>
-
+    <AuthLayout backHref="/login" backLabel={t("backToSignIn")}>
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="w-full max-w-sm mx-auto"
+        className="w-full"
       >
-        {/* Header */}
+        {/* Header icon + title */}
         <div className="text-center mb-8">
           <div className="w-20 h-20 rounded-[1.5rem] bg-primary/10 flex items-center justify-center mx-auto mb-5">
             <KeyRound className="h-10 w-10 text-primary" strokeWidth={1.5} />
@@ -142,7 +129,7 @@ export default function ResetPassword() {
         </div>
 
         {/* Form card */}
-        <div className="bg-white rounded-3xl p-6 card-shadow">
+        <div className="bg-white rounded-3xl p-6 card-shadow md:bg-transparent md:p-0 md:shadow-none md:rounded-none">
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="new-pw" className="font-bold">{t("newPasswordLabel")}</Label>
@@ -190,6 +177,6 @@ export default function ResetPassword() {
           </form>
         </div>
       </motion.div>
-    </div>
+    </AuthLayout>
   );
 }
