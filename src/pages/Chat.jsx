@@ -128,90 +128,97 @@ function ReportSheet({ open, onClose, conversationId, reportedUserId, listingId 
           <motion.div
             initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }}
             transition={{ type: "spring", damping: 26, stiffness: 260 }}
-            className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[430px] z-50 bg-background rounded-t-3xl shadow-2xl pb-safe"
+            className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[430px] z-50 bg-background rounded-t-3xl shadow-2xl flex flex-col"
+            style={{ maxHeight: "90dvh" }}
           >
-            <div className="flex justify-center pt-3 pb-1">
+            {/* Drag handle — always visible, never scrolls away */}
+            <div className="flex justify-center pt-3 pb-1 shrink-0">
               <div className="w-10 h-1 rounded-full bg-border" />
             </div>
 
-            {step === "pick" && (
-              <div className="px-5 pb-8">
-                <div className="flex items-center justify-between mb-4">
-                  <h2 className="font-extrabold text-[17px]">{t("report_sheet_title")}</h2>
-                  <button onClick={onClose} className="p-1.5 rounded-xl hover:bg-muted">
-                    <X size={18} className="text-muted-foreground" />
-                  </button>
-                </div>
-                <p className="text-[13px] text-muted-foreground mb-4">{t("report_sheet_subtitle")}</p>
-                <div className="space-y-2">
-                  {REPORT_REASONS.map((rk) => (
-                    <button
-                      key={rk}
-                      onClick={() => { setReason(rk); setStep("detail"); }}
-                      className="w-full text-left px-4 py-3 rounded-2xl border border-border/60 bg-muted/40 hover:border-primary/40 hover:bg-primary/5 transition-all text-[13.5px] font-semibold"
-                    >
-                      {t(rk)}
+            {/* Scrollable content area */}
+            <div className="overflow-y-auto overscroll-contain" style={{ paddingBottom: "env(safe-area-inset-bottom, 24px)" }}>
+
+              {step === "pick" && (
+                <div className="px-5 pb-8">
+                  <div className="flex items-center justify-between mb-4">
+                    <h2 className="font-extrabold text-[17px]">{t("report_sheet_title")}</h2>
+                    <button onClick={onClose} className="p-1.5 rounded-xl hover:bg-muted">
+                      <X size={18} className="text-muted-foreground" />
                     </button>
-                  ))}
+                  </div>
+                  <p className="text-[13px] text-muted-foreground mb-4">{t("report_sheet_subtitle")}</p>
+                  <div className="space-y-2">
+                    {REPORT_REASONS.map((rk) => (
+                      <button
+                        key={rk}
+                        onClick={() => { setReason(rk); setStep("detail"); }}
+                        className="w-full text-left px-4 py-3 rounded-2xl border border-border/60 bg-muted/40 hover:border-primary/40 hover:bg-primary/5 transition-all text-[13.5px] font-semibold"
+                      >
+                        {t(rk)}
+                      </button>
+                    ))}
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
 
-            {step === "detail" && (
-              <div className="px-5 pb-8">
-                <div className="flex items-center gap-2 mb-4">
-                  <button onClick={() => setStep("pick")} className="p-1.5 rounded-xl hover:bg-muted">
-                    <ChevronLeft size={18} className="text-muted-foreground" />
+              {step === "detail" && (
+                <div className="px-5 pb-8">
+                  <div className="flex items-center gap-2 mb-4">
+                    <button onClick={() => setStep("pick")} className="p-1.5 rounded-xl hover:bg-muted">
+                      <ChevronLeft size={18} className="text-muted-foreground" />
+                    </button>
+                    <h2 className="font-extrabold text-[17px]">{t("report_detail_title")}</h2>
+                  </div>
+                  <div className="rounded-2xl bg-primary/8 border border-primary/20 px-3 py-2 mb-4 text-[12.5px] text-primary font-semibold">
+                    {t(reason)}
+                  </div>
+                  <textarea
+                    value={detail}
+                    onChange={(e) => setDetail(e.target.value)}
+                    placeholder={t("report_detail_placeholder")}
+                    rows={4}
+                    maxLength={500}
+                    className="w-full rounded-2xl border border-border/60 bg-muted/50 px-4 py-3 text-[13.5px] resize-none outline-none focus:border-primary/50 transition-colors"
+                  />
+                  <p className="text-right text-[11px] text-muted-foreground mt-1">{detail.length}/500</p>
+                  <button
+                    onClick={submit}
+                    disabled={submitting}
+                    className="mt-3 w-full py-3.5 rounded-2xl bg-gradient-to-r from-primary to-secondary text-white font-extrabold text-[14px] disabled:opacity-50 transition-opacity shadow-md"
+                  >
+                    {submitting ? (
+                      <span className="flex items-center justify-center gap-2">
+                        <Loader2 size={14} className="animate-spin" />
+                        {t("report_submitting")}
+                      </span>
+                    ) : t("report_submit_btn")}
                   </button>
-                  <h2 className="font-extrabold text-[17px]">{t("report_detail_title")}</h2>
+                  <p className="text-center text-[11.5px] text-muted-foreground mt-3">
+                    {t("report_privacy_note")}
+                  </p>
                 </div>
-                <div className="rounded-2xl bg-primary/8 border border-primary/20 px-3 py-2 mb-4 text-[12.5px] text-primary font-semibold">
-                  {t(reason)}
-                </div>
-                <textarea
-                  value={detail}
-                  onChange={(e) => setDetail(e.target.value)}
-                  placeholder={t("report_detail_placeholder")}
-                  rows={4}
-                  maxLength={500}
-                  className="w-full rounded-2xl border border-border/60 bg-muted/50 px-4 py-3 text-[13.5px] resize-none outline-none focus:border-primary/50 transition-colors"
-                />
-                <p className="text-right text-[11px] text-muted-foreground mt-1">{detail.length}/500</p>
-                <button
-                  onClick={submit}
-                  disabled={submitting}
-                  className="mt-3 w-full py-3.5 rounded-2xl bg-gradient-to-r from-primary to-secondary text-white font-extrabold text-[14px] disabled:opacity-50 transition-opacity shadow-md"
-                >
-                  {submitting ? (
-                    <span className="flex items-center justify-center gap-2">
-                      <Loader2 size={14} className="animate-spin" />
-                      {t("report_submitting")}
-                    </span>
-                  ) : t("report_submit_btn")}
-                </button>
-                <p className="text-center text-[11.5px] text-muted-foreground mt-3">
-                  {t("report_privacy_note")}
-                </p>
-              </div>
-            )}
+              )}
 
-            {step === "done" && (
-              <div className="px-5 pb-12 flex flex-col items-center text-center">
-                <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mb-4 mt-4">
-                  <CheckCircle2 size={32} className="text-primary" />
+              {step === "done" && (
+                <div className="px-5 pb-12 flex flex-col items-center text-center">
+                  <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mb-4 mt-4">
+                    <CheckCircle2 size={32} className="text-primary" />
+                  </div>
+                  <h2 className="font-extrabold text-[18px] mb-2">{t("report_done_title")}</h2>
+                  <p className="text-[13.5px] text-muted-foreground max-w-[280px] leading-relaxed">
+                    {t("report_done_desc")}
+                  </p>
+                  <button
+                    onClick={onClose}
+                    className="mt-6 px-8 py-3 rounded-2xl bg-muted font-bold text-[14px]"
+                  >
+                    {t("report_done_close")}
+                  </button>
                 </div>
-                <h2 className="font-extrabold text-[18px] mb-2">{t("report_done_title")}</h2>
-                <p className="text-[13.5px] text-muted-foreground max-w-[280px] leading-relaxed">
-                  {t("report_done_desc")}
-                </p>
-                <button
-                  onClick={onClose}
-                  className="mt-6 px-8 py-3 rounded-2xl bg-muted font-bold text-[14px]"
-                >
-                  {t("report_done_close")}
-                </button>
-              </div>
-            )}
+              )}
+
+            </div>
           </motion.div>
         </>
       )}
