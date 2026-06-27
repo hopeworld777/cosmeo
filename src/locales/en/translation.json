@@ -360,5 +360,21 @@
   "passwordTooShort": "Password must be at least 6 characters",
   "networkError": "Could not reach the server. Check your connection and try again.",
   "emailAlreadyInUse": "That email or username is already registered. Try logging in.",
-  "registrationFailed": "Registration failed"
+  "registrationFailed": "Registration failed",
+
+  "verifyEmailTitle": "Verify your email",
+  "verifyEmailBody": "Before you can publish listings on Kosmeo, please verify your email address. This helps keep our marketplace safe for everyone.",
+  "verifyEmailSentTo": "Verification email sent to:",
+  "verifyEmailSpamNote": "Didn't receive the email? Check your spam or junk folder. It may take a few minutes to arrive.",
+  "resendVerificationEmail": "Resend verification email",
+  "iveVerifiedMyEmail": "I've verified my email",
+  "goBack": "Back",
+  "verificationEmailSent": "Verification email sent",
+  "checkYourInboxLink": "Check your inbox and click the link to verify.",
+  "youCanNowList": "You can now create listings.",
+  "notYetVerified": "Not verified yet",
+  "checkInboxAndRefresh": "Please click the link in your email first.",
+  "checking": "Checking…",
+  "error": "Error",
+  "cancel": "Cancel"
 }

@@ -53,11 +53,11 @@ export default function Sell() {
     try {
       await api.auth.resendVerification();
       toast({
-        title: t("verificationEmailSent") || "Verification email sent",
-        description: t("checkYourInbox") || "Check your inbox and click the link.",
+        title: t("verificationEmailSent"),
+        description: t("checkYourInboxLink"),
       });
     } catch (err) {
-      toast({ title: t("error") || "Error", description: err.message, variant: "destructive" });
+      toast({ title: t("error"), description: err.message, variant: "destructive" });
     } finally {
       setResending(false);
     }
@@ -69,12 +69,12 @@ export default function Sell() {
       const me = await api.auth.me();
       setUser(me);
       if (me.email_verified) {
-        toast({ title: t("emailVerified") || "Email verified!", description: t("youCanNowList") || "You can now create listings." });
+        toast({ title: t("emailVerified"), description: t("youCanNowList") });
       } else {
-        toast({ title: t("notYetVerified") || "Not yet verified", description: t("checkInboxAndRefresh") || "Please click the link in your email first.", variant: "destructive" });
+        toast({ title: t("notYetVerified"), description: t("checkInboxAndRefresh"), variant: "destructive" });
       }
     } catch (err) {
-      toast({ title: t("error") || "Error", description: err.message, variant: "destructive" });
+      toast({ title: t("error"), description: err.message, variant: "destructive" });
     } finally {
       setRefreshing(false);
     }
@@ -113,14 +113,13 @@ export default function Sell() {
             {/* Copy */}
             <div className="flex flex-col gap-2">
               <h2 className="text-[22px] font-black text-foreground leading-tight">
-                {t("verifyEmailTitle") || "Verify your email first"}
+                {t("verifyEmailTitle")}
               </h2>
               <p className="text-[14px] text-muted-foreground leading-relaxed">
-                {t("verifyEmailBody") ||
-                  "Please verify your email before listing items on Kosmeo. Email verification helps protect buyers and sellers from spam and fraudulent accounts."}
+                {t("verifyEmailBody")}
               </p>
-              <p className="text-[12.5px] text-muted-foreground/70 font-medium">
-                {t("verifyEmailSentTo") || "A verification link was sent to"}{" "}
+              <p className="text-[12.5px] text-muted-foreground/70 font-medium mt-1">
+                {t("verifyEmailSentTo")}{" "}
                 <span className="font-bold text-foreground">{user?.email}</span>
               </p>
             </div>
@@ -136,12 +135,12 @@ export default function Sell() {
                 {resending ? (
                   <span className="flex items-center gap-2">
                     <span className="h-4 w-4 rounded-full border-2 border-white/40 border-t-white animate-spin" />
-                    {t("sending") || "Sending…"}
+                    {t("sending")}
                   </span>
                 ) : (
                   <span className="flex items-center gap-2">
                     <MailCheck className="h-4 w-4" />
-                    {t("resendVerificationEmail") || "Resend verification email"}
+                    {t("resendVerificationEmail")}
                   </span>
                 )}
               </Button>
@@ -156,12 +155,12 @@ export default function Sell() {
                 {refreshing ? (
                   <span className="flex items-center gap-2">
                     <RefreshCw className="h-4 w-4 animate-spin" />
-                    {t("checking") || "Checking…"}
+                    {t("checking")}
                   </span>
                 ) : (
                   <span className="flex items-center gap-2">
                     <RefreshCw className="h-4 w-4" />
-                    {t("refreshVerificationStatus") || "Refresh verification status"}
+                    {t("iveVerifiedMyEmail")}
                   </span>
                 )}
               </Button>
@@ -171,9 +170,14 @@ export default function Sell() {
                 data-testid="button-go-back-gate"
                 className="text-[13.5px] text-muted-foreground font-semibold py-2 hover:text-foreground transition-colors"
               >
-                {t("goBack") || "Go back"}
+                {t("goBack")}
               </button>
             </div>
+
+            {/* Spam note */}
+            <p className="text-[12px] text-muted-foreground/60 text-center leading-relaxed px-2">
+              {t("verifyEmailSpamNote")}
+            </p>
           </motion.div>
         </div>
       </div>
