@@ -198,6 +198,15 @@ router.post("/", requireAuth, async (req, res) => {
     return res.status(403).json({ error: "email_not_verified" });
   }
 
+  // Active listing limit — max 3 per user (sold/deleted/inactive don't count)
+  const countResult = await pool.query(
+    "SELECT COUNT(*) FROM listings WHERE seller_id = $1 AND is_active = true",
+    [req.userId]
+  );
+  if (parseInt(countResult.rows[0].count, 10) >= 3) {
+    return res.status(403).json({ error: "listing_limit_reached" });
+  }
+
   // Zod validation
   const parsed = createListingSchema.safeParse(req.body);
   if (!parsed.success) {

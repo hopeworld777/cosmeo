@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -43,6 +43,16 @@ export default function Sell() {
   const { toast } = useToast();
   const [, setLocation] = useLocation();
   const { t } = useTranslation();
+
+  // ── Active listing count (for 3-listing limit) ────────────────────────────
+  const [activeListingCount, setActiveListingCount] = useState(null);
+
+  useEffect(() => {
+    if (!user?.email_verified) return;
+    api.listings.me()
+      .then(listings => setActiveListingCount(listings.filter(l => l.is_active).length))
+      .catch(() => setActiveListingCount(0));
+  }, [user?.id, user?.email_verified]);
 
   // ── Email verification gate ───────────────────────────────────────────────
   const [resending, setResending]   = useState(false);
@@ -178,6 +188,65 @@ export default function Sell() {
             <p className="text-[12px] text-muted-foreground/60 text-center leading-relaxed px-2">
               {t("verifyEmailSpamNote")}
             </p>
+          </motion.div>
+        </div>
+      </div>
+    );
+  }
+  // ── Listing limit gate ────────────────────────────────────────────────────
+  if (user && user.email_verified && activeListingCount >= 3) {
+    return (
+      <div className="flex flex-col h-full bg-background">
+        {/* Header */}
+        <div className="sticky top-0 z-30 bg-white/95 backdrop-blur-xl pt-11 pb-4 px-5 border-b border-border/20">
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => { window.history.length > 1 ? window.history.back() : setLocation("/"); }}
+              className="h-11 w-11 rounded-full bg-muted flex items-center justify-center shrink-0 hover:bg-muted/70 transition-colors"
+              data-testid="button-go-back-limit"
+            >
+              <ChevronLeft className="h-5 w-5 text-foreground" />
+            </button>
+            <h1 className="text-xl font-black text-foreground leading-tight">{t("listAnItem")}</h1>
+          </div>
+        </div>
+
+        <div className="flex-1 overflow-y-auto flex items-center justify-center p-6">
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3 }}
+            className="w-full max-w-sm flex flex-col items-center text-center gap-5"
+          >
+            <div className="w-20 h-20 rounded-full bg-amber-100 flex items-center justify-center">
+              <Sparkles className="w-9 h-9 text-amber-500" />
+            </div>
+
+            <div className="flex flex-col gap-2">
+              <h2 className="text-[22px] font-black text-foreground leading-tight">
+                {t("listingLimitTitle")}
+              </h2>
+              <p className="text-[14px] text-muted-foreground leading-relaxed">
+                {t("listingLimitBody")}
+              </p>
+            </div>
+
+            <div className="w-full flex flex-col gap-3 mt-1">
+              <Button
+                onClick={() => setLocation("/profile")}
+                data-testid="button-go-to-listings"
+                className="w-full h-12 rounded-2xl bg-gradient-to-r from-primary to-secondary text-white font-extrabold text-[14px] shadow-[0_4px_20px_rgba(124,58,237,0.25)] hover:opacity-90 transition-opacity"
+              >
+                {t("goToMyListings")}
+              </Button>
+              <button
+                onClick={() => { window.history.length > 1 ? window.history.back() : setLocation("/"); }}
+                data-testid="button-go-back-limit-link"
+                className="text-[13.5px] text-muted-foreground font-semibold py-2 hover:text-foreground transition-colors"
+              >
+                {t("goBack")}
+              </button>
+            </div>
           </motion.div>
         </div>
       </div>

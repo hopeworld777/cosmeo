@@ -362,6 +362,10 @@
   "emailAlreadyInUse": "That email or username is already registered. Try logging in.",
   "registrationFailed": "Registration failed",
 
+  "listingLimitTitle": "Listing limit reached",
+  "listingLimitBody": "You can have up to 3 active listings at a time. Mark an item as sold or remove a listing to create a new one.",
+  "goToMyListings": "My listings",
+
   "verifyEmailTitle": "Verify your email",
   "verifyEmailBody": "Verify your email to publish listings.",
   "verifyEmailSentTo": "Email sent to:",
