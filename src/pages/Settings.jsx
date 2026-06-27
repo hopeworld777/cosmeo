@@ -137,19 +137,21 @@ export default function Settings() {
     <div className="flex flex-col min-h-full bg-background pb-28">
 
       {/* ── Sticky header ─────────────────────────────────────────── */}
-      <div className="sticky top-0 z-30 bg-white/95 backdrop-blur-xl pt-12 pb-4 px-5 flex items-center gap-3 border-b border-border/20">
-        <button
-          type="button"
-          onClick={() => window.history.length > 1 ? window.history.back() : setLocation("/profile")}
-          className="h-11 w-11 rounded-full bg-muted flex items-center justify-center hover:bg-muted/70 transition-colors shrink-0"
-        >
-          <ChevronLeft className="h-5 w-5 text-foreground" />
-        </button>
-        <h1 className="text-2xl font-black text-foreground flex-1">{t("editProfile")}</h1>
-        <LanguageSwitcher />
+      <div className="sticky top-0 z-30 bg-white/95 backdrop-blur-xl pt-12 pb-4 px-5 border-b border-border/20">
+        <div className="flex items-center gap-3 md:max-w-2xl md:mx-auto">
+          <button
+            type="button"
+            onClick={() => window.history.length > 1 ? window.history.back() : setLocation("/profile")}
+            className="h-11 w-11 rounded-full bg-muted flex items-center justify-center hover:bg-muted/70 transition-colors shrink-0"
+          >
+            <ChevronLeft className="h-5 w-5 text-foreground" />
+          </button>
+          <h1 className="text-2xl font-black text-foreground flex-1">{t("editProfile")}</h1>
+          <LanguageSwitcher />
+        </div>
       </div>
 
-      <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-5 p-5 pt-6">
+      <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-5 p-5 pt-6 md:max-w-2xl md:mx-auto md:w-full">
 
         {/* ── Avatar ───────────────────────────────────────────────── */}
         <div className="flex flex-col items-center gap-2 py-3">

@@ -389,6 +389,7 @@ export default function Sell() {
 
       {/* ── Sticky header ──────────────────────────────────────────────── */}
       <div className="sticky top-0 z-30 bg-white/95 backdrop-blur-xl pt-11 pb-4 px-5 border-b border-border/20">
+        <div className="md:max-w-2xl md:mx-auto">
         <div className="flex items-center gap-3 mb-4">
           <button
             onClick={step > 0 ? goBack : () => { window.history.length > 1 ? window.history.back() : setLocation("/"); }}
@@ -410,6 +411,7 @@ export default function Sell() {
             <div key={i} className={`h-1.5 flex-1 rounded-full transition-all duration-300 ${i <= step ? "bg-primary" : "bg-muted"}`} />
           ))}
         </div>
+        </div>
       </div>
 
       {/* ── Animated step content ──────────────────────────────────────── */}
@@ -422,7 +424,7 @@ export default function Sell() {
             initial="enter"
             animate="center"
             exit="exit"
-            className="p-5 pb-36 flex flex-col gap-5"
+            className="p-5 pb-36 flex flex-col gap-5 md:max-w-2xl md:mx-auto md:w-full"
           >
 
             {/* ══ STEP 0: Category + Photos ══════════════════════════════ */}

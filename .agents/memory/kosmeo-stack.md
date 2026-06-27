@@ -1,9 +1,9 @@
 ---
-name: Kosmeo stack
-description: Full-stack architecture, auth, image uploads, and DB schema for the Kosmeo cosplay marketplace
+name: Cosmeo stack
+description: Full-stack architecture, auth, image uploads, and DB schema for the Cosmeo cosplay marketplace (formerly Kosmeo)
 ---
 
-# Kosmeo Full-Stack Architecture
+# Cosmeo Full-Stack Architecture
 
 ## Ports & Proxy
 - Frontend: Vite on port 5000 (workflow: "Start application")

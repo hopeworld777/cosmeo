@@ -351,7 +351,7 @@ export default function Chat() {
   };
 
   return (
-    <div className="flex flex-col h-full bg-background">
+    <div className="flex flex-col h-full bg-background md:max-w-3xl md:mx-auto md:w-full">
 
       {/* Header */}
       <div className="sticky top-0 z-30 bg-white/95 backdrop-blur-xl border-b border-border/20 px-4 pt-12 pb-4">

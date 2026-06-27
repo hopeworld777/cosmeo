@@ -333,7 +333,7 @@ export default function ItemDetail() {
   const formatGEL = (n) => n != null ? `₾${Number(n).toFixed(0)}` : null;
 
   return (
-    <div className="flex flex-col min-h-full bg-background relative" style={{ paddingBottom: "max(8rem, calc(5rem + env(safe-area-inset-bottom)))" }}>
+    <div className="flex flex-col min-h-full bg-background relative md:max-w-3xl md:mx-auto md:w-full" style={{ paddingBottom: "max(8rem, calc(5rem + env(safe-area-inset-bottom)))" }}>
 
       {/* Sticky Top Nav */}
       <div className="absolute top-0 left-0 right-0 z-50 flex justify-between items-center px-4 pt-4 pb-2">
@@ -528,7 +528,7 @@ export default function ItemDetail() {
       </div>
 
       {/* Bottom Sticky Action Bar */}
-      <div className="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-xl shadow-[0_-8px_30px_rgba(0,0,0,0.06)] z-40 flex gap-3 max-w-[430px] mx-auto rounded-t-3xl px-4 pt-4" style={{ paddingBottom: "max(1rem, env(safe-area-inset-bottom))" }}>
+      <div className="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-xl shadow-[0_-8px_30px_rgba(0,0,0,0.06)] z-40 flex gap-3 max-w-[430px] md:max-w-3xl mx-auto rounded-t-3xl px-4 pt-4" style={{ paddingBottom: "max(1rem, env(safe-area-inset-bottom))" }}>
         {isOwner ? (
           /* ── Owner actions ── */
           <>

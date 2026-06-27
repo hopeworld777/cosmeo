@@ -54,7 +54,7 @@ export default function VerifyEmail() {
               <CheckCircle2 className="h-12 w-12 text-green-500" strokeWidth={1.5} />
             </motion.div>
             <h2 className="text-2xl font-black text-foreground mb-2">Email verified</h2>
-            <p className="text-muted-foreground text-sm mb-2">Your account is fully set up. Welcome to Kosmeo!</p>
+            <p className="text-muted-foreground text-sm mb-2">Your account is fully set up. Welcome to Cosmeo!</p>
             <p className="text-xs text-muted-foreground">Taking you home...</p>
           </>
         )}
@@ -72,7 +72,7 @@ export default function VerifyEmail() {
               onClick={() => setLocation("/")}
               className="w-full h-12 rounded-2xl font-bold bg-gradient-to-r from-primary to-secondary"
             >
-              Go to Kosmeo
+              Go to Cosmeo
             </Button>
           </>
         )}

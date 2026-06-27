@@ -751,7 +751,7 @@ export default function Profile() {
         <HeaderControls variant="settings" />
       </div>
 
-      <div className="p-4 pt-6 flex flex-col gap-5">
+      <div className="p-4 pt-6 flex flex-col gap-5 md:max-w-3xl md:mx-auto md:w-full">
 
         {/* Profile Card */}
         <motion.div

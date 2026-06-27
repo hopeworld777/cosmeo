@@ -49,5 +49,5 @@ if (process.env.NODE_ENV === "production") {
 }
 
 app.listen(PORT, "0.0.0.0", () => {
-  console.log(`Kosmeo API running on port ${PORT}`);
+  console.log(`Cosmeo API running on port ${PORT}`);
 });

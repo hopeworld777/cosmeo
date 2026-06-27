@@ -52,23 +52,25 @@ export default function Messages() {
 
       {/* Sticky Header */}
       <div className="sticky top-0 z-30 bg-white/95 backdrop-blur-xl pt-12 pb-5 px-4 rounded-b-3xl shadow-sm">
-        <div className="flex items-center justify-between mb-5">
-          <h1 className="text-3xl font-black text-foreground">Inbox</h1>
-          <HeaderControls />
-        </div>
-        <div className="relative">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-primary pointer-events-none" />
-          <Input
-            placeholder="Search messages…"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="pl-12 bg-muted border-none h-14 rounded-2xl text-base font-medium placeholder:text-muted-foreground/70"
-          />
+        <div className="md:max-w-4xl md:mx-auto">
+          <div className="flex items-center justify-between mb-5">
+            <h1 className="text-3xl font-black text-foreground">Inbox</h1>
+            <HeaderControls />
+          </div>
+          <div className="relative">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-primary pointer-events-none" />
+            <Input
+              placeholder="Search messages…"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="pl-12 bg-muted border-none h-14 rounded-2xl text-base font-medium placeholder:text-muted-foreground/70"
+            />
+          </div>
         </div>
       </div>
 
       {/* List */}
-      <div className="flex-1 p-4 pt-6 space-y-3">
+      <div className="flex-1 p-4 pt-6 space-y-3 md:max-w-4xl md:mx-auto md:w-full">
         {loading ? (
           Array.from({ length: 4 }).map((_, i) => (
             <div key={i} className="h-24 w-full bg-muted rounded-3xl animate-pulse" />

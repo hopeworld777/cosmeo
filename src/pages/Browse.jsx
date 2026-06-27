@@ -97,6 +97,7 @@ export default function Browse() {
 
       {/* ── Sticky header ──────────────────────────────────────────── */}
       <div className="sticky top-0 z-30 bg-white/95 backdrop-blur-xl pb-4 pt-12 md:pt-6 px-4 rounded-b-3xl" style={{ boxShadow: "0 4px 20px rgba(139,92,246,0.05)" }}>
+        <div className="md:max-w-6xl md:mx-auto">
         <div className="flex items-center justify-between mb-5">
           <h1 className="text-3xl font-black text-foreground">{t("discover")}</h1>
           <HeaderControls />
@@ -146,6 +147,7 @@ export default function Browse() {
               {f.label}
             </Badge>
           ))}
+        </div>
         </div>
       </div>
 
