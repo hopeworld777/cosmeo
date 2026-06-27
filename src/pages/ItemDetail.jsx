@@ -75,6 +75,29 @@ export default function ItemDetail() {
     return <div className="p-8 text-center text-foreground font-bold">{t("itemNotFound")}</div>;
   }
 
+  const isOwner = !!(user && listing && user.id === listing.seller_id);
+
+  const handleDelete = async () => {
+    if (!window.confirm(t("confirmDelete"))) return;
+    try {
+      await api.listings.delete(id);
+      toast({ title: t("listingDeleted") });
+      setLocation("/profile");
+    } catch (err) {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    }
+  };
+
+  const handleMarkSold = async () => {
+    try {
+      await api.listings.markSold(id);
+      toast({ title: t("markedAsSold") });
+      setListing(prev => ({ ...prev, status: "sold", is_active: false }));
+    } catch (err) {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    }
+  };
+
   const handleLikeToggle = async () => {
     if (!user) {
       toast({ title: "Sign in to save items", description: "You need an account to save to wishlist." });
@@ -336,25 +359,52 @@ export default function ItemDetail() {
 
       {/* Bottom Sticky Action Bar */}
       <div className="fixed bottom-0 left-0 right-0 p-4 bg-white/95 backdrop-blur-xl shadow-[0_-8px_30px_rgba(0,0,0,0.06)] z-40 flex gap-3 max-w-[430px] mx-auto rounded-t-3xl">
-        {listing.is_for_rent && listing.rent_price && (
-          <Button
-            className="flex-1 h-16 rounded-2xl bg-secondary/10 border-2 border-secondary text-secondary hover:bg-secondary/20 hover:text-secondary"
-            variant="outline"
-            onClick={openChat}
-          >
-            <div className="flex flex-col items-center">
-              <span className="text-xs font-bold opacity-80 uppercase tracking-wide">{t("rentDay")}</span>
-              <span className="font-black text-lg">{formatGEL(listing.rent_price)}<span className="text-xs font-bold opacity-70">/d</span></span>
-            </div>
-          </Button>
-        )}
-        {listing.is_for_sale && listing.price && (
-          <Button
-            className="flex-[2] h-16 rounded-2xl bg-gradient-to-r from-primary to-secondary text-white font-black text-xl shadow-[0_8px_20px_rgba(139,92,246,0.3)] hover:opacity-90 transition-opacity"
-            onClick={openChat}
-          >
-            {t("messageSeller")}
-          </Button>
+        {isOwner ? (
+          /* ── Owner actions ── */
+          <>
+            <Button
+              variant="outline"
+              className="flex-1 h-16 rounded-2xl border-2 border-secondary bg-secondary/10 text-secondary hover:bg-secondary/20 hover:text-secondary font-bold disabled:opacity-50"
+              onClick={handleMarkSold}
+              disabled={listing.status === "sold"}
+            >
+              <div className="flex flex-col items-center gap-0.5">
+                <span className="text-base font-black leading-tight">
+                  {listing.status === "sold" ? `✓ ${t("soldLabel")}` : t("markAsSold")}
+                </span>
+              </div>
+            </Button>
+            <Button
+              className="flex-[2] h-16 rounded-2xl bg-red-500 hover:bg-red-600 text-white font-black text-base shadow-[0_8px_20px_rgba(239,68,68,0.25)] transition-colors"
+              onClick={handleDelete}
+            >
+              {t("deleteListing")}
+            </Button>
+          </>
+        ) : (
+          /* ── Buyer actions ── */
+          <>
+            {listing.is_for_rent && listing.rent_price && (
+              <Button
+                className="flex-1 h-16 rounded-2xl bg-secondary/10 border-2 border-secondary text-secondary hover:bg-secondary/20 hover:text-secondary"
+                variant="outline"
+                onClick={openChat}
+              >
+                <div className="flex flex-col items-center">
+                  <span className="text-xs font-bold opacity-80 uppercase tracking-wide">{t("rentDay")}</span>
+                  <span className="font-black text-lg">{formatGEL(listing.rent_price)}<span className="text-xs font-bold opacity-70">/d</span></span>
+                </div>
+              </Button>
+            )}
+            {listing.is_for_sale && listing.price && (
+              <Button
+                className="flex-[2] h-16 rounded-2xl bg-gradient-to-r from-primary to-secondary text-white font-black text-xl shadow-[0_8px_20px_rgba(139,92,246,0.3)] hover:opacity-90 transition-opacity"
+                onClick={openChat}
+              >
+                {t("messageSeller")}
+              </Button>
+            )}
+          </>
         )}
       </div>
 
