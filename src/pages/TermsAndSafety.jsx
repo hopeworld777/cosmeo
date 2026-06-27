@@ -1,4 +1,4 @@
-import { useState, useEffect, useLayoutEffect, useRef, useCallback } from "react";
+import { useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useTranslation } from "react-i18next";
 import { useLocation, useSearch } from "wouter";
@@ -13,29 +13,6 @@ import {
   Star,
 } from "lucide-react";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
-
-const SESSION_KEY = "kosmeo_terms_state";
-
-// Helper: get the mobile scroll container (the overflow-y-auto div in AppShell).
-// On desktop (md+) the window is the scroll container.
-function getScrollEl() {
-  if (typeof window === "undefined") return null;
-  if (window.matchMedia("(min-width: 768px)").matches) return window;
-  return document.querySelector("[data-scroll-container]") || window;
-}
-
-function getScrollTop() {
-  const el = getScrollEl();
-  if (!el) return 0;
-  return el === window ? window.scrollY : el.scrollTop;
-}
-
-function restoreScrollTop(top) {
-  const el = getScrollEl();
-  if (!el) return;
-  if (el === window) window.scrollTo(0, top);
-  else el.scrollTop = top;
-}
 
 // ── Controlled accordion section ──────────────────────────────────────────────
 function Section({ icon: Icon, titleKey, children, accent = "primary", open, onToggle }) {
@@ -120,76 +97,15 @@ export default function TermsAndSafety() {
   const [, setLocation] = useLocation();
   const search = useSearch();
 
-  // ── Restore persisted state eagerly (before first paint) ──────────────────
-  const [restoredState] = useState(() => {
-    try {
-      const raw = sessionStorage.getItem(SESSION_KEY);
-      if (raw) return JSON.parse(raw);
-    } catch {}
-    return null;
-  });
-
-  const initialTab =
-    restoredState?.tab ??
-    (new URLSearchParams(search).get("tab") === "terms" ? "terms" : "safety");
+  const initialTab = new URLSearchParams(search).get("tab") === "terms" ? "terms" : "safety";
 
   const [tab, setTab] = useState(initialTab);
 
-  // All accordion open states keyed by section titleKey
-  const [openSections, setOpenSections] = useState(
-    restoredState?.openSections ?? {}
-  );
+  const [openSections, setOpenSections] = useState({});
 
   const toggleSection = useCallback((key) => {
     setOpenSections((prev) => ({ ...prev, [key]: !prev[key] }));
   }, []);
-
-  // ── Track latest values in refs so cleanup can read them synchronously ─────
-  const scrollPosRef   = useRef(restoredState?.scrollTop ?? 0);
-  const openSectionsRef = useRef(openSections);
-  const tabRef          = useRef(tab);
-
-  useEffect(() => { openSectionsRef.current = openSections; }, [openSections]);
-  useEffect(() => { tabRef.current = tab; }, [tab]);
-
-  // Track scroll in real time so we always have the latest position
-  useEffect(() => {
-    const el = getScrollEl();
-    if (!el) return;
-    const handler = () => {
-      scrollPosRef.current = el === window ? window.scrollY : el.scrollTop;
-    };
-    el.addEventListener("scroll", handler, { passive: true });
-    return () => el.removeEventListener("scroll", handler);
-  }, []);
-
-  // ── Save state on unmount (useLayoutEffect cleanup fires BEFORE AppShell's
-  //    useLayoutEffect scroll-reset, so scrollPosRef still holds the real value)
-  useLayoutEffect(() => {
-    return () => {
-      try {
-        sessionStorage.setItem(
-          SESSION_KEY,
-          JSON.stringify({
-            scrollTop:    scrollPosRef.current,
-            openSections: openSectionsRef.current,
-            tab:          tabRef.current,
-          })
-        );
-      } catch {}
-    };
-  }, []);
-
-  // ── Restore scroll on mount (useEffect fires AFTER AppShell's
-  //    useLayoutEffect scroll-reset, so this correctly overwrites the reset)
-  useEffect(() => {
-    if (!restoredState) return;
-    const { scrollTop } = restoredState;
-    if (!scrollTop) return;
-    // rAF lets the layout settle before jumping
-    const id = requestAnimationFrame(() => restoreScrollTop(scrollTop));
-    return () => cancelAnimationFrame(id);
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <div className="min-h-screen bg-background">
