@@ -23,13 +23,13 @@ args = "Start application"
 name = "Start application"
 author = "agent"
 
+[workflows.workflow.metadata]
+outputType = "webview"
+
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "npm run dev"
 waitForPort = 5000
-
-[workflows.workflow.metadata]
-outputType = "webview"
 
 [[ports]]
 localPort = 3001
@@ -38,10 +38,6 @@ externalPort = 3001
 [[ports]]
 localPort = 5000
 externalPort = 80
-
-[[ports]]
-localPort = 5001
-externalPort = 3000
 
 [deployment]
 deploymentTarget = "autoscale"
@@ -53,3 +49,4 @@ build = ["npm", "run", "build"]
 [userenv.shared]
 NODE_ENV = "development"
 JWT_SECRET = "d97e68f478c52da7279130e99868a3704ab9131fd80320bbfcfff0d58ab967b1025e0d5d69a2b9eed054869d292bd7d6"
+PORT = "3001"
