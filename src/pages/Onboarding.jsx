@@ -164,7 +164,7 @@ export default function Onboarding() {
 
             {/* Brand */}
             <div className="absolute top-8 left-10">
-              <span className="text-white font-black text-2xl tracking-tight opacity-90">CosMeo</span>
+              <span className="text-white font-black text-2xl tracking-tight opacity-90">Cosmeo</span>
             </div>
 
             {/* Slide content */}

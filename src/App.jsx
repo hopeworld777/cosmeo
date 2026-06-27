@@ -108,7 +108,7 @@ function DesktopNav() {
       style={{ boxShadow: "0 2px 16px rgba(124,58,237,0.07)" }}
     >
       <Link href="/" className="font-black text-xl shrink-0 bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-        CosMeo
+        Cosmeo
       </Link>
 
       <nav className="flex items-center gap-6 flex-1">

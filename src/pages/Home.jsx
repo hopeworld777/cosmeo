@@ -80,7 +80,7 @@ export default function Home() {
           <div className="md:hidden flex items-center justify-between mb-4">
             <div>
               <h1 className="text-3xl font-black tracking-tight text-foreground leading-none">
-                CosMeo
+                Cosmeo
               </h1>
               <p className="text-[11px] font-semibold text-muted-foreground mt-0.5 tracking-wide">
                 ქოსფლეი + მეორადი 💜

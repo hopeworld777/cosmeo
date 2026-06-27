@@ -17,7 +17,7 @@ function BrandPanel() {
         <div className="w-24 h-24 rounded-[2.25rem] bg-white/20 backdrop-blur-sm flex items-center justify-center mb-8 shadow-xl">
           <Sparkles className="h-12 w-12 text-white" strokeWidth={1.5} />
         </div>
-        <h1 className="text-5xl font-black text-white mb-5">CosMeo</h1>
+        <h1 className="text-5xl font-black text-white mb-5">Cosmeo</h1>
         <p className="text-white/75 text-base leading-relaxed max-w-xs">
           {isKa
             ? "საუკეთესო პლატფორმა ქართული კოსფლეი კომიუნითისთვის"
