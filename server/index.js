@@ -39,6 +39,15 @@ app.use("/api/admin", adminRoutes);
 // Health check
 app.get("/api/health", (req, res) => res.json({ ok: true, ts: new Date().toISOString() }));
 
+// In production, serve the built Vite frontend and handle client-side routing
+if (process.env.NODE_ENV === "production") {
+  const distPath = path.join(__dirname, "../dist");
+  app.use(express.static(distPath));
+  app.get("*", (req, res) => {
+    res.sendFile(path.join(distPath, "index.html"));
+  });
+}
+
 app.listen(PORT, "0.0.0.0", () => {
   console.log(`Kosmeo API running on port ${PORT}`);
 });
