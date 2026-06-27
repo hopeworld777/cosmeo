@@ -1,7 +1,7 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useLayoutEffect } from "react";
 import { motion } from "framer-motion";
 import { ChevronLeft, MapPin, Check, Camera } from "lucide-react";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
@@ -36,14 +36,13 @@ function restoreScrollTop(top) {
   else el.scrollTop = top;
 }
 
-let _savedScrollTop = 0;
-let _scrollSaved = false;
-let _goingToSubpage = false;
+// Scroll position saved when leaving /settings for a submenu.
+// null means "no saved position" — do not restore on next mount.
+let _savedScrollTop = null;
+let _isGoingToSubpage = false;
 
 function markSubpageNav() {
-  _savedScrollTop = getScrollTop();
-  _scrollSaved = true;
-  _goingToSubpage = true;
+  _isGoingToSubpage = true;
 }
 
 export default function Settings() {
@@ -80,18 +79,27 @@ export default function Settings() {
 
   const bioValue = watch("bio") || "";
 
-  useEffect(() => {
-    if (_scrollSaved) {
-      restoreScrollTop(_savedScrollTop);
-    }
+  // Save scroll in layout-effect cleanup so it fires BEFORE AppShell resets
+  // the container. Only persist the position when going to a submenu page.
+  useLayoutEffect(() => {
     return () => {
-      if (_goingToSubpage) {
-        _goingToSubpage = false;
+      if (_isGoingToSubpage) {
+        _savedScrollTop = getScrollTop();
+        _isGoingToSubpage = false;
       } else {
-        _scrollSaved = false;
+        _savedScrollTop = null;
       }
     };
   }, []);
+
+  // Restore scroll after AppShell's layout-effect has already run (and reset
+  // the container to 0). rAF lets the page content paint before jumping.
+  useEffect(() => {
+    if (_savedScrollTop === null) return;
+    const top = _savedScrollTop;
+    const id = requestAnimationFrame(() => restoreScrollTop(top));
+    return () => cancelAnimationFrame(id);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (!user) return null;
 

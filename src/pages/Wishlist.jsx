@@ -1,15 +1,16 @@
 import ListingCard from "@/components/ListingCard";
-import { Heart, Search, X } from "lucide-react";
+import { Heart, Search, X, ChevronLeft } from "lucide-react";
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { api } from "@/lib/api";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import HeaderControls from "@/components/HeaderControls";
 
 export default function Wishlist() {
   const [wishlist, setWishlist] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const [, setLocation] = useLocation();
 
   useEffect(() => {
     api.favorites.list()
@@ -33,8 +34,16 @@ export default function Wishlist() {
 
       {/* Sticky Header */}
       <div className="sticky top-0 z-30 bg-white/95 backdrop-blur-xl pt-12 pb-4 px-4 rounded-b-3xl shadow-sm">
-        <div className="flex items-center justify-between mb-4">
-          <div>
+        <div className="flex items-center gap-3 mb-4">
+          <button
+            type="button"
+            onClick={() => window.history.length > 1 ? window.history.back() : setLocation("/")}
+            className="h-11 w-11 rounded-full bg-muted flex items-center justify-center hover:bg-muted/70 transition-colors shrink-0"
+            aria-label="Back"
+          >
+            <ChevronLeft className="h-5 w-5 text-foreground" />
+          </button>
+          <div className="flex-1">
             <h1 className="text-3xl font-black text-foreground">Wishlist</h1>
             <p className="text-sm font-bold text-primary mt-0.5">
               {loading ? "…" : `${wishlist.length} saved item${wishlist.length !== 1 ? "s" : ""}`}
