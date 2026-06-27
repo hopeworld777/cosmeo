@@ -47,6 +47,7 @@ CREATE TABLE IF NOT EXISTS listings (
   is_active    BOOLEAN        DEFAULT true,
   is_flagged   BOOLEAN        DEFAULT false,
   views        INTEGER        DEFAULT 0,
+  sold_at      TIMESTAMPTZ,
   created_at   TIMESTAMPTZ    DEFAULT NOW()
 );
 
