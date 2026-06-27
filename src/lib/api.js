@@ -60,6 +60,11 @@ export const api = {
     me: () => request("/listings/me"),
     markSold: (id) => request(`/listings/${id}/sold`, { method: "PATCH" }),
     markAvailable: (id) => request(`/listings/${id}/available`, { method: "PATCH" }),
+    buyers: (id) => request(`/listings/${id}/buyers`),
+  },
+
+  users: {
+    search: (q) => request(`/auth/search-user?q=${encodeURIComponent(q)}`),
   },
 
   wallet: {
@@ -70,6 +75,7 @@ export const api = {
 
   reviews: {
     forSeller: (userId) => request(`/reviews/${userId}`),
+    forBuyer: (userId) => request(`/reviews/buyer/${userId}`),
     submit: (body) =>
       request("/reviews", { method: "POST", body: JSON.stringify(body) }),
   },

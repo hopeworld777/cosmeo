@@ -1,7 +1,7 @@
 import {
   Settings, LogOut, Package, Star, ShoppingBag, Heart, ChevronRight,
   Wallet, ArrowDownToLine, CheckCircle2, Trash2, Tag, X, Loader2,
-  AlertCircle, TrendingUp, ShieldCheck, ScrollText
+  AlertCircle, TrendingUp, ShieldCheck, ScrollText, User, Search
 } from "lucide-react";
 import HeaderControls from "@/components/HeaderControls";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -54,7 +54,6 @@ function WithdrawModal({ balance, onClose, onSuccess }) {
 
   return (
     <>
-      {/* Backdrop */}
       <motion.div
         key="backdrop"
         initial={{ opacity: 0 }}
@@ -63,8 +62,6 @@ function WithdrawModal({ balance, onClose, onSuccess }) {
         onClick={onClose}
         className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50"
       />
-
-      {/* Sheet */}
       <motion.div
         key="sheet"
         initial={{ y: "100%" }}
@@ -73,11 +70,9 @@ function WithdrawModal({ balance, onClose, onSuccess }) {
         transition={{ type: "spring", damping: 30, stiffness: 300 }}
         className="fixed bottom-0 left-0 right-0 max-w-[430px] mx-auto z-50 bg-white rounded-t-[2rem] shadow-2xl"
       >
-        {/* Handle */}
         <div className="flex justify-center pt-3 pb-1">
           <div className="w-10 h-1.5 rounded-full bg-muted-foreground/20" />
         </div>
-
         <div className="px-6 pt-2 pb-10">
           <AnimatePresence mode="wait">
             {done ? (
@@ -95,10 +90,7 @@ function WithdrawModal({ balance, onClose, onSuccess }) {
                   <span className="text-foreground font-black">₾{withdrawn.toFixed(2)}</span> is being transferred to your {bank} account.
                 </p>
                 <p className="text-xs text-muted-foreground mt-1">Processing time: 1–2 business days</p>
-                <Button
-                  onClick={onClose}
-                  className="mt-8 w-full h-14 rounded-2xl bg-gradient-to-r from-primary to-secondary text-white font-bold text-base"
-                >
+                <Button onClick={onClose} className="mt-8 w-full h-14 rounded-2xl bg-gradient-to-r from-primary to-secondary text-white font-bold text-base">
                   Done
                 </Button>
               </motion.div>
@@ -111,19 +103,12 @@ function WithdrawModal({ balance, onClose, onSuccess }) {
                       Available: <span className="text-foreground font-extrabold">₾{Number(balance).toFixed(2)}</span>
                     </p>
                   </div>
-                  <button
-                    onClick={onClose}
-                    className="h-9 w-9 rounded-full bg-muted flex items-center justify-center"
-                  >
+                  <button onClick={onClose} className="h-9 w-9 rounded-full bg-muted flex items-center justify-center">
                     <X className="h-4 w-4 text-muted-foreground" />
                   </button>
                 </div>
-
-                {/* Amount */}
                 <div className="mb-4">
-                  <label className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-2 block">
-                    Amount (GEL)
-                  </label>
+                  <label className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-2 block">Amount (GEL)</label>
                   <div className="relative">
                     <span className="absolute left-4 top-1/2 -translate-y-1/2 text-2xl font-black text-primary">₾</span>
                     <input
@@ -139,48 +124,30 @@ function WithdrawModal({ balance, onClose, onSuccess }) {
                   </div>
                   <div className="flex gap-2 mt-2">
                     {[10, 25, 50, 100].filter(v => v <= balance).map(v => (
-                      <button
-                        key={v}
-                        onClick={() => setAmount(String(v))}
-                        className="flex-1 py-1.5 rounded-xl bg-primary/10 text-primary text-xs font-black hover:bg-primary/20 transition-colors"
-                      >
+                      <button key={v} onClick={() => setAmount(String(v))}
+                        className="flex-1 py-1.5 rounded-xl bg-primary/10 text-primary text-xs font-black hover:bg-primary/20 transition-colors">
                         ₾{v}
                       </button>
                     ))}
                     {balance > 0 && (
-                      <button
-                        onClick={() => setAmount(String(balance))}
-                        className="flex-1 py-1.5 rounded-xl bg-secondary/10 text-secondary text-xs font-black hover:bg-secondary/20 transition-colors"
-                      >
+                      <button onClick={() => setAmount(String(balance))}
+                        className="flex-1 py-1.5 rounded-xl bg-secondary/10 text-secondary text-xs font-black hover:bg-secondary/20 transition-colors">
                         All
                       </button>
                     )}
                   </div>
                 </div>
-
-                {/* Bank selector */}
                 <div className="mb-4">
-                  <label className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-2 block">
-                    Bank
-                  </label>
+                  <label className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-2 block">Bank</label>
                   <div className="grid grid-cols-3 gap-2">
                     {["TBC", "BOG", "Other"].map((b) => (
-                      <button
-                        key={b}
-                        onClick={() => setBank(b)}
-                        className={`py-3 rounded-2xl text-sm font-extrabold transition-all ${
-                          bank === b
-                            ? "bg-primary text-white shadow-md"
-                            : "bg-muted text-foreground hover:bg-muted/80"
-                        }`}
-                      >
+                      <button key={b} onClick={() => setBank(b)}
+                        className={`py-3 rounded-2xl text-sm font-extrabold transition-all ${bank === b ? "bg-primary text-white shadow-md" : "bg-muted text-foreground hover:bg-muted/80"}`}>
                         {b}
                       </button>
                     ))}
                   </div>
                 </div>
-
-                {/* Account number */}
                 <div className="mb-6">
                   <label className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-2 block">
                     {bank === "Other" ? "Account / IBAN" : `${bank} Account Number`}
@@ -193,28 +160,15 @@ function WithdrawModal({ balance, onClose, onSuccess }) {
                     className="w-full px-4 h-14 rounded-2xl bg-muted text-base font-bold text-foreground outline-none focus:ring-2 focus:ring-primary/30 transition-shadow placeholder:text-muted-foreground/50 placeholder:font-normal"
                   />
                 </div>
-
-                {/* Disclaimer */}
                 <div className="flex gap-2 bg-amber-50 rounded-2xl p-3 mb-5">
                   <AlertCircle className="h-4 w-4 text-amber-500 shrink-0 mt-0.5" />
                   <p className="text-xs text-amber-700 font-medium leading-snug">
                     This is a simulated withdrawal for demo purposes. No real funds will be transferred.
                   </p>
                 </div>
-
-                <Button
-                  onClick={submit}
-                  disabled={loading || !amount || !account}
-                  className="w-full h-14 rounded-2xl bg-gradient-to-r from-primary to-secondary text-white font-bold text-base shadow-[0_4px_14px_rgba(124,58,237,0.3)] hover:opacity-90 disabled:opacity-40 transition-opacity"
-                >
-                  {loading ? (
-                    <Loader2 className="h-5 w-5 animate-spin" />
-                  ) : (
-                    <>
-                      <ArrowDownToLine className="h-5 w-5 mr-2" />
-                      Withdraw ₾{amount || "0"}
-                    </>
-                  )}
+                <Button onClick={submit} disabled={loading || !amount || !account}
+                  className="w-full h-14 rounded-2xl bg-gradient-to-r from-primary to-secondary text-white font-bold text-base shadow-[0_4px_14px_rgba(124,58,237,0.3)] hover:opacity-90 disabled:opacity-40 transition-opacity">
+                  {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : <><ArrowDownToLine className="h-5 w-5 mr-2" />Withdraw ₾{amount || "0"}</>}
                 </Button>
               </motion.div>
             )}
@@ -225,25 +179,56 @@ function WithdrawModal({ balance, onClose, onSuccess }) {
   );
 }
 
-// ── Review Modal ───────────────────────────────────────────────────────────────
-function ReviewModal({ listing, onClose, onSubmitted }) {
+// ── Buyer Review Modal — seller rates the buyer after a sale ──────────────────
+function BuyerReviewModal({ listing, onClose, onSubmitted }) {
+  const [buyers, setBuyers] = useState([]);
+  const [loadingBuyers, setLoadingBuyers] = useState(true);
+  const [selectedBuyer, setSelectedBuyer] = useState(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState([]);
+  const [searching, setSearching] = useState(false);
   const [rating, setRating] = useState(0);
   const [hovered, setHovered] = useState(0);
   const [comment, setComment] = useState("");
   const [loading, setLoading] = useState(false);
   const [done, setDone] = useState(false);
   const { toast } = useToast();
-  const { user } = useAuth();
+
+  useEffect(() => {
+    api.listings.buyers(listing.id)
+      .then(data => {
+        const list = data || [];
+        setBuyers(list);
+        if (list.length === 1) setSelectedBuyer(list[0]);
+      })
+      .catch(() => {})
+      .finally(() => setLoadingBuyers(false));
+  }, [listing.id]);
+
+  useEffect(() => {
+    if (!searchQuery || searchQuery.length < 2) { setSearchResults([]); return; }
+    const t = setTimeout(async () => {
+      setSearching(true);
+      try {
+        const results = await api.users.search(searchQuery);
+        setSearchResults(results || []);
+      } catch { setSearchResults([]); }
+      finally { setSearching(false); }
+    }, 350);
+    return () => clearTimeout(t);
+  }, [searchQuery]);
 
   async function submit() {
+    if (!selectedBuyer) { toast({ title: "Select the buyer first", variant: "destructive" }); return; }
     if (rating === 0) { toast({ title: "Pick a star rating", variant: "destructive" }); return; }
     setLoading(true);
     try {
       await api.reviews.submit({
         listing_id: listing.id,
-        seller_id: user.id,   // seller reviews themselves as mock buyer flow
+        buyer_id: selectedBuyer.id,
         rating,
         comment: comment.trim() || null,
+        review_type: "buyer",
       });
       setDone(true);
       onSubmitted(rating);
@@ -263,9 +248,9 @@ function ReviewModal({ listing, onClose, onSubmitted }) {
       <motion.div key="rv-sheet"
         initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }}
         transition={{ type: "spring", damping: 30, stiffness: 300 }}
-        className="fixed bottom-0 left-0 right-0 max-w-[430px] mx-auto z-50 bg-white rounded-t-[2rem] shadow-2xl"
+        className="fixed bottom-0 left-0 right-0 max-w-[430px] mx-auto z-50 bg-white rounded-t-[2rem] shadow-2xl max-h-[90vh] overflow-y-auto"
       >
-        <div className="flex justify-center pt-3 pb-1">
+        <div className="flex justify-center pt-3 pb-1 sticky top-0 bg-white z-10">
           <div className="w-10 h-1.5 rounded-full bg-muted-foreground/20" />
         </div>
         <div className="px-6 pt-2 pb-10">
@@ -278,9 +263,8 @@ function ReviewModal({ listing, onClose, onSubmitted }) {
                 </div>
                 <h3 className="text-2xl font-black text-foreground mb-2">Review Saved!</h3>
                 <p className="text-muted-foreground font-medium">
-                  You rated this transaction <span className="text-foreground font-extrabold">{rating}/5 ★</span>
+                  You rated <span className="text-foreground font-extrabold">@{selectedBuyer?.username}</span> as a buyer.
                 </p>
-                <p className="text-xs text-muted-foreground mt-1">Your seller rating has been updated.</p>
                 <Button onClick={onClose}
                   className="mt-8 w-full h-14 rounded-2xl bg-gradient-to-r from-primary to-secondary text-white font-bold text-base">
                   Done
@@ -290,38 +274,111 @@ function ReviewModal({ listing, onClose, onSubmitted }) {
               <motion.div key="rv-form" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
                 <div className="flex items-start justify-between mb-5">
                   <div>
-                    <h3 className="text-2xl font-black text-foreground">Rate the Sale</h3>
-                    <p className="text-sm text-muted-foreground font-medium mt-0.5 line-clamp-1">
-                      {listing.title}
-                    </p>
+                    <h3 className="text-2xl font-black text-foreground">Rate the Buyer</h3>
+                    <p className="text-sm text-muted-foreground font-medium mt-0.5 line-clamp-1">{listing.title}</p>
                   </div>
-                  <button onClick={onClose}
-                    className="h-9 w-9 rounded-full bg-muted flex items-center justify-center shrink-0">
+                  <button onClick={onClose} className="h-9 w-9 rounded-full bg-muted flex items-center justify-center shrink-0">
                     <X className="h-4 w-4 text-muted-foreground" />
                   </button>
                 </div>
 
+                {/* Buyer selection */}
+                <div className="mb-5">
+                  <label className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-2 block">
+                    Who bought this?
+                  </label>
+
+                  {loadingBuyers ? (
+                    <div className="h-14 bg-muted rounded-2xl animate-pulse" />
+                  ) : buyers.length > 0 ? (
+                    <div className="flex flex-col gap-2">
+                      {buyers.map(b => (
+                        <button key={b.id} onClick={() => setSelectedBuyer(b)}
+                          className={`flex items-center gap-3 px-4 py-3 rounded-2xl border-2 transition-all ${
+                            selectedBuyer?.id === b.id
+                              ? "border-primary bg-primary/5"
+                              : "border-border hover:border-primary/40"
+                          }`}>
+                          <Avatar className="h-9 w-9">
+                            <AvatarImage src={b.avatar_url} />
+                            <AvatarFallback className="bg-primary/10 text-primary font-black text-sm">
+                              {b.username.slice(0, 2).toUpperCase()}
+                            </AvatarFallback>
+                          </Avatar>
+                          <span className="font-extrabold text-foreground">@{b.username}</span>
+                          {selectedBuyer?.id === b.id && (
+                            <CheckCircle2 className="h-4 w-4 text-primary ml-auto" />
+                          )}
+                        </button>
+                      ))}
+                      <p className="text-xs text-muted-foreground font-medium text-center mt-1">
+                        Or search for another user:
+                      </p>
+                    </div>
+                  ) : (
+                    <p className="text-xs text-muted-foreground font-medium mb-2">
+                      No messages found for this listing. Search by username:
+                    </p>
+                  )}
+
+                  {/* Username search */}
+                  <div className="relative mt-2">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <input
+                      type="text"
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      placeholder="Search by username…"
+                      className="w-full pl-9 pr-4 h-12 rounded-2xl bg-muted text-sm font-medium text-foreground outline-none focus:ring-2 focus:ring-primary/30 transition-shadow"
+                    />
+                    {searching && <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-primary" />}
+                  </div>
+                  {searchResults.length > 0 && (
+                    <div className="mt-2 flex flex-col gap-1">
+                      {searchResults.map(u => (
+                        <button key={u.id} onClick={() => { setSelectedBuyer(u); setSearchQuery(""); setSearchResults([]); }}
+                          className="flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-muted transition-colors text-left">
+                          <Avatar className="h-7 w-7">
+                            <AvatarImage src={u.avatar_url} />
+                            <AvatarFallback className="bg-primary/10 text-primary font-black text-xs">
+                              {u.username.slice(0, 2).toUpperCase()}
+                            </AvatarFallback>
+                          </Avatar>
+                          <span className="font-bold text-sm text-foreground">@{u.username}</span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+
+                  {selectedBuyer && buyers.every(b => b.id !== selectedBuyer.id) && (
+                    <div className="mt-2 flex items-center gap-3 px-4 py-3 rounded-2xl border-2 border-primary bg-primary/5">
+                      <Avatar className="h-9 w-9">
+                        <AvatarImage src={selectedBuyer.avatar_url} />
+                        <AvatarFallback className="bg-primary/10 text-primary font-black text-sm">
+                          {selectedBuyer.username.slice(0, 2).toUpperCase()}
+                        </AvatarFallback>
+                      </Avatar>
+                      <span className="font-extrabold text-foreground">@{selectedBuyer.username}</span>
+                      <CheckCircle2 className="h-4 w-4 text-primary ml-auto" />
+                    </div>
+                  )}
+                </div>
+
                 {/* Stars */}
-                <div className="flex flex-col items-center mb-6">
+                <div className="flex flex-col items-center mb-5">
                   <div className="flex gap-3 mb-2">
                     {[1, 2, 3, 4, 5].map((s) => (
                       <motion.button key={s} whileTap={{ scale: 0.85 }}
                         onClick={() => setRating(s)}
                         onMouseEnter={() => setHovered(s)}
-                        onMouseLeave={() => setHovered(0)}
-                      >
-                        <Star className={`h-10 w-10 transition-all ${
-                          s <= (hovered || rating)
-                            ? "fill-amber-400 text-amber-400 scale-110"
-                            : "text-muted-foreground/30"
-                        }`} />
+                        onMouseLeave={() => setHovered(0)}>
+                        <Star className={`h-10 w-10 transition-all ${s <= (hovered || rating) ? "fill-amber-400 text-amber-400 scale-110" : "text-muted-foreground/30"}`} />
                       </motion.button>
                     ))}
                   </div>
                   <AnimatePresence mode="wait">
                     {(hovered || rating) > 0 && (
-                      <motion.p key={hovered || rating}
-                        initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
+                      <motion.p key={hovered || rating} initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
                         className="text-sm font-extrabold text-amber-500">
                         {labels[hovered || rating]}
                       </motion.p>
@@ -330,30 +387,29 @@ function ReviewModal({ listing, onClose, onSubmitted }) {
                 </div>
 
                 {/* Comment */}
-                <div className="mb-6">
+                <div className="mb-5">
                   <label className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-2 block">
                     Comment (optional)
                   </label>
                   <textarea
                     value={comment}
                     onChange={(e) => setComment(e.target.value)}
-                    placeholder="How did the transaction go? Fast delivery, item as described…"
+                    placeholder="How was the transaction? Paid promptly, polite communication…"
                     rows={3}
                     className="w-full px-4 py-3 rounded-2xl bg-muted text-sm font-medium text-foreground outline-none focus:ring-2 focus:ring-primary/30 transition-shadow placeholder:text-muted-foreground/50 placeholder:font-normal resize-none"
                   />
                 </div>
 
-                <div className="flex gap-3 bg-primary/5 rounded-2xl p-3 mb-5">
-                  <AlertCircle className="h-4 w-4 text-primary shrink-0 mt-0.5" />
-                  <p className="text-xs text-primary/70 font-medium leading-snug">
-                    This simulates a buyer review to update your seller rating on the platform.
-                  </p>
+                <div className="flex gap-3 mb-5">
+                  <Button variant="outline" onClick={onClose}
+                    className="flex-1 h-13 rounded-2xl border-2 border-border text-muted-foreground font-bold">
+                    Skip
+                  </Button>
+                  <Button onClick={submit} disabled={loading || rating === 0 || !selectedBuyer}
+                    className="flex-[2] h-13 rounded-2xl bg-gradient-to-r from-amber-400 to-orange-400 text-white font-bold shadow-md hover:opacity-90 disabled:opacity-40">
+                    {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : "⭐ Submit Review"}
+                  </Button>
                 </div>
-
-                <Button onClick={submit} disabled={loading || rating === 0}
-                  className="w-full h-14 rounded-2xl bg-gradient-to-r from-amber-400 to-orange-400 text-white font-bold text-base shadow-md hover:opacity-90 disabled:opacity-40">
-                  {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : "⭐ Submit Review"}
-                </Button>
               </motion.div>
             )}
           </AnimatePresence>
@@ -368,6 +424,7 @@ function MyListings({ onSold }) {
   const { t } = useTranslation();
   const [listings, setListings] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [tab, setTab] = useState("active");
   const [reviewListing, setReviewListing] = useState(null);
   const { toast } = useToast();
   const [, setLocation] = useLocation();
@@ -390,12 +447,12 @@ function MyListings({ onSold }) {
     try {
       await api.listings.markSold(listing.id);
       setListings((prev) =>
-        prev.map((l) => l.id === listing.id ? { ...l, status: "sold", is_active: false } : l)
+        prev.map((l) => l.id === listing.id ? { ...l, status: "sold", is_active: false, sold_at: new Date().toISOString() } : l)
       );
       window.dispatchEvent(new Event("kosmeo:listingChanged"));
       const salePrice = Number(listing.price || listing.rent_price || 0);
       if (salePrice > 0 && onSold) onSold(salePrice);
-      toast({ title: "Marked as sold! ✅", description: "Now rate the transaction." });
+      toast({ title: "Marked as sold! ✅", description: "Rate the buyer to build trust." });
       setReviewListing(listing);
     } catch (err) {
       toast({ title: "Error", description: err.message, variant: "destructive" });
@@ -423,6 +480,9 @@ function MyListings({ onSold }) {
     );
   }
 
+  const activeListings = listings.filter(l => l.status === "active");
+  const soldListings = listings.filter(l => l.status === "sold");
+
   if (listings.length === 0) {
     return (
       <div className="flex flex-col items-center py-10 text-center">
@@ -441,85 +501,168 @@ function MyListings({ onSold }) {
     );
   }
 
-  const statusConfig = {
-    active:  { label: "Active",  bg: "bg-green-100",  text: "text-green-700"  },
-    sold:    { label: "Sold",    bg: "bg-amber-100",  text: "text-amber-700"  },
-    deleted: { label: "Removed", bg: "bg-red-100",    text: "text-red-700"    },
-  };
-
   return (
-    <div className="space-y-3">
-      <AnimatePresence mode="popLayout">
-        {listings.map((l, i) => {
-          const img = l.images?.[0] ?? null;
-          const sc = statusConfig[l.status] || statusConfig.active;
-          const isActive = l.status === "active";
+    <div>
+      {/* Tabs */}
+      <div className="flex gap-2 mb-4">
+        <button
+          onClick={() => setTab("active")}
+          className={`flex-1 py-2 rounded-2xl text-sm font-extrabold transition-all ${
+            tab === "active"
+              ? "bg-primary text-white shadow-sm"
+              : "bg-muted text-muted-foreground hover:bg-muted/80"
+          }`}
+        >
+          Active{activeListings.length > 0 && ` (${activeListings.length})`}
+        </button>
+        <button
+          onClick={() => setTab("sold")}
+          className={`flex-1 py-2 rounded-2xl text-sm font-extrabold transition-all ${
+            tab === "sold"
+              ? "bg-amber-500 text-white shadow-sm"
+              : "bg-muted text-muted-foreground hover:bg-muted/80"
+          }`}
+        >
+          Sold{soldListings.length > 0 && ` (${soldListings.length})`}
+        </button>
+      </div>
 
-          return (
-            <motion.div
-              key={l.id}
-              layout
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, x: -30 }}
-              transition={{ delay: i * 0.04 }}
-              className="flex items-center gap-3 bg-white rounded-3xl card-shadow p-3"
-            >
-              {/* Thumbnail */}
-              <div className="h-18 w-16 shrink-0 rounded-2xl overflow-hidden bg-muted">
-                {img ? (
-                  <img src={img} alt={l.title} className="h-full w-full object-cover" />
-                ) : (
-                  <div className="h-full w-full bg-gradient-to-br from-primary/10 to-secondary/10 flex items-center justify-center">
-                    <Tag className="h-5 w-5 text-primary/40" />
-                  </div>
-                )}
-              </div>
-
-              {/* Info */}
-              <div className="flex-1 min-w-0">
-                <p className="font-extrabold text-sm text-foreground line-clamp-1 leading-tight">{l.title}</p>
-                <div className="flex items-center gap-2 mt-1 flex-wrap">
-                  <span className={`text-[10px] font-black px-2 py-0.5 rounded-full ${sc.bg} ${sc.text}`}>
-                    {sc.label}
-                  </span>
-                  {l.price && l.is_for_sale && (
-                    <span className="text-xs font-bold text-primary">₾{Number(l.price).toFixed(0)}</span>
-                  )}
-                  {l.rent_price && l.is_for_rent && (
-                    <span className="text-xs font-bold text-secondary">₾{Number(l.rent_price).toFixed(0)}/d</span>
-                  )}
-                </div>
-              </div>
-
-              {/* Actions */}
-              {isActive && (
-                <div className="flex flex-col gap-1.5 shrink-0">
-                  <button
-                    onClick={() => handleMarkSold(l)}
-                    className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-green-50 text-green-700 text-[11px] font-bold hover:bg-green-100 transition-colors whitespace-nowrap"
+      {/* Active listings */}
+      {tab === "active" && (
+        <div className="space-y-3">
+          {activeListings.length === 0 ? (
+            <div className="flex flex-col items-center py-8 text-center">
+              <Package className="h-8 w-8 text-muted-foreground/40 mb-2" />
+              <p className="text-sm font-bold text-muted-foreground">No active listings</p>
+              <button
+                onClick={() => setLocation("/sell")}
+                className="mt-3 px-5 py-2 rounded-2xl bg-primary/10 text-primary text-sm font-bold hover:bg-primary/20 transition-colors"
+              >
+                + Create one
+              </button>
+            </div>
+          ) : (
+            <AnimatePresence mode="popLayout">
+              {activeListings.map((l, i) => {
+                const img = l.images?.[0] ?? null;
+                return (
+                  <motion.div
+                    key={l.id}
+                    layout
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, x: -30 }}
+                    transition={{ delay: i * 0.04 }}
+                    className="flex items-center gap-3 bg-white rounded-3xl card-shadow p-3 cursor-pointer hover:shadow-md transition-shadow"
+                    onClick={() => setLocation(`/item/${l.id}`)}
                   >
-                    <CheckCircle2 className="h-3 w-3" />
-                    Sold
-                  </button>
-                  <button
-                    onClick={() => handleDelete(l.id)}
-                    className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-red-50 text-red-500 text-[11px] font-bold hover:bg-red-100 transition-colors"
-                  >
-                    <Trash2 className="h-3 w-3" />
-                    Delete
-                  </button>
-                </div>
-              )}
-            </motion.div>
-          );
-        })}
-      </AnimatePresence>
+                    <div className="h-18 w-16 shrink-0 rounded-2xl overflow-hidden bg-muted">
+                      {img ? (
+                        <img src={img} alt={l.title} className="h-full w-full object-cover" />
+                      ) : (
+                        <div className="h-full w-full bg-gradient-to-br from-primary/10 to-secondary/10 flex items-center justify-center">
+                          <Tag className="h-5 w-5 text-primary/40" />
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-extrabold text-sm text-foreground line-clamp-1 leading-tight">{l.title}</p>
+                      <div className="flex items-center gap-2 mt-1 flex-wrap">
+                        <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-green-100 text-green-700">Active</span>
+                        {l.price && l.is_for_sale && (
+                          <span className="text-xs font-bold text-primary">₾{Number(l.price).toFixed(0)}</span>
+                        )}
+                        {l.rent_price && l.is_for_rent && (
+                          <span className="text-xs font-bold text-secondary">₾{Number(l.rent_price).toFixed(0)}/d</span>
+                        )}
+                      </div>
+                    </div>
+                    <div className="flex flex-col gap-1.5 shrink-0" onClick={e => e.stopPropagation()}>
+                      <button
+                        onClick={() => handleMarkSold(l)}
+                        className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-green-50 text-green-700 text-[11px] font-bold hover:bg-green-100 transition-colors whitespace-nowrap"
+                      >
+                        <CheckCircle2 className="h-3 w-3" />
+                        Sold
+                      </button>
+                      <button
+                        onClick={() => handleDelete(l.id)}
+                        className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-red-50 text-red-500 text-[11px] font-bold hover:bg-red-100 transition-colors"
+                      >
+                        <Trash2 className="h-3 w-3" />
+                        Delete
+                      </button>
+                    </div>
+                  </motion.div>
+                );
+              })}
+            </AnimatePresence>
+          )}
+        </div>
+      )}
 
-      {/* Review modal — appears after marking sold */}
+      {/* Sold listings */}
+      {tab === "sold" && (
+        <div className="space-y-3">
+          {soldListings.length === 0 ? (
+            <div className="flex flex-col items-center py-8 text-center">
+              <ShoppingBag className="h-8 w-8 text-muted-foreground/40 mb-2" />
+              <p className="text-sm font-bold text-muted-foreground">No sold listings yet</p>
+              <p className="text-xs text-muted-foreground mt-1">Completed sales will appear here</p>
+            </div>
+          ) : (
+            <AnimatePresence mode="popLayout">
+              {soldListings.map((l, i) => {
+                const img = l.images?.[0] ?? null;
+                const soldDate = l.sold_at ? new Date(l.sold_at).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }) : null;
+                return (
+                  <motion.div
+                    key={l.id}
+                    layout
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, x: -30 }}
+                    transition={{ delay: i * 0.04 }}
+                    className="flex items-center gap-3 bg-white rounded-3xl card-shadow p-3 cursor-pointer hover:shadow-md transition-shadow active:scale-[0.98]"
+                    onClick={() => setLocation(`/item/${l.id}`)}
+                  >
+                    <div className="h-18 w-16 shrink-0 rounded-2xl overflow-hidden bg-muted relative">
+                      {img ? (
+                        <img src={img} alt={l.title} className="h-full w-full object-cover opacity-80" />
+                      ) : (
+                        <div className="h-full w-full bg-gradient-to-br from-amber-50 to-orange-50 flex items-center justify-center">
+                          <Tag className="h-5 w-5 text-amber-400/60" />
+                        </div>
+                      )}
+                      <div className="absolute inset-0 bg-black/20 flex items-center justify-center">
+                        <span className="text-[9px] font-black text-white bg-black/50 px-1.5 py-0.5 rounded-full tracking-wider">SOLD</span>
+                      </div>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-extrabold text-sm text-foreground line-clamp-1 leading-tight">{l.title}</p>
+                      <div className="flex items-center gap-2 mt-1 flex-wrap">
+                        <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-amber-100 text-amber-700">Sold</span>
+                        {l.price && l.is_for_sale && (
+                          <span className="text-xs font-bold text-muted-foreground line-through">₾{Number(l.price).toFixed(0)}</span>
+                        )}
+                      </div>
+                      {soldDate && (
+                        <p className="text-[10px] text-muted-foreground font-medium mt-0.5">{soldDate}</p>
+                      )}
+                    </div>
+                    <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />
+                  </motion.div>
+                );
+              })}
+            </AnimatePresence>
+          )}
+        </div>
+      )}
+
+      {/* Buyer review modal — appears after marking sold */}
       <AnimatePresence>
         {reviewListing && (
-          <ReviewModal
+          <BuyerReviewModal
             listing={reviewListing}
             onClose={() => setReviewListing(null)}
             onSubmitted={() => setTimeout(() => setReviewListing(null), 2500)}
@@ -632,20 +775,36 @@ export default function Profile() {
               {user.bio || "No bio yet — tap ⚙️ to add one!"}
             </p>
 
-            {/* Stats */}
+            {/* Stats — Seller Rating | Sales | Buyer Rating */}
             <div className="flex w-full justify-around mt-5 pt-5 border-t border-border/30">
-              {[
-                { label: t("rating"), value: user.rating ? Number(user.rating).toFixed(1) : "New" },
-                { label: t("salesLabel"), value: user.sales_count || 0 },
-                { label: t("reviewsCount"), value: user.review_count || 0 },
-              ].map((stat, i) => (
-                <div key={i} className="flex flex-col items-center">
-                  <span className="text-xl font-black text-foreground">{stat.value}</span>
-                  <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mt-0.5">
-                    {stat.label}
-                  </span>
-                </div>
-              ))}
+              <div className="flex flex-col items-center">
+                <span className="text-xl font-black text-foreground">
+                  {user.rating ? Number(user.rating).toFixed(1) : "New"}
+                </span>
+                <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mt-0.5">
+                  Seller ★
+                </span>
+                <span className="text-[9px] text-muted-foreground/70">
+                  {user.review_count || 0} reviews
+                </span>
+              </div>
+              <div className="flex flex-col items-center">
+                <span className="text-xl font-black text-foreground">{user.sales_count || 0}</span>
+                <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mt-0.5">
+                  {t("salesLabel")}
+                </span>
+              </div>
+              <div className="flex flex-col items-center">
+                <span className="text-xl font-black text-foreground">
+                  {user.buyer_rating ? Number(user.buyer_rating).toFixed(1) : "New"}
+                </span>
+                <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mt-0.5">
+                  Buyer ★
+                </span>
+                <span className="text-[9px] text-muted-foreground/70">
+                  {user.buyer_review_count || 0} reviews
+                </span>
+              </div>
             </div>
           </div>
         </motion.div>
@@ -659,17 +818,15 @@ export default function Profile() {
           {t("editProfileSettings")}
         </button>
 
-        {/* ── Wallet Card ──────────────────────────────────────────────── */}
+        {/* Wallet Card */}
         <motion.div
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.08 }}
           className="bg-gradient-to-br from-primary to-secondary rounded-[2rem] p-5 text-white shadow-[0_8px_24px_rgba(124,58,237,0.3)] overflow-hidden relative"
         >
-          {/* Decorative circle */}
           <div className="absolute -right-8 -top-8 h-36 w-36 rounded-full bg-white/10 pointer-events-none" />
           <div className="absolute -right-2 bottom-0 h-20 w-20 rounded-full bg-white/5 pointer-events-none" />
-
           <div className="flex items-start justify-between relative">
             <div>
               <div className="flex items-center gap-2 mb-1">
@@ -679,9 +836,7 @@ export default function Profile() {
               {balanceLoading ? (
                 <div className="h-10 w-28 bg-white/20 rounded-xl animate-pulse mt-1" />
               ) : (
-                <p className="text-4xl font-black tracking-tight mt-1">
-                  ₾{balance.toFixed(2)}
-                </p>
+                <p className="text-4xl font-black tracking-tight mt-1">₾{balance.toFixed(2)}</p>
               )}
               <p className="text-xs text-white/60 font-medium mt-1.5">Total value traded in the community 🏆</p>
             </div>
@@ -690,8 +845,6 @@ export default function Profile() {
               <span className="text-xs font-bold text-white/80">{user.sales_count || 0} sales</span>
             </div>
           </div>
-
-          {/* Gamified stat footer */}
           <div className="mt-5 flex items-center justify-between bg-white/10 rounded-2xl px-4 py-3">
             <div className="text-center">
               <p className="text-lg font-black text-white">{user.sales_count || 0}</p>
@@ -699,9 +852,7 @@ export default function Profile() {
             </div>
             <div className="w-px h-8 bg-white/20" />
             <div className="text-center">
-              <p className="text-lg font-black text-white">
-                {balance > 0 ? `₾${balance.toFixed(0)}` : "₾0"}
-              </p>
+              <p className="text-lg font-black text-white">{balance > 0 ? `₾${balance.toFixed(0)}` : "₾0"}</p>
               <p className="text-[10px] font-bold text-white/60 uppercase tracking-wide">Earned</p>
             </div>
             <div className="w-px h-8 bg-white/20" />
@@ -712,7 +863,6 @@ export default function Profile() {
               <p className="text-[10px] font-bold text-white/60 uppercase tracking-wide">Rank</p>
             </div>
           </div>
-
           {balance <= 0 && (
             <p className="text-center text-[10px] text-white/50 mt-2 font-medium">
               Mark your first listing as Sold to start tracking! 🚀
@@ -720,14 +870,13 @@ export default function Profile() {
           )}
         </motion.div>
 
-        {/* ── My Listings ──────────────────────────────────────────────── */}
+        {/* My Listings */}
         <motion.div
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.12 }}
           className="bg-white rounded-[2rem] card-shadow overflow-hidden"
         >
-          {/* Section header */}
           <button
             onClick={() => setListingsOpen((v) => !v)}
             className="w-full flex items-center justify-between px-5 py-4 hover:bg-muted/30 transition-colors"
@@ -745,16 +894,12 @@ export default function Profile() {
               >
                 + New
               </button>
-              <motion.div
-                animate={{ rotate: listingsOpen ? 90 : 0 }}
-                transition={{ duration: 0.2 }}
-              >
+              <motion.div animate={{ rotate: listingsOpen ? 90 : 0 }} transition={{ duration: 0.2 }}>
                 <ChevronRight className="h-4 w-4 text-muted-foreground" />
               </motion.div>
             </div>
           </button>
 
-          {/* Collapsed/expanded */}
           <AnimatePresence>
             {listingsOpen && (
               <motion.div
@@ -806,7 +951,6 @@ export default function Profile() {
           })}
         </div>
 
-        {/* Divider */}
         <div className="flex items-center gap-3 px-1">
           <div className="flex-1 h-px bg-border/50" />
         </div>
@@ -836,7 +980,6 @@ export default function Profile() {
           })}
         </div>
 
-        {/* Divider */}
         <div className="flex items-center gap-3 px-1">
           <div className="flex-1 h-px bg-border/50" />
         </div>
@@ -882,10 +1025,9 @@ export default function Profile() {
         {withdrawOpen && (
           <WithdrawModal
             balance={balance}
-            onClose={() => setWithdrawOpen(false)}
+            onClose={() => {}}
             onSuccess={(newBalance) => {
               setBalance(newBalance);
-              setTimeout(() => setWithdrawOpen(false), 2200);
             }}
           />
         )}

@@ -121,6 +121,32 @@ router.get("/me", requireAuth, async (req, res) => {
   }
 });
 
+// GET /api/listings/:id/buyers — users who messaged about this listing (potential buyers)
+// Must be before /:id to avoid Express shadowing
+router.get("/:id/buyers", requireAuth, async (req, res) => {
+  if (!/^\d+$/.test(req.params.id)) {
+    return res.status(404).json({ error: "Listing not found" });
+  }
+  try {
+    // Only the seller can fetch this
+    const listing = await pool.query("SELECT seller_id FROM listings WHERE id = $1", [req.params.id]);
+    if (!listing.rows[0] || listing.rows[0].seller_id !== req.userId) {
+      return res.status(403).json({ error: "Not authorized" });
+    }
+    const result = await pool.query(`
+      SELECT DISTINCT u.id, u.username, u.avatar_url
+      FROM conversations c
+      JOIN users u ON u.id = c.buyer_id
+      WHERE c.listing_id = $1 AND c.buyer_id != $2
+      ORDER BY u.username
+    `, [req.params.id, req.userId]);
+    res.json(result.rows);
+  } catch (err) {
+    console.error("Listing buyers error:", err);
+    res.status(500).json({ error: "Failed to fetch buyers" });
+  }
+});
+
 // GET /api/listings/:id
 router.get("/:id", optionalAuth, async (req, res) => {
   if (!/^\d+$/.test(req.params.id)) {
@@ -136,7 +162,7 @@ router.get("/:id", optionalAuth, async (req, res) => {
              (SELECT COUNT(*) FROM favorites WHERE listing_id = l.id) as favorited_count
       FROM listings l
       JOIN users u ON u.id = l.seller_id
-      WHERE l.id = $1 AND l.is_active = true
+      WHERE l.id = $1 AND l.status != 'deleted'
     `, [req.params.id]);
 
     if (!result.rows[0]) return res.status(404).json({ error: "Listing not found" });
@@ -240,7 +266,7 @@ router.delete("/:id", requireAuth, async (req, res) => {
 router.patch("/:id/sold", requireAuth, async (req, res) => {
   try {
     const result = await pool.query(
-      "UPDATE listings SET status = 'sold', is_active = false WHERE id = $1 AND seller_id = $2 RETURNING id, status",
+      "UPDATE listings SET status = 'sold', is_active = false, sold_at = NOW() WHERE id = $1 AND seller_id = $2 RETURNING id, status, sold_at",
       [req.params.id, req.userId]
     );
     if (!result.rows[0]) return res.status(404).json({ error: "Not found or not authorized" });
@@ -274,7 +300,7 @@ router.get("/user/:userId", async (req, res) => {
              (SELECT json_agg(image_url ORDER BY sort_order) FROM listing_images WHERE listing_id = l.id) as images,
              (SELECT COUNT(*) FROM favorites WHERE listing_id = l.id) as favorited_count
       FROM listings l
-      WHERE l.seller_id = $1 AND l.is_active = true
+      WHERE l.seller_id = $1 AND l.status != 'deleted'
       ORDER BY l.created_at DESC
     `, [req.params.userId]);
     res.json(result.rows);

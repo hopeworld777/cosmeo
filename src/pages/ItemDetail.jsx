@@ -1,7 +1,7 @@
 import { useParams, Link, useLocation } from "wouter";
 import {
   ChevronLeft, Share2, Heart, ShieldCheck, MapPin,
-  Eye, Star, MessageCircle, Send, X, Loader2
+  Eye, Star, MessageCircle, Send, X, Loader2, Calendar
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -13,6 +13,122 @@ import { api } from "@/lib/api";
 import { useAuth } from "@/hooks/useAuth";
 import { useTranslation } from "react-i18next";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
+
+// ── Seller Review Modal — buyer rates the seller from a sold listing ──────────
+function SellerReviewModal({ listing, onClose, onSubmitted }) {
+  const [rating, setRating] = useState(0);
+  const [hovered, setHovered] = useState(0);
+  const [comment, setComment] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [done, setDone] = useState(false);
+  const { toast } = useToast();
+
+  async function submit() {
+    if (rating === 0) { toast({ title: "Pick a star rating", variant: "destructive" }); return; }
+    setLoading(true);
+    try {
+      await api.reviews.submit({
+        listing_id: listing.id,
+        seller_id: listing.seller_id,
+        rating,
+        comment: comment.trim() || null,
+        review_type: "seller",
+      });
+      setDone(true);
+      if (onSubmitted) onSubmitted(rating);
+    } catch (err) {
+      toast({ title: "Failed to submit", description: err.message, variant: "destructive" });
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  const labels = ["", "Poor", "Fair", "Good", "Great", "Excellent"];
+
+  return (
+    <>
+      <motion.div key="sr-bg" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+        onClick={onClose} className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50" />
+      <motion.div key="sr-sheet"
+        initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }}
+        transition={{ type: "spring", damping: 30, stiffness: 300 }}
+        className="fixed bottom-0 left-0 right-0 max-w-[430px] mx-auto z-50 bg-white rounded-t-[2rem] shadow-2xl"
+      >
+        <div className="flex justify-center pt-3 pb-1">
+          <div className="w-10 h-1.5 rounded-full bg-muted-foreground/20" />
+        </div>
+        <div className="px-6 pt-2 pb-10">
+          <AnimatePresence mode="wait">
+            {done ? (
+              <motion.div key="sr-done" initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }}
+                className="flex flex-col items-center py-8 text-center">
+                <div className="h-20 w-20 rounded-full bg-amber-50 flex items-center justify-center mb-4">
+                  <Star className="h-10 w-10 text-amber-400 fill-amber-400" />
+                </div>
+                <h3 className="text-2xl font-black text-foreground mb-2">Review Submitted!</h3>
+                <p className="text-muted-foreground font-medium">
+                  You rated <span className="text-foreground font-extrabold">@{listing.seller_username}</span> {rating}/5 ★
+                </p>
+                <Button onClick={onClose}
+                  className="mt-8 w-full h-14 rounded-2xl bg-gradient-to-r from-primary to-secondary text-white font-bold text-base">
+                  Done
+                </Button>
+              </motion.div>
+            ) : (
+              <motion.div key="sr-form" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+                <div className="flex items-start justify-between mb-5">
+                  <div>
+                    <h3 className="text-2xl font-black text-foreground">Rate the Seller</h3>
+                    <p className="text-sm text-muted-foreground font-medium mt-0.5">@{listing.seller_username}</p>
+                  </div>
+                  <button onClick={onClose} className="h-9 w-9 rounded-full bg-muted flex items-center justify-center shrink-0">
+                    <X className="h-4 w-4 text-muted-foreground" />
+                  </button>
+                </div>
+                <div className="flex flex-col items-center mb-6">
+                  <div className="flex gap-3 mb-2">
+                    {[1, 2, 3, 4, 5].map((s) => (
+                      <motion.button key={s} whileTap={{ scale: 0.85 }}
+                        onClick={() => setRating(s)}
+                        onMouseEnter={() => setHovered(s)}
+                        onMouseLeave={() => setHovered(0)}>
+                        <Star className={`h-10 w-10 transition-all ${s <= (hovered || rating) ? "fill-amber-400 text-amber-400 scale-110" : "text-muted-foreground/30"}`} />
+                      </motion.button>
+                    ))}
+                  </div>
+                  <AnimatePresence mode="wait">
+                    {(hovered || rating) > 0 && (
+                      <motion.p key={hovered || rating} initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
+                        className="text-sm font-extrabold text-amber-500">
+                        {labels[hovered || rating]}
+                      </motion.p>
+                    )}
+                  </AnimatePresence>
+                </div>
+                <div className="mb-6">
+                  <label className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-2 block">
+                    Comment (optional)
+                  </label>
+                  <textarea
+                    value={comment}
+                    onChange={(e) => setComment(e.target.value)}
+                    placeholder="Item as described? Fast handoff? Good communication…"
+                    rows={3}
+                    className="w-full px-4 py-3 rounded-2xl bg-muted text-sm font-medium text-foreground outline-none focus:ring-2 focus:ring-primary/30 transition-shadow placeholder:text-muted-foreground/50 placeholder:font-normal resize-none"
+                  />
+                </div>
+                <Button onClick={submit} disabled={loading || rating === 0}
+                  className="w-full h-14 rounded-2xl bg-gradient-to-r from-amber-400 to-orange-400 text-white font-bold text-base shadow-md hover:opacity-90 disabled:opacity-40">
+                  {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : "⭐ Submit Review"}
+                </Button>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+      </motion.div>
+    </>
+  );
+}
 
 export default function ItemDetail() {
   const { t } = useTranslation();
@@ -26,6 +142,7 @@ export default function ItemDetail() {
   const [error, setError] = useState(null);
   const [isLiked, setIsLiked] = useState(false);
 
+  const [rateSellerOpen, setRateSellerOpen] = useState(false);
   const [chatOpen, setChatOpen] = useState(false);
   const [messageText, setMessageText] = useState("");
   const [sending, setSending] = useState(false);
@@ -259,7 +376,7 @@ export default function ItemDetail() {
           {/* Badges */}
           <div className="flex items-center gap-2 mb-4 flex-wrap">
             {listing.status === "sold" && (
-              <Badge className="bg-muted text-muted-foreground border border-muted-foreground/30 uppercase tracking-wider font-black px-3 py-1 rounded-full text-xs">
+              <Badge className="bg-amber-100 text-amber-700 border border-amber-200 uppercase tracking-wider font-black px-3 py-1 rounded-full text-xs">
                 🏷️ {t("soldLabel")}
               </Badge>
             )}
@@ -295,6 +412,12 @@ export default function ItemDetail() {
               <Eye className="h-4 w-4 text-secondary" />
               {listing.views || 0} {t("viewedLabel")}
             </span>
+            {listing.sold_at && (
+              <span className="flex items-center gap-1.5 text-amber-600">
+                <Calendar className="h-4 w-4" />
+                Sold {new Date(listing.sold_at).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}
+              </span>
+            )}
           </div>
 
           {/* Price row */}
@@ -361,7 +484,7 @@ export default function ItemDetail() {
               </div>
             </div>
 
-            {(!user || listing.seller_id !== user.id) && (
+            {(!user || listing.seller_id !== user.id) && listing.status !== "sold" && (
               <motion.button
                 whileTap={{ scale: 0.96 }}
                 onClick={openChat}
@@ -369,6 +492,16 @@ export default function ItemDetail() {
               >
                 <MessageCircle className="h-5 w-5" />
                 💬 {t("openChat")}
+              </motion.button>
+            )}
+            {listing.status === "sold" && user && listing.seller_id !== user.id && (
+              <motion.button
+                whileTap={{ scale: 0.96 }}
+                onClick={() => setRateSellerOpen(true)}
+                className="mt-4 w-full h-12 rounded-2xl bg-gradient-to-r from-amber-400 to-orange-400 text-white font-bold flex items-center justify-center gap-2 shadow-md hover:opacity-90 transition-opacity"
+              >
+                <Star className="h-5 w-5 fill-white" />
+                ⭐ Rate this Seller
               </motion.button>
             )}
           </div>
@@ -559,6 +692,17 @@ export default function ItemDetail() {
               </div>
             </motion.div>
           </>
+        )}
+      </AnimatePresence>
+
+      {/* ── Rate Seller Overlay ────────────────────────────────────────── */}
+      <AnimatePresence>
+        {rateSellerOpen && listing && (
+          <SellerReviewModal
+            listing={listing}
+            onClose={() => setRateSellerOpen(false)}
+            onSubmitted={() => setTimeout(() => setRateSellerOpen(false), 2500)}
+          />
         )}
       </AnimatePresence>
     </div>

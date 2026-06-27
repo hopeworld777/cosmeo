@@ -96,7 +96,7 @@ router.post("/login", async (req, res) => {
 router.get("/me", requireAuth, async (req, res) => {
   try {
     const result = await pool.query(
-      `SELECT id, username, email, bio, avatar_url, rating, review_count, sales_count, balance, email_verified, created_at, location
+      `SELECT id, username, email, bio, avatar_url, rating, review_count, sales_count, buyer_rating, buyer_review_count, balance, email_verified, created_at, location
        FROM users WHERE id = $1`,
       [req.userId]
     );
@@ -220,7 +220,7 @@ router.post("/verify-email", async (req, res) => {
     // Generate a fresh JWT so user is logged in after verifying
     const jwtToken = generateToken(row.user_id);
     const userResult = await pool.query(
-      "SELECT id, username, email, bio, avatar_url, email_verified, rating, review_count, sales_count FROM users WHERE id = $1",
+      "SELECT id, username, email, bio, avatar_url, email_verified, rating, review_count, sales_count, buyer_rating, buyer_review_count FROM users WHERE id = $1",
       [row.user_id]
     );
     res.json({ success: true, user: userResult.rows[0], token: jwtToken });
@@ -284,7 +284,7 @@ router.post("/reset-password", async (req, res) => {
     // Auto-login after reset
     const jwtToken = generateToken(row.user_id);
     const userResult = await pool.query(
-      "SELECT id, username, email, bio, avatar_url, email_verified, rating, review_count, sales_count FROM users WHERE id = $1",
+      "SELECT id, username, email, bio, avatar_url, email_verified, rating, review_count, sales_count, buyer_rating, buyer_review_count FROM users WHERE id = $1",
       [row.user_id]
     );
     res.json({ success: true, user: userResult.rows[0], token: jwtToken });
@@ -306,6 +306,24 @@ router.post("/validate-reset-token", async (req, res) => {
     res.json({ valid: result.rows.length > 0 });
   } catch {
     res.json({ valid: false });
+  }
+});
+
+// GET /api/auth/search-user?q=username — find a user by username prefix (for buyer search)
+router.get("/search-user", requireAuth, async (req, res) => {
+  const { q } = req.query;
+  if (!q || q.trim().length < 2) return res.json([]);
+  try {
+    const result = await pool.query(
+      `SELECT id, username, avatar_url FROM users
+       WHERE username ILIKE $1 AND id != $2
+       LIMIT 5`,
+      [`${q.trim()}%`, req.userId]
+    );
+    res.json(result.rows);
+  } catch (err) {
+    console.error("Search user error:", err);
+    res.status(500).json({ error: "Search failed" });
   }
 });
 
