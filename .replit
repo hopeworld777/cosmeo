@@ -2,6 +2,7 @@ modules = ["nodejs-20", "postgresql-16"]
 [agent]
 expertMode = true
 integrations = ["replitmail:1.0.0"]
+stack = "FULLSTACK_JS"
 
 [nix]
 channel = "stable-25_05"
@@ -57,3 +58,13 @@ externalPort = 80
 [[ports]]
 localPort = 5001
 externalPort = 3000
+
+[deployment]
+deploymentTarget = "autoscale"
+run = ["node", "./dist/index.cjs"]
+build = ["npm", "run", "build"]
+
+[userenv]
+
+[userenv.shared]
+NODE_ENV = "development"
