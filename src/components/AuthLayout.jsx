@@ -1,14 +1,8 @@
-import { Sparkles, ShieldCheck, Star, Users } from "lucide-react";
+import { Sparkles } from "lucide-react";
 import { Link } from "wouter";
 import { ArrowLeft } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
-
-const FEATURES = [
-  { Icon: ShieldCheck, en: "Hand-to-hand, cash-only exchanges",    ka: "ხელიდან ხელში, ნაღდი ანგარიშსწორება" },
-  { Icon: Star,        en: "Verified seller trust tiers",          ka: "გადამოწმებული გამყიდველები" },
-  { Icon: Users,       en: "Built for the local cosplay community",ka: "ქართული კოსფლეი კომიუნითი" },
-];
 
 function BrandPanel() {
   const { i18n } = useTranslation();
@@ -19,27 +13,16 @@ function BrandPanel() {
       <div className="absolute -top-20 -left-20 w-80 h-80 rounded-full bg-white/10 blur-3xl pointer-events-none" />
       <div className="absolute -bottom-16 -right-16 w-64 h-64 rounded-full bg-white/10 blur-3xl pointer-events-none" />
 
-      <div className="z-10 flex flex-col items-center text-center max-w-sm">
-        <div className="w-20 h-20 rounded-[2rem] bg-white/20 backdrop-blur-sm flex items-center justify-center mb-6 shadow-xl">
-          <Sparkles className="h-10 w-10 text-white" strokeWidth={1.5} />
+      <div className="z-10 flex flex-col items-center text-center">
+        <div className="w-24 h-24 rounded-[2.25rem] bg-white/20 backdrop-blur-sm flex items-center justify-center mb-8 shadow-xl">
+          <Sparkles className="h-12 w-12 text-white" strokeWidth={1.5} />
         </div>
-        <h1 className="text-4xl font-black text-white mb-3">CosMeo</h1>
-        <p className="text-white/80 text-base leading-relaxed mb-10">
+        <h1 className="text-5xl font-black text-white mb-5">CosMeo</h1>
+        <p className="text-white/75 text-base leading-relaxed max-w-xs">
           {isKa
             ? "საუკეთესო პლატფორმა ქართული კოსფლეი კომიუნითისთვის"
             : "The cosplay marketplace built for the Georgian gaming & cosplay community."}
         </p>
-
-        <div className="space-y-3 w-full">
-          {FEATURES.map(({ Icon, en, ka }) => (
-            <div key={en} className="flex items-center gap-3 text-left">
-              <div className="w-9 h-9 rounded-xl bg-white/20 flex items-center justify-center shrink-0">
-                <Icon className="h-4 w-4 text-white" />
-              </div>
-              <span className="text-white/90 text-sm font-medium">{isKa ? ka : en}</span>
-            </div>
-          ))}
-        </div>
       </div>
 
       <p className="absolute bottom-8 text-white/40 text-xs font-medium z-10">cosmeo.ge</p>
