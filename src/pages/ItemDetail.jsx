@@ -100,6 +100,7 @@ export default function ItemDetail() {
     if (!window.confirm(t("confirmDelete"))) return;
     try {
       await api.listings.delete(id);
+      window.dispatchEvent(new Event("kosmeo:listingChanged"));
       toast({ title: t("listingDeleted") });
       setLocation("/profile");
     } catch (err) {
@@ -113,9 +114,11 @@ export default function ItemDetail() {
     try {
       if (isSold) {
         await api.listings.markAvailable(id);
+        window.dispatchEvent(new Event("kosmeo:listingChanged"));
         toast({ title: t("markedAsAvailable") });
       } else {
         await api.listings.markSold(id);
+        window.dispatchEvent(new Event("kosmeo:listingChanged"));
         toast({ title: t("markedAsSold") });
       }
     } catch (err) {

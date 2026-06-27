@@ -36,7 +36,7 @@ export default function Home() {
     { id: "crafting", emoji: "🧵", tKey: "materials" },
   ];
 
-  useEffect(() => {
+  const fetchListings = () => {
     setLoading(true);
     api.listings.list({ limit: 40 })
       .then(data => {
@@ -49,6 +49,12 @@ export default function Home() {
       })
       .catch(() => {})
       .finally(() => setLoading(false));
+  };
+
+  useEffect(() => {
+    fetchListings();
+    window.addEventListener("kosmeo:listingChanged", fetchListings);
+    return () => window.removeEventListener("kosmeo:listingChanged", fetchListings);
   }, []);
 
   const filtered = useMemo(() => {

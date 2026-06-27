@@ -372,11 +372,18 @@ function MyListings({ onSold }) {
   const { toast } = useToast();
   const [, setLocation] = useLocation();
 
-  useEffect(() => {
+  const fetchMyListings = () => {
+    setLoading(true);
     api.listings.me()
       .then((data) => setListings(data || []))
       .catch(() => {})
       .finally(() => setLoading(false));
+  };
+
+  useEffect(() => {
+    fetchMyListings();
+    window.addEventListener("kosmeo:listingChanged", fetchMyListings);
+    return () => window.removeEventListener("kosmeo:listingChanged", fetchMyListings);
   }, []);
 
   const handleMarkSold = async (listing) => {
@@ -385,6 +392,7 @@ function MyListings({ onSold }) {
       setListings((prev) =>
         prev.map((l) => l.id === listing.id ? { ...l, status: "sold", is_active: false } : l)
       );
+      window.dispatchEvent(new Event("kosmeo:listingChanged"));
       const salePrice = Number(listing.price || listing.rent_price || 0);
       if (salePrice > 0 && onSold) onSold(salePrice);
       toast({ title: "Marked as sold! ✅", description: "Now rate the transaction." });
@@ -398,6 +406,7 @@ function MyListings({ onSold }) {
     try {
       await api.listings.delete(id);
       setListings((prev) => prev.filter((l) => l.id !== id));
+      window.dispatchEvent(new Event("kosmeo:listingChanged"));
       toast({ title: "Listing removed" });
     } catch (err) {
       toast({ title: "Error", description: err.message, variant: "destructive" });

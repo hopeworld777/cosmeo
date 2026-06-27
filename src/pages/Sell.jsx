@@ -136,6 +136,7 @@ export default function Sell() {
       });
       setSuccess(true);
       toast({ title: t("listingPublished"), description: t("itemIsLive") });
+      window.dispatchEvent(new Event("kosmeo:listingChanged"));
       setTimeout(() => setLocation("/"), 2200);
     } catch (err) {
       toast({ title: t("couldNotSave"), description: err.message, variant: "destructive" });

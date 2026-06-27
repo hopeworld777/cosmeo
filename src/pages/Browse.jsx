@@ -60,6 +60,8 @@ export default function Browse() {
       }
     }
     fetchListings();
+    window.addEventListener("kosmeo:listingChanged", fetchListings);
+    return () => window.removeEventListener("kosmeo:listingChanged", fetchListings);
   }, [debouncedSearch, activeFilter, initialCategory]);
 
   const displayed = useMemo(() => {

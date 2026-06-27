@@ -102,6 +102,25 @@ router.get("/trending", async (req, res) => {
   }
 });
 
+// GET /api/listings/me — seller's own listings (all statuses)
+// MUST be defined before /:id so Express does not shadow it
+router.get("/me", requireAuth, async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT l.*,
+             (SELECT json_agg(image_url ORDER BY sort_order) FROM listing_images WHERE listing_id = l.id) as images,
+             (SELECT COUNT(*) FROM favorites WHERE listing_id = l.id) as favorited_count
+      FROM listings l
+      WHERE l.seller_id = $1 AND l.status != 'deleted'
+      ORDER BY l.created_at DESC
+    `, [req.userId]);
+    res.json(result.rows);
+  } catch (err) {
+    console.error("My listings error:", err);
+    res.status(500).json({ error: "Failed to fetch your listings" });
+  }
+});
+
 // GET /api/listings/:id
 router.get("/:id", optionalAuth, async (req, res) => {
   if (!/^\d+$/.test(req.params.id)) {
@@ -214,24 +233,6 @@ router.delete("/:id", requireAuth, async (req, res) => {
   } catch (err) {
     console.error("Delete listing error:", err);
     res.status(500).json({ error: "Failed to delete listing" });
-  }
-});
-
-// GET /api/listings/me — seller's own listings (all statuses)
-router.get("/me", requireAuth, async (req, res) => {
-  try {
-    const result = await pool.query(`
-      SELECT l.*,
-             (SELECT json_agg(image_url ORDER BY sort_order) FROM listing_images WHERE listing_id = l.id) as images,
-             (SELECT COUNT(*) FROM favorites WHERE listing_id = l.id) as favorited_count
-      FROM listings l
-      WHERE l.seller_id = $1 AND l.status != 'deleted'
-      ORDER BY l.created_at DESC
-    `, [req.userId]);
-    res.json(result.rows);
-  } catch (err) {
-    console.error("My listings error:", err);
-    res.status(500).json({ error: "Failed to fetch your listings" });
   }
 });
 
