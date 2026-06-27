@@ -76,7 +76,7 @@ function SafetyBanner({ warnKey, onDismiss }) {
   );
 }
 
-// ─── Report bottom sheet ──────────────────────────────────────────────────────
+// ─── Report dialog (centered modal) ──────────────────────────────────────────
 const REPORT_REASONS = [
   "report_reason_scam",
   "report_reason_fake_listing",
@@ -94,8 +94,18 @@ function ReportSheet({ open, onClose, conversationId, reportedUserId, listingId 
   const [detail, setDetail] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
+  // Reset state when opening
   useEffect(() => {
     if (open) { setStep("pick"); setReason(null); setDetail(""); }
+  }, [open]);
+
+  // Prevent the page behind from scrolling while the dialog is open
+  useEffect(() => {
+    if (open) {
+      const prev = document.body.style.overflow;
+      document.body.style.overflow = "hidden";
+      return () => { document.body.style.overflow = prev; };
+    }
   }, [open]);
 
   async function submit() {
@@ -119,29 +129,48 @@ function ReportSheet({ open, onClose, conversationId, reportedUserId, listingId 
   return (
     <AnimatePresence>
       {open && (
-        <>
+        /*
+         * Full-viewport overlay — this is the flex container that does the
+         * centering.  z-[200] ensures it sits above the app shell's stacking
+         * context (which uses z-[80] for the desktop nav and z-30 for chat
+         * header).  Padding respects iPhone safe-area insets on all four sides
+         * so the modal card is never hidden behind the notch or home indicator.
+         */
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.18 }}
+          className="fixed inset-0 z-[200] flex items-center justify-center bg-black/50"
+          style={{
+            paddingTop:    "env(safe-area-inset-top,    16px)",
+            paddingBottom: "env(safe-area-inset-bottom, 16px)",
+            paddingLeft:   "env(safe-area-inset-left,   16px)",
+            paddingRight:  "env(safe-area-inset-right,  16px)",
+          }}
+          onClick={onClose}
+        >
+          {/*
+           * Modal card — stopPropagation keeps clicks inside from closing the
+           * dialog.  max-h + overflow-y-auto makes long content scroll rather
+           * than overflow off-screen.  16px horizontal margin keeps it away
+           * from the screen edges on narrow phones.
+           */}
           <motion.div
-            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/40 z-50"
-            onClick={onClose}
-          />
-          <motion.div
-            initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }}
-            transition={{ type: "spring", damping: 26, stiffness: 260 }}
-            className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[430px] z-50 bg-background rounded-t-3xl shadow-2xl flex flex-col"
+            initial={{ opacity: 0, scale: 0.95, y: 16 }}
+            animate={{ opacity: 1, scale: 1,    y: 0  }}
+            exit={{   opacity: 0, scale: 0.95, y: 16  }}
+            transition={{ type: "spring", damping: 28, stiffness: 300 }}
+            className="w-full max-w-sm bg-background rounded-3xl shadow-2xl flex flex-col mx-4"
             style={{ maxHeight: "90dvh" }}
+            onClick={(e) => e.stopPropagation()}
           >
-            {/* Drag handle — always visible, never scrolls away */}
-            <div className="flex justify-center pt-3 pb-1 shrink-0">
-              <div className="w-10 h-1 rounded-full bg-border" />
-            </div>
-
-            {/* Scrollable content area */}
-            <div className="overflow-y-auto overscroll-contain" style={{ paddingBottom: "env(safe-area-inset-bottom, 24px)" }}>
+            {/* Scrollable body */}
+            <div className="overflow-y-auto overscroll-contain flex-1">
 
               {step === "pick" && (
-                <div className="px-5 pb-8">
-                  <div className="flex items-center justify-between mb-4">
+                <div className="px-5 pt-5 pb-6">
+                  <div className="flex items-center justify-between mb-3">
                     <h2 className="font-extrabold text-[17px]">{t("report_sheet_title")}</h2>
                     <button onClick={onClose} className="p-1.5 rounded-xl hover:bg-muted">
                       <X size={18} className="text-muted-foreground" />
@@ -159,11 +188,18 @@ function ReportSheet({ open, onClose, conversationId, reportedUserId, listingId 
                       </button>
                     ))}
                   </div>
+                  {/* Cancel button always visible at the bottom */}
+                  <button
+                    onClick={onClose}
+                    className="mt-4 w-full py-3 rounded-2xl bg-muted text-muted-foreground font-bold text-[13.5px] hover:bg-muted/80 transition-colors"
+                  >
+                    {t("cancel") || "Cancel"}
+                  </button>
                 </div>
               )}
 
               {step === "detail" && (
-                <div className="px-5 pb-8">
+                <div className="px-5 pt-5 pb-6">
                   <div className="flex items-center gap-2 mb-4">
                     <button onClick={() => setStep("pick")} className="p-1.5 rounded-xl hover:bg-muted">
                       <ChevronLeft size={18} className="text-muted-foreground" />
@@ -201,8 +237,8 @@ function ReportSheet({ open, onClose, conversationId, reportedUserId, listingId 
               )}
 
               {step === "done" && (
-                <div className="px-5 pb-12 flex flex-col items-center text-center">
-                  <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mb-4 mt-4">
+                <div className="px-5 pt-8 pb-8 flex flex-col items-center text-center">
+                  <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mb-4">
                     <CheckCircle2 size={32} className="text-primary" />
                   </div>
                   <h2 className="font-extrabold text-[18px] mb-2">{t("report_done_title")}</h2>
@@ -220,7 +256,7 @@ function ReportSheet({ open, onClose, conversationId, reportedUserId, listingId 
 
             </div>
           </motion.div>
-        </>
+        </motion.div>
       )}
     </AnimatePresence>
   );
