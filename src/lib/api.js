@@ -59,6 +59,7 @@ export const api = {
     byUser: (userId) => request(`/listings/user/${userId}`),
     me: () => request("/listings/me"),
     markSold: (id) => request(`/listings/${id}/sold`, { method: "PATCH" }),
+    markAvailable: (id) => request(`/listings/${id}/available`, { method: "PATCH" }),
   },
 
   wallet: {

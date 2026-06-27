@@ -107,12 +107,19 @@ export default function ItemDetail() {
     }
   };
 
-  const handleMarkSold = async () => {
+  const handleToggleSold = async () => {
+    const isSold = listing.status === "sold";
+    setListing(prev => ({ ...prev, status: isSold ? "active" : "sold", is_active: isSold }));
     try {
-      await api.listings.markSold(id);
-      toast({ title: t("markedAsSold") });
-      setListing(prev => ({ ...prev, status: "sold", is_active: false }));
+      if (isSold) {
+        await api.listings.markAvailable(id);
+        toast({ title: t("markedAsAvailable") });
+      } else {
+        await api.listings.markSold(id);
+        toast({ title: t("markedAsSold") });
+      }
     } catch (err) {
+      setListing(prev => ({ ...prev, status: isSold ? "sold" : "active", is_active: !isSold }));
       toast({ title: "Error", description: err.message, variant: "destructive" });
     }
   };
@@ -248,6 +255,11 @@ export default function ItemDetail() {
 
           {/* Badges */}
           <div className="flex items-center gap-2 mb-4 flex-wrap">
+            {listing.status === "sold" && (
+              <Badge className="bg-muted text-muted-foreground border border-muted-foreground/30 uppercase tracking-wider font-black px-3 py-1 rounded-full text-xs">
+                🏷️ {t("soldLabel")}
+              </Badge>
+            )}
             {listing.fandom && (
               <Badge className="bg-primary/10 text-primary border-none uppercase tracking-wider font-bold px-3 py-1 rounded-full text-xs">
                 {listing.fandom}
@@ -383,15 +395,16 @@ export default function ItemDetail() {
           <>
             <Button
               variant="outline"
-              className="flex-1 h-16 rounded-2xl border-2 border-secondary bg-secondary/10 text-secondary hover:bg-secondary/20 hover:text-secondary font-bold disabled:opacity-50"
-              onClick={handleMarkSold}
-              disabled={listing.status === "sold"}
+              className={`flex-1 h-16 rounded-2xl border-2 font-bold transition-colors ${
+                listing.status === "sold"
+                  ? "border-muted-foreground/40 bg-muted/50 text-muted-foreground hover:bg-muted hover:border-muted-foreground/60"
+                  : "border-secondary bg-secondary/10 text-secondary hover:bg-secondary/20 hover:text-secondary"
+              }`}
+              onClick={handleToggleSold}
             >
-              <div className="flex flex-col items-center gap-0.5">
-                <span className="text-base font-black leading-tight">
-                  {listing.status === "sold" ? `✓ ${t("soldLabel")}` : t("markAsSold")}
-                </span>
-              </div>
+              <span className="text-base font-black leading-tight">
+                {listing.status === "sold" ? t("markAsAvailable") : t("markAsSold")}
+              </span>
             </Button>
             <Button
               className="flex-[2] h-16 rounded-2xl bg-red-500 hover:bg-red-600 text-white font-black text-base shadow-[0_8px_20px_rgba(239,68,68,0.25)] transition-colors"
@@ -402,28 +415,35 @@ export default function ItemDetail() {
           </>
         ) : (
           /* ── Buyer actions ── */
-          <>
-            {listing.is_for_rent && listing.rent_price && (
-              <Button
-                className="flex-1 h-16 rounded-2xl bg-secondary/10 border-2 border-secondary text-secondary hover:bg-secondary/20 hover:text-secondary"
-                variant="outline"
-                onClick={openChat}
-              >
-                <div className="flex flex-col items-center">
-                  <span className="text-xs font-bold opacity-80 uppercase tracking-wide">{t("rentDay")}</span>
-                  <span className="font-black text-lg">{formatGEL(listing.rent_price)}<span className="text-xs font-bold opacity-70">/d</span></span>
-                </div>
-              </Button>
-            )}
-            {listing.is_for_sale && listing.price && (
-              <Button
-                className="flex-[2] h-16 rounded-2xl bg-gradient-to-r from-primary to-secondary text-white font-black text-xl shadow-[0_8px_20px_rgba(139,92,246,0.3)] hover:opacity-90 transition-opacity"
-                onClick={openChat}
-              >
-                {t("messageSeller")}
-              </Button>
-            )}
-          </>
+          listing.status === "sold" ? (
+            <div className="flex-1 h-16 rounded-2xl bg-muted/60 border-2 border-muted flex items-center justify-center gap-2">
+              <span className="text-2xl">🏷️</span>
+              <span className="font-black text-base text-muted-foreground">{t("itemSoldNote")}</span>
+            </div>
+          ) : (
+            <>
+              {listing.is_for_rent && listing.rent_price && (
+                <Button
+                  className="flex-1 h-16 rounded-2xl bg-secondary/10 border-2 border-secondary text-secondary hover:bg-secondary/20 hover:text-secondary"
+                  variant="outline"
+                  onClick={openChat}
+                >
+                  <div className="flex flex-col items-center">
+                    <span className="text-xs font-bold opacity-80 uppercase tracking-wide">{t("rentDay")}</span>
+                    <span className="font-black text-lg">{formatGEL(listing.rent_price)}<span className="text-xs font-bold opacity-70">/d</span></span>
+                  </div>
+                </Button>
+              )}
+              {listing.is_for_sale && listing.price && (
+                <Button
+                  className="flex-[2] h-16 rounded-2xl bg-gradient-to-r from-primary to-secondary text-white font-black text-xl shadow-[0_8px_20px_rgba(139,92,246,0.3)] hover:opacity-90 transition-opacity"
+                  onClick={openChat}
+                >
+                  {t("messageSeller")}
+                </Button>
+              )}
+            </>
+          )
         )}
       </div>
 

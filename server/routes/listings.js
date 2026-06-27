@@ -250,6 +250,21 @@ router.patch("/:id/sold", requireAuth, async (req, res) => {
   }
 });
 
+// PATCH /api/listings/:id/available — revert sold listing back to active
+router.patch("/:id/available", requireAuth, async (req, res) => {
+  try {
+    const result = await pool.query(
+      "UPDATE listings SET status = 'active', is_active = true WHERE id = $1 AND seller_id = $2 RETURNING id, status",
+      [req.params.id, req.userId]
+    );
+    if (!result.rows[0]) return res.status(404).json({ error: "Not found or not authorized" });
+    res.json({ success: true, status: "active" });
+  } catch (err) {
+    console.error("Mark available error:", err);
+    res.status(500).json({ error: "Failed to mark as available" });
+  }
+});
+
 // GET /api/listings/user/:userId
 router.get("/user/:userId", async (req, res) => {
   try {
