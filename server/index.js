@@ -37,6 +37,14 @@ app.use("/api/reports", reportsRoutes);
 // Health check
 app.get("/api/health", (req, res) => res.json({ ok: true, ts: new Date().toISOString() }));
 
+// Serve built frontend (must come after API routes)
+app.use(express.static(path.join(__dirname, "../dist")));
+
+// Fallback to index.html for SPA routing
+app.get("*", (req, res) => {
+  res.sendFile(path.join(__dirname, "../dist/index.html"));
+});
+
 app.listen(PORT, "0.0.0.0", () => {
   console.log(`Kosmeo API running on port ${PORT}`);
 });
