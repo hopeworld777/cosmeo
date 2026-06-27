@@ -41,7 +41,7 @@
   "size": "ზომა",
   "category": "კატეგორია",
   "buyFor": "ყიდვა",
-  "messageSeller": "გამყიდველს მიწერე",
+  "messageSeller": "მიწერე გამყიდველს",
   "messageSellerHint": "შეათანხმე შეხვედრა Kosmeo ჩატში. გადაიხადე მხოლოდ ნივთის პირადი შემოწმების შემდეგ.",
   "priceLabel": "ფასი",
   "chatSayHi": "გამარჯობა {{seller}}!",

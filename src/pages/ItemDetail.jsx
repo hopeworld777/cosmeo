@@ -329,42 +329,29 @@ export default function ItemDetail() {
         </motion.div>
       </div>
 
-      {/* Bottom Sticky Action Bar — only shown to buyers, not to the seller's own listing */}
-      {(!user || listing.seller_id !== user.id) && (
-        <div className="fixed bottom-0 left-0 right-0 px-4 pt-3 pb-5 bg-white/95 backdrop-blur-xl shadow-[0_-8px_30px_rgba(0,0,0,0.06)] z-40 flex flex-col gap-2 max-w-[430px] mx-auto rounded-t-3xl">
-          {/* Price info — displayed only, not tappable */}
-          {(listing.is_for_sale || listing.is_for_rent) && (
-            <div className="flex items-center gap-4">
-              {listing.is_for_sale && listing.price && (
-                <div className="flex flex-col">
-                  <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wide">{t("priceLabel")}</span>
-                  <span className="text-xl font-black text-primary">{formatGEL(listing.price)}</span>
-                </div>
-              )}
-              {listing.is_for_rent && listing.rent_price && (
-                <div className={`flex flex-col ${listing.is_for_sale ? "ml-4 pl-4 border-l border-border" : ""}`}>
-                  <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wide">{t("rentDay")}</span>
-                  <span className="text-xl font-black text-secondary">{formatGEL(listing.rent_price)}</span>
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* Primary CTA */}
+      {/* Bottom Sticky Action Bar */}
+      <div className="fixed bottom-0 left-0 right-0 p-4 bg-white/95 backdrop-blur-xl shadow-[0_-8px_30px_rgba(0,0,0,0.06)] z-40 flex gap-3 max-w-[430px] mx-auto rounded-t-3xl">
+        {listing.is_for_rent && listing.rent_price && (
           <Button
-            className="w-full h-14 rounded-2xl bg-gradient-to-r from-primary to-secondary text-white font-bold text-base shadow-[0_8px_20px_rgba(139,92,246,0.3)] hover:opacity-90 transition-opacity flex items-center justify-center gap-2"
+            className="flex-1 h-16 rounded-2xl bg-secondary/10 border-2 border-secondary text-secondary hover:bg-secondary/20 hover:text-secondary"
+            variant="outline"
             onClick={openChat}
           >
-            <MessageCircle className="h-5 w-5" />
+            <div className="flex flex-col items-center">
+              <span className="text-xs font-bold opacity-80 uppercase tracking-wide">{t("rentDay")}</span>
+              <span className="font-black text-lg">{formatGEL(listing.rent_price)}<span className="text-xs font-bold opacity-70">/d</span></span>
+            </div>
+          </Button>
+        )}
+        {listing.is_for_sale && listing.price && (
+          <Button
+            className="flex-[2] h-16 rounded-2xl bg-gradient-to-r from-primary to-secondary text-white font-black text-xl shadow-[0_8px_20px_rgba(139,92,246,0.3)] hover:opacity-90 transition-opacity"
+            onClick={openChat}
+          >
             {t("messageSeller")}
           </Button>
-
-          {/* Helper text */}
-          <p className="text-center text-[11px] text-muted-foreground font-medium leading-snug px-2">
-            {t("messageSellerHint")}
-          </p>
-        </div>
-      )}
+        )}
+      </div>
 
       {/* ── Chat Overlay ──────────────────────────────────────────────── */}
       <AnimatePresence>
