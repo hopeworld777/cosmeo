@@ -240,7 +240,10 @@ export default function ItemDetail() {
       }
     } catch (err) {
       setListing(prev => ({ ...prev, status: isSold ? "sold" : "active", is_active: !isSold }));
-      toast({ title: "Error", description: err.message, variant: "destructive" });
+      const description = err.message === "listing_limit_reached"
+        ? t("listingLimitBody")
+        : err.message;
+      toast({ title: t("error"), description, variant: "destructive" });
     }
   };
 

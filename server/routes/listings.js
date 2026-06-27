@@ -298,6 +298,15 @@ router.patch("/:id/sold", requireAuth, async (req, res) => {
 // PATCH /api/listings/:id/available — revert sold listing back to active
 router.patch("/:id/available", requireAuth, async (req, res) => {
   try {
+    // Enforce the 3-active-listing cap before re-activating
+    const countResult = await pool.query(
+      "SELECT COUNT(*) FROM listings WHERE seller_id = $1 AND is_active = true",
+      [req.userId]
+    );
+    if (parseInt(countResult.rows[0].count, 10) >= 3) {
+      return res.status(403).json({ error: "listing_limit_reached" });
+    }
+
     const result = await pool.query(
       "UPDATE listings SET status = 'active', is_active = true WHERE id = $1 AND seller_id = $2 RETURNING id, status",
       [req.params.id, req.userId]
