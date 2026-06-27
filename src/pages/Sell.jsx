@@ -3,7 +3,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { motion, AnimatePresence } from "framer-motion";
-import { Camera, CheckCircle2, ArrowLeft, ArrowRight, X, Sparkles } from "lucide-react";
+import { Camera, CheckCircle2, ChevronLeft, ArrowRight, X, Sparkles } from "lucide-react";
 import CityPicker from "@/components/CityPicker";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -179,18 +179,12 @@ export default function Sell() {
       {/* ── Sticky header ──────────────────────────────────────────────── */}
       <div className="sticky top-0 z-30 bg-white/95 backdrop-blur-xl pt-11 pb-4 px-5 border-b border-border/20">
         <div className="flex items-center gap-3 mb-4">
-          {step > 0 ? (
-            <button
-              onClick={goBack}
-              className="h-9 w-9 rounded-full bg-muted flex items-center justify-center shrink-0 hover:bg-muted/70 transition-colors"
-            >
-              <ArrowLeft className="h-4 w-4 text-foreground" />
-            </button>
-          ) : (
-            <div className="h-9 w-9 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-              <Sparkles className="h-4 w-4 text-primary" />
-            </div>
-          )}
+          <button
+            onClick={step > 0 ? goBack : () => { window.history.length > 1 ? window.history.back() : setLocation("/"); }}
+            className="h-11 w-11 rounded-full bg-muted flex items-center justify-center shrink-0 hover:bg-muted/70 transition-colors"
+          >
+            <ChevronLeft className="h-5 w-5 text-foreground" />
+          </button>
           <div className="flex-1">
             <h1 className="text-xl font-black text-foreground leading-tight">{t("listAnItem")}</h1>
             <p className="text-xs text-muted-foreground font-medium">

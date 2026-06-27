@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useTranslation } from "react-i18next";
 import { useLocation, useSearch } from "wouter";
 import {
-  ArrowLeft,
+  ChevronLeft,
   ShieldCheck,
   Users,
   MapPin,
@@ -198,9 +198,9 @@ export default function TermsAndSafety() {
       <div className="sticky top-0 md:top-16 z-40 bg-background/95 backdrop-blur-sm border-b border-border/40 px-4 py-3 flex items-center gap-3">
         <button
           onClick={() => window.history.length > 1 ? window.history.back() : setLocation("/")}
-          className="p-1.5 rounded-xl hover:bg-muted transition-colors"
+          className="h-11 w-11 rounded-full bg-muted flex items-center justify-center hover:bg-muted/70 transition-colors shrink-0"
         >
-          <ArrowLeft size={20} className="text-foreground/70" />
+          <ChevronLeft className="h-5 w-5 text-foreground" />
         </button>
         <div className="flex-1">
           <h1 className="font-extrabold text-[16px] text-foreground leading-tight">

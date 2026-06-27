@@ -3,7 +3,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { ArrowLeft, MapPin, Check, Camera } from "lucide-react";
+import { ChevronLeft, MapPin, Check, Camera } from "lucide-react";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
 import { useLocation, Link } from "wouter";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -92,10 +92,10 @@ export default function Settings() {
       <div className="sticky top-0 z-30 bg-white/95 backdrop-blur-xl pt-12 pb-4 px-5 flex items-center gap-3 border-b border-border/20">
         <button
           type="button"
-          onClick={() => setLocation("/profile")}
+          onClick={() => window.history.length > 1 ? window.history.back() : setLocation("/profile")}
           className="h-11 w-11 rounded-full bg-muted flex items-center justify-center hover:bg-muted/70 transition-colors shrink-0"
         >
-          <ArrowLeft className="h-5 w-5 text-foreground" />
+          <ChevronLeft className="h-5 w-5 text-foreground" />
         </button>
         <h1 className="text-2xl font-black text-foreground flex-1">{t("editProfile")}</h1>
         <LanguageSwitcher />
