@@ -76,8 +76,8 @@ export default function Home() {
       <div className="sticky top-0 z-40 bg-white/95 backdrop-blur-xl border-b border-border/20">
         <div className="px-5 pt-11 md:pt-5 pb-3 md:max-w-6xl md:mx-auto">
 
-          {/* Brand row */}
-          <div className="flex items-center justify-between mb-4">
+          {/* Brand row — mobile only; desktop nav already shows the brand */}
+          <div className="md:hidden flex items-center justify-between mb-4">
             <div>
               <h1 className="text-3xl font-black tracking-tight text-foreground leading-none">
                 CosMeo

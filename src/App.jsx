@@ -25,7 +25,11 @@ import { useAuth } from "@/hooks/useAuth";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
 
 // Routes that hide everything (login / register / etc.)
-const AUTH_ROUTES = ["/login", "/register", "/onboarding", "/forgot-password", "/reset-password", "/verify-email"];
+const AUTH_ROUTES = ["/login", "/register", "/forgot-password", "/reset-password", "/verify-email"];
+
+// Onboarding gets its own full-screen desktop layout — no DesktopNav, but
+// the shell should expand to full width on desktop (not stay phone-framed).
+const ONBOARDING_ROUTES = ["/onboarding"];
 
 // Routes that additionally hide the bottom tab bar (but NOT the desktop nav)
 const HIDE_BOTTOM_NAV_EXTRA = ["/chat/", "/terms", "/item/", "/admin"];
@@ -149,32 +153,34 @@ function AppShell() {
 
   // Auth routes hide everything (desktop nav, bottom nav, floating lang switcher).
   const isAuthRoute = AUTH_ROUTES.some(r => location.startsWith(r));
+  const isOnboardingRoute = ONBOARDING_ROUTES.some(r => location.startsWith(r));
 
   // Some non-auth routes also hide the bottom nav (chat, terms).
-  const hideBottomNav = isAuthRoute || HIDE_BOTTOM_NAV_EXTRA.some(r => location.startsWith(r));
+  const hideBottomNav = isAuthRoute || isOnboardingRoute || HIDE_BOTTOM_NAV_EXTRA.some(r => location.startsWith(r));
 
   // Show the floating mobile LanguageSwitcher only when the current page does
-  // NOT provide its own (and we're not on an auth page).
-  const showMobileFloatLang = !isAuthRoute && !ownsLangSwitcher(location);
+  // NOT provide its own (and we're not on an auth/onboarding page).
+  const showMobileFloatLang = !isAuthRoute && !isOnboardingRoute && !ownsLangSwitcher(location);
 
   // Reset the mobile scroll container to the top on every route change.
-  // useLayoutEffect fires before child useEffects, so any page that wants to
-  // restore a saved scroll position (e.g. TermsAndSafety) can do so in its
-  // own useEffect and it will run *after* this reset.
   const scrollRef = useRef(null);
   useLayoutEffect(() => {
     if (scrollRef.current) scrollRef.current.scrollTop = 0;
   }, [location]);
 
+  // Whether this route should expand to full desktop width (non-auth + onboarding)
+  const expandsOnDesktop = !isAuthRoute;
+
   return (
     <div className="flex justify-center bg-background min-h-[100dvh] w-full">
-      {/* Desktop nav is shown on every non-auth route, including /terms */}
-      {!isAuthRoute && <DesktopNav />}
+      {/* Desktop nav is shown on every non-auth, non-onboarding route */}
+      {!isAuthRoute && !isOnboardingRoute && <DesktopNav />}
 
       <div className={[
         "flex flex-col w-full relative bg-background",
         "max-w-[430px] h-[100dvh] overflow-hidden border-x border-border/30 shadow-2xl",
-        !isAuthRoute && "md:max-w-none md:h-auto md:min-h-[100dvh] md:overflow-visible md:border-x-0 md:shadow-none md:pt-16",
+        expandsOnDesktop && !isOnboardingRoute && "md:max-w-none md:h-auto md:min-h-[100dvh] md:overflow-visible md:border-x-0 md:shadow-none md:pt-16",
+        isOnboardingRoute && "md:max-w-none md:h-auto md:min-h-[100dvh] md:overflow-visible md:border-x-0 md:shadow-none md:pt-0",
       ].filter(Boolean).join(" ")}>
         <OnboardingGuard />
 

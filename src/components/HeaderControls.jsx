@@ -18,7 +18,7 @@ export default function HeaderControls({ variant = "avatar" }) {
   const { t } = useTranslation();
 
   return (
-    <div className="flex items-center gap-2 shrink-0">
+    <div className="md:hidden flex items-center gap-2 shrink-0">
       <LanguageSwitcher />
 
       {variant === "settings" ? (
