@@ -16,7 +16,7 @@ import LanguageSwitcher from "@/components/LanguageSwitcher";
 
 const CATEGORIES = [
   { id: "outfit",   emoji: "👗", labelKey: "cat_outfit",   bg: "bg-pink-50",   border: "border-pink-300",   text: "text-pink-600",   activeBg: "bg-pink-100"   },
-  { id: "wig",      emoji: "💇", labelKey: "cat_wig",      bg: "bg-purple-50", border: "border-purple-300", text: "text-purple-600", activeBg: "bg-purple-100" },
+  { id: "wig",      emoji: "💇", labelKey: "cat_wig",      bg: "bg-violet-50", border: "border-violet-200", text: "text-violet-500", activeBg: "bg-violet-100" },
   { id: "shoes",    emoji: "🥾", labelKey: "cat_shoes",    bg: "bg-amber-50",  border: "border-amber-300",  text: "text-amber-600",  activeBg: "bg-amber-100"  },
   { id: "prop",     emoji: "⚔️",  labelKey: "cat_prop",     bg: "bg-blue-50",   border: "border-blue-300",   text: "text-blue-600",   activeBg: "bg-blue-100"   },
   { id: "crafting", emoji: "🧵", labelKey: "cat_crafting", bg: "bg-green-50",  border: "border-green-300",  text: "text-green-600",  activeBg: "bg-green-100"  },

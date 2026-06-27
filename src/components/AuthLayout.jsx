@@ -15,7 +15,7 @@ function BrandPanel() {
   const isKa = i18n.language === "ka";
 
   return (
-    <div className="hidden md:flex flex-1 flex-col items-center justify-center bg-gradient-to-br from-violet-600 via-purple-600 to-fuchsia-600 relative overflow-hidden px-16 py-12">
+    <div className="hidden md:flex flex-1 flex-col items-center justify-center bg-gradient-to-br from-violet-500 via-purple-400 to-fuchsia-300 relative overflow-hidden px-16 py-12">
       <div className="absolute -top-20 -left-20 w-80 h-80 rounded-full bg-white/10 blur-3xl pointer-events-none" />
       <div className="absolute -bottom-16 -right-16 w-64 h-64 rounded-full bg-white/10 blur-3xl pointer-events-none" />
 

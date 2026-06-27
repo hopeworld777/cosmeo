@@ -5,25 +5,34 @@
 
 @layer base {
   :root {
-    --background: 250 30% 97%;
-    --foreground: 260 20% 20%;
+    --background: 250 28% 97%;
+    --foreground: 260 22% 18%;
     --card: 0 0% 100%;
-    --card-foreground: 260 20% 20%;
+    --card-foreground: 260 22% 18%;
     --popover: 0 0% 100%;
-    --popover-foreground: 260 20% 20%;
-    --primary: 265 65% 60%;
+    --popover-foreground: 260 22% 18%;
+
+    /* Primary: soft dusty lavender — reduced saturation vs old bright purple */
+    --primary: 265 42% 62%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 320 70% 72%;
+
+    /* Secondary: muted mauve/rose */
+    --secondary: 320 36% 68%;
     --secondary-foreground: 0 0% 100%;
-    --muted: 250 25% 94%;
-    --muted-foreground: 260 15% 55%;
-    --accent: 200 75% 82%;
-    --accent-foreground: 200 40% 30%;
+
+    --muted: 250 20% 93%;
+    --muted-foreground: 260 14% 52%;
+
+    /* Accent: very light lavender tint */
+    --accent: 265 30% 90%;
+    --accent-foreground: 265 30% 32%;
+
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 98%;
-    --border: 250 25% 90%;
-    --input: 250 25% 94%;
-    --ring: 265 65% 60%;
+
+    --border: 250 20% 89%;
+    --input: 250 20% 93%;
+    --ring: 265 42% 62%;
     --radius: 1.25rem;
   }
 }
@@ -50,9 +59,9 @@
 }
 
 .card-shadow {
-  box-shadow: 0 4px 20px rgba(139,92,246,0.08), 0 1px 4px rgba(0,0,0,0.05);
+  box-shadow: 0 4px 20px rgba(147, 120, 210, 0.10), 0 1px 4px rgba(0, 0, 0, 0.04);
 }
 
 .pastel-gradient {
-  background: linear-gradient(180deg, hsl(260 80% 85% / 0.3) 0%, hsl(60 20% 98% / 0.1) 100%);
+  background: linear-gradient(180deg, hsl(260 35% 88% / 0.35) 0%, hsl(60 20% 98% / 0.08) 100%);
 }

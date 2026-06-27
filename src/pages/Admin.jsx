@@ -194,7 +194,7 @@ function ReportCard({ report, onUpdate }) {
                   )}
                   {report.conversation_id && (
                     <Link href={`/chat/${report.conversation_id}`}>
-                      <span className="flex items-center gap-1.5 text-[12px] font-bold bg-purple-50 border border-purple-200 text-purple-600 px-3 py-1.5 rounded-xl hover:bg-purple-100 transition-colors cursor-pointer">
+                      <span className="flex items-center gap-1.5 text-[12px] font-bold bg-primary/10 border border-primary/20 text-primary px-3 py-1.5 rounded-xl hover:bg-primary/20 transition-colors cursor-pointer">
                         <MessageSquare size={13} />
                         View conversation
                         <ExternalLink size={11} />
