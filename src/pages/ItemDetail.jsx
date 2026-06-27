@@ -12,6 +12,7 @@ import { useState, useEffect, useRef } from "react";
 import { api } from "@/lib/api";
 import { useAuth } from "@/hooks/useAuth";
 import { useTranslation } from "react-i18next";
+import LanguageSwitcher from "@/components/LanguageSwitcher";
 
 export default function ItemDetail() {
   const { t } = useTranslation();
@@ -163,20 +164,24 @@ export default function ItemDetail() {
     <div className="flex flex-col h-full bg-background relative pb-24">
 
       {/* Sticky Top Nav */}
-      <div className="absolute top-0 left-0 right-0 z-50 flex justify-between items-center p-4">
+      <div className="absolute top-0 left-0 right-0 z-50 flex justify-between items-center px-4 pt-4 pb-2">
+        {/* Back */}
         <div
           onClick={() => window.history.back()}
-          className="flex h-12 w-12 cursor-pointer items-center justify-center rounded-full bg-white card-shadow text-foreground hover:scale-105 transition-transform"
+          className="flex h-11 w-11 shrink-0 cursor-pointer items-center justify-center rounded-full bg-white card-shadow text-foreground hover:scale-105 transition-transform"
         >
           <ChevronLeft className="h-6 w-6" />
         </div>
-        <div className="flex gap-3">
-          <div className="flex h-12 w-12 cursor-pointer items-center justify-center rounded-full bg-white card-shadow text-foreground hover:scale-105 transition-transform">
+
+        {/* Right-side controls — lang switcher then listing actions, all in one row */}
+        <div className="flex items-center gap-2">
+          <LanguageSwitcher />
+          <div className="flex h-11 w-11 shrink-0 cursor-pointer items-center justify-center rounded-full bg-white card-shadow text-foreground hover:scale-105 transition-transform">
             <Share2 className="h-5 w-5" />
           </div>
           <div
             onClick={handleLikeToggle}
-            className="flex h-12 w-12 cursor-pointer items-center justify-center rounded-full bg-white card-shadow text-muted-foreground hover:scale-105 transition-transform"
+            className="flex h-11 w-11 shrink-0 cursor-pointer items-center justify-center rounded-full bg-white card-shadow text-muted-foreground hover:scale-105 transition-transform"
           >
             <Heart className={`h-6 w-6 transition-colors ${isLiked ? "fill-secondary text-secondary" : ""}`} />
           </div>

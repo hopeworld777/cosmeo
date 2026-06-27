@@ -31,7 +31,7 @@ const HIDE_BOTTOM_NAV_EXTRA = ["/chat/", "/terms"];
 
 // Routes where the page renders its own LanguageSwitcher — suppress the
 // floating mobile one to avoid duplication.  Prefix-matched for /settings/*.
-const OWN_LANG_ROUTES = ["/", "/sell", "/browse", "/messages", "/profile", "/wishlist", "/settings", "/terms"];
+const OWN_LANG_ROUTES = ["/", "/sell", "/browse", "/messages", "/profile", "/wishlist", "/settings", "/terms", "/item"];
 
 function ownsLangSwitcher(location) {
   return OWN_LANG_ROUTES.some((r) => {
