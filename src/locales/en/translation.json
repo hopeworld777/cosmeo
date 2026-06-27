@@ -41,6 +41,8 @@
   "size": "Size",
   "category": "Category",
   "buyFor": "Buy for",
+  "linkCopied": "Link copied to clipboard",
+  "linkCopyFailed": "Couldn't copy link",
   "messageSeller": "Message Seller",
   "markAsSold": "Mark as Sold",
   "soldLabel": "Sold",

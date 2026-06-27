@@ -77,6 +77,25 @@ export default function ItemDetail() {
 
   const isOwner = !!(user && listing && user.id === listing.seller_id);
 
+  const handleShare = async () => {
+    const url = `${window.location.origin}/item/${id}`;
+    try {
+      if (navigator.share) {
+        await navigator.share({ title: listing.title, url });
+      } else {
+        await navigator.clipboard.writeText(url);
+        toast({ title: t("linkCopied") });
+      }
+    } catch {
+      try {
+        await navigator.clipboard.writeText(url);
+        toast({ title: t("linkCopied") });
+      } catch {
+        toast({ title: t("linkCopyFailed"), variant: "destructive" });
+      }
+    }
+  };
+
   const handleDelete = async () => {
     if (!window.confirm(t("confirmDelete"))) return;
     try {
@@ -199,7 +218,7 @@ export default function ItemDetail() {
         {/* Right-side controls — lang switcher then listing actions, all in one row */}
         <div className="flex items-center gap-2">
           <LanguageSwitcher />
-          <div className="flex h-11 w-11 shrink-0 cursor-pointer items-center justify-center rounded-full bg-white card-shadow text-foreground hover:scale-105 transition-transform">
+          <div onClick={handleShare} className="flex h-11 w-11 shrink-0 cursor-pointer items-center justify-center rounded-full bg-white card-shadow text-foreground hover:scale-105 transition-transform">
             <Share2 className="h-5 w-5" />
           </div>
           <div

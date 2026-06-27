@@ -41,6 +41,8 @@
   "size": "ზომა",
   "category": "კატეგორია",
   "buyFor": "ყიდვა",
+  "linkCopied": "ბმული დაკოპირდა",
+  "linkCopyFailed": "ბმულის დაკოპირება ვერ მოხერხდა",
   "messageSeller": "მიწერე გამყიდველს",
   "markAsSold": "გაყიდულად მონიშვნა",
   "soldLabel": "გაყიდულია",
