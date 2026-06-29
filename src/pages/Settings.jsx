@@ -81,7 +81,13 @@ export default function Settings() {
 
   // ── Avatar upload state — MUST be declared before any early return ──────
   const avatarInputRef = useRef(null);
-  const [avatarUploading, setAvatarUploading] = useState(false);
+  const [pendingAvatarFile, setPendingAvatarFile] = useState(null);
+  const [avatarPreview, setAvatarPreview]         = useState(null);
+
+  // Revoke the object URL when the preview is replaced or component unmounts
+  useEffect(() => {
+    return () => { if (avatarPreview) URL.revokeObjectURL(avatarPreview); };
+  }, [avatarPreview]);
 
   // Save scroll in layout-effect cleanup so it fires BEFORE AppShell resets
   // the container. Only persist the position when going to a submenu page.
@@ -109,47 +115,44 @@ export default function Settings() {
 
   const initial = user.username?.slice(0, 2).toUpperCase() || "U";
 
-  const handleAvatarChange = async (e) => {
+  const handleAvatarChange = (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    setAvatarUploading(true);
-    try {
-      const { avatar_url } = await api.upload.avatar(file);
-      setUser((u) => ({ ...u, avatar_url }));
-      toast({ title: t("avatarUpdated", "Profile photo updated") });
-    } catch (err) {
-      toast({ title: t("couldNotSave"), description: err.message, variant: "destructive" });
-    } finally {
-      setAvatarUploading(false);
-      e.target.value = "";
-    }
+    setAvatarPreview(URL.createObjectURL(file));
+    setPendingAvatarFile(file);
+    e.target.value = "";
   };
 
   const onSubmit = async (data) => {
     try {
+      let newAvatarUrl = null;
+
+      if (pendingAvatarFile) {
+        const { avatar_url } = await api.upload.avatar(pendingAvatarFile);
+        newAvatarUrl = avatar_url;
+      }
+
       const updated = await api.auth.updateMe({
         username: data.username.trim(),
         bio: data.bio,
         location: data.location || null,
       });
-      setUser(updated);
+
+      const merged = newAvatarUrl ? { ...updated, avatar_url: newAvatarUrl } : updated;
+      setUser(merged);
       reset({
-        username: updated.username,
-        bio: updated.bio || "",
-        location: updated.location || "",
+        username: merged.username,
+        bio: merged.bio || "",
+        location: merged.location || "",
       });
+
+      setPendingAvatarFile(null);
+      setAvatarPreview(null);
       setSaved(true);
-      toast({
-        title: t("profileUpdated"),
-        description: t("changesSavedDesc"),
-      });
+      toast({ title: t("profileUpdated"), description: t("changesSavedDesc") });
       setTimeout(() => setSaved(false), 3000);
     } catch (err) {
-      toast({
-        title: t("couldNotSave"),
-        description: err.message,
-        variant: "destructive",
-      });
+      toast({ title: t("couldNotSave"), description: err.message, variant: "destructive" });
     }
   };
 
@@ -177,22 +180,22 @@ export default function Settings() {
         <div className="flex flex-col items-center gap-2 py-3">
           <button
             type="button"
-            disabled={avatarUploading}
+            disabled={isSubmitting}
             onClick={() => avatarInputRef.current?.click()}
             className="relative focus:outline-none group"
             data-testid="button-avatar-upload"
             aria-label="Change profile photo"
           >
             <Avatar className="h-24 w-24 border-4 border-white shadow-xl">
-              <AvatarImage src={user.avatar_url} />
+              <AvatarImage src={avatarPreview || user.avatar_url} />
               <AvatarFallback className="bg-gradient-to-br from-primary to-secondary text-white text-2xl font-black">
                 {initial}
               </AvatarFallback>
             </Avatar>
-            <div className={`absolute -bottom-1 -right-1 h-8 w-8 rounded-full bg-primary flex items-center justify-center shadow-md transition-opacity ${avatarUploading ? "opacity-50" : "group-hover:opacity-80"}`}>
+            <div className={`absolute -bottom-1 -right-1 h-8 w-8 rounded-full flex items-center justify-center shadow-md transition-all ${pendingAvatarFile ? "bg-secondary" : "bg-primary"} group-hover:opacity-80`}>
               <Camera className="h-3.5 w-3.5 text-white" />
             </div>
-            {avatarUploading && (
+            {isSubmitting && pendingAvatarFile && (
               <div className="absolute inset-0 rounded-full bg-black/30 flex items-center justify-center">
                 <div className="h-5 w-5 rounded-full border-2 border-white border-t-transparent animate-spin" />
               </div>
@@ -207,7 +210,9 @@ export default function Settings() {
             data-testid="input-avatar-file"
           />
           <p className="text-xs text-muted-foreground font-medium">
-            {avatarUploading ? t("uploading", "Uploading…") : t("tapToChangePhoto", "Tap to change photo")}
+            {pendingAvatarFile
+              ? t("newPhotoSelected", "New photo selected — tap Save")
+              : t("tapToChangePhoto", "Tap to change photo")}
           </p>
         </div>
 
