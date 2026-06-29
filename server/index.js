@@ -13,6 +13,7 @@ import walletRoutes from "./routes/wallet.js";
 import reviewsRoutes from "./routes/reviews.js";
 import reportsRoutes from "./routes/reports.js";
 import adminRoutes from "./routes/admin.js";
+import { r2, streamFromR2 } from "./r2.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
@@ -22,8 +23,21 @@ app.use(cors({ origin: true, credentials: true }));
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true }));
 
-// Serve uploaded images
+// Serve legacy local uploads (keeps existing listing images working)
 app.use("/uploads", express.static(path.join(__dirname, "../uploads")));
+
+// Proxy R2 images  — GET /api/media/<key>
+app.get("/api/media/{*key}", async (req, res) => {
+  if (!r2) return res.status(503).json({ error: "R2 not configured" });
+  const raw = req.params.key;
+  const key = Array.isArray(raw) ? raw.join("/") : raw;
+  try {
+    await streamFromR2(key, res);
+  } catch (err) {
+    console.error("R2 read error:", err.message);
+    res.status(404).json({ error: "Image not found" });
+  }
+});
 
 // Routes
 app.use("/api/auth", authRoutes);

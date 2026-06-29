@@ -1,34 +1,18 @@
 import { Router } from "express";
 import multer from "multer";
 import path from "path";
-import { fileURLToPath } from "url";
-import fs from "fs";
+import crypto from "crypto";
 import { requireAuth } from "../middleware/auth.js";
+import { uploadToR2, streamFromR2, r2 } from "../r2.js";
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const uploadsDir = path.join(__dirname, "../../uploads");
-
-if (!fs.existsSync(uploadsDir)) {
-  fs.mkdirSync(uploadsDir, { recursive: true });
-}
-
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, uploadsDir),
-  filename: (req, file, cb) => {
-    const ext = path.extname(file.originalname).toLowerCase();
-    const unique = `${Date.now()}-${Math.round(Math.random() * 1e9)}${ext}`;
-    cb(null, unique);
-  },
-});
+const memStorage = multer.memoryStorage();
 
 const upload = multer({
-  storage,
-  limits: { fileSize: 10 * 1024 * 1024 }, // 10MB
-  fileFilter: (req, file, cb) => {
+  storage: memStorage,
+  limits: { fileSize: 10 * 1024 * 1024 }, // 10 MB
+  fileFilter: (_req, file, cb) => {
     const allowed = /jpeg|jpg|png|gif|webp/;
-    const ext = allowed.test(path.extname(file.originalname).toLowerCase());
-    const mime = allowed.test(file.mimetype);
-    if (ext && mime) {
+    if (allowed.test(path.extname(file.originalname).toLowerCase()) && allowed.test(file.mimetype)) {
       cb(null, true);
     } else {
       cb(new Error("Only image files are allowed"));
@@ -36,22 +20,41 @@ const upload = multer({
   },
 });
 
+function makeKey(file) {
+  const ext  = path.extname(file.originalname).toLowerCase() || ".jpg";
+  const rand = crypto.randomBytes(12).toString("hex");
+  return `uploads/${Date.now()}-${rand}${ext}`;
+}
+
 const router = Router();
 
-// POST /api/upload  (single image)
-router.post("/", requireAuth, upload.single("image"), (req, res) => {
+// POST /api/upload  — single image
+router.post("/", requireAuth, upload.single("image"), async (req, res) => {
   if (!req.file) return res.status(400).json({ error: "No file uploaded" });
-  const url = `/uploads/${req.file.filename}`;
-  res.json({ url });
+  try {
+    const key = makeKey(req.file);
+    const url = await uploadToR2(req.file.buffer, key, req.file.mimetype);
+    res.json({ url });
+  } catch (err) {
+    console.error("Upload error:", err.message);
+    res.status(500).json({ error: "Upload failed" });
+  }
 });
 
-// POST /api/upload/multiple  (up to 5 images)
-router.post("/multiple", requireAuth, upload.array("images", 5), (req, res) => {
+// POST /api/upload/multiple  — up to 5 images
+router.post("/multiple", requireAuth, upload.array("images", 5), async (req, res) => {
   if (!req.files || req.files.length === 0) {
     return res.status(400).json({ error: "No files uploaded" });
   }
-  const urls = req.files.map(f => `/uploads/${f.filename}`);
-  res.json({ urls });
+  try {
+    const urls = await Promise.all(
+      req.files.map(f => uploadToR2(f.buffer, makeKey(f), f.mimetype))
+    );
+    res.json({ urls });
+  } catch (err) {
+    console.error("Upload error:", err.message);
+    res.status(500).json({ error: "Upload failed" });
+  }
 });
 
 export default router;
