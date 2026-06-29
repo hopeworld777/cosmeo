@@ -2,7 +2,7 @@ import { Resend } from "resend";
 
 const APP_URL = process.env.APP_URL || `https://${process.env.REPLIT_DEV_DOMAIN || "localhost:5000"}`;
 const FROM_NAME = "Cosmeo";
-const FROM_EMAIL = "onboarding@resend.dev";
+const FROM_EMAIL = "noreply@cosmeo.shop";
 
 const resend = process.env.RESEND_API_KEY
   ? new Resend(process.env.RESEND_API_KEY)
