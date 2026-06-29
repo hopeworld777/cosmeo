@@ -79,6 +79,10 @@ export default function Settings() {
 
   const bioValue = watch("bio") || "";
 
+  // ── Avatar upload state — MUST be declared before any early return ──────
+  const avatarInputRef = useRef(null);
+  const [avatarUploading, setAvatarUploading] = useState(false);
+
   // Save scroll in layout-effect cleanup so it fires BEFORE AppShell resets
   // the container. Only persist the position when going to a submenu page.
   useLayoutEffect(() => {
@@ -104,9 +108,6 @@ export default function Settings() {
   if (!user) return null;
 
   const initial = user.username?.slice(0, 2).toUpperCase() || "U";
-
-  const avatarInputRef = useRef(null);
-  const [avatarUploading, setAvatarUploading] = useState(false);
 
   const handleAvatarChange = async (e) => {
     const file = e.target.files?.[0];

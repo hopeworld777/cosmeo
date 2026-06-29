@@ -12,10 +12,9 @@ const avatarUpload = multer({
   storage: multer.memoryStorage(),
   limits: { fileSize: 5 * 1024 * 1024 },
   fileFilter: (_req, file, cb) => {
-    const ok = /jpeg|jpg|png|gif|webp/.test(
-      path.extname(file.originalname).toLowerCase()
-    ) && /jpeg|jpg|png|gif|webp/.test(file.mimetype);
-    ok ? cb(null, true) : cb(new Error("Only image files are allowed"));
+    file.mimetype.startsWith("image/")
+      ? cb(null, true)
+      : cb(new Error("Only image files are allowed"));
   },
 });
 
