@@ -139,6 +139,19 @@ export const api = {
   },
 
   upload: {
+    avatar: async (file) => {
+      const formData = new FormData();
+      formData.append("avatar", file);
+      const token = getToken();
+      const res = await fetch(`${BASE}/auth/avatar`, {
+        method: "POST",
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+        body: formData,
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || "Avatar upload failed");
+      return data;
+    },
     single: async (file) => {
       const formData = new FormData();
       formData.append("image", file);

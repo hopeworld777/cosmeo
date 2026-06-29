@@ -1,9 +1,23 @@
 import { Router } from "express";
 import bcrypt from "bcryptjs";
 import crypto from "crypto";
+import multer from "multer";
+import path from "path";
 import pool from "../db.js";
 import { generateToken, requireAuth } from "../middleware/auth.js";
 import { sendVerificationEmail, sendPasswordResetEmail } from "../email.js";
+import { uploadToR2 } from "../r2.js";
+
+const avatarUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 5 * 1024 * 1024 },
+  fileFilter: (_req, file, cb) => {
+    const ok = /jpeg|jpg|png|gif|webp/.test(
+      path.extname(file.originalname).toLowerCase()
+    ) && /jpeg|jpg|png|gif|webp/.test(file.mimetype);
+    ok ? cb(null, true) : cb(new Error("Only image files are allowed"));
+  },
+});
 
 const router = Router();
 
@@ -112,6 +126,21 @@ router.get("/me", requireAuth, async (req, res) => {
   } catch (err) {
     console.error("Me error:", err);
     res.status(500).json({ error: "Failed to fetch user" });
+  }
+});
+
+// POST /api/auth/avatar
+router.post("/avatar", requireAuth, avatarUpload.single("avatar"), async (req, res) => {
+  if (!req.file) return res.status(400).json({ error: "No file uploaded" });
+  try {
+    const ext  = path.extname(req.file.originalname).toLowerCase() || ".jpg";
+    const key  = `avatars/${req.userId}-${Date.now()}${ext}`;
+    const url  = await uploadToR2(req.file.buffer, key, req.file.mimetype);
+    await pool.query("UPDATE users SET avatar_url = $1 WHERE id = $2", [url, req.userId]);
+    res.json({ avatar_url: url });
+  } catch (err) {
+    console.error("Avatar upload error:", err.message);
+    res.status(500).json({ error: "Avatar upload failed" });
   }
 });
 

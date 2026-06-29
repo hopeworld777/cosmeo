@@ -1,7 +1,7 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { useState, useEffect, useLayoutEffect } from "react";
+import { useState, useEffect, useLayoutEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import { ChevronLeft, MapPin, Check, Camera } from "lucide-react";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
@@ -105,6 +105,25 @@ export default function Settings() {
 
   const initial = user.username?.slice(0, 2).toUpperCase() || "U";
 
+  const avatarInputRef = useRef(null);
+  const [avatarUploading, setAvatarUploading] = useState(false);
+
+  const handleAvatarChange = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setAvatarUploading(true);
+    try {
+      const { avatar_url } = await api.upload.avatar(file);
+      setUser((u) => ({ ...u, avatar_url }));
+      toast({ title: t("avatarUpdated", "Profile photo updated") });
+    } catch (err) {
+      toast({ title: t("couldNotSave"), description: err.message, variant: "destructive" });
+    } finally {
+      setAvatarUploading(false);
+      e.target.value = "";
+    }
+  };
+
   const onSubmit = async (data) => {
     try {
       const updated = await api.auth.updateMe({
@@ -155,18 +174,40 @@ export default function Settings() {
 
         {/* ── Avatar ───────────────────────────────────────────────── */}
         <div className="flex flex-col items-center gap-2 py-3">
-          <div className="relative">
+          <button
+            type="button"
+            disabled={avatarUploading}
+            onClick={() => avatarInputRef.current?.click()}
+            className="relative focus:outline-none group"
+            data-testid="button-avatar-upload"
+            aria-label="Change profile photo"
+          >
             <Avatar className="h-24 w-24 border-4 border-white shadow-xl">
               <AvatarImage src={user.avatar_url} />
               <AvatarFallback className="bg-gradient-to-br from-primary to-secondary text-white text-2xl font-black">
                 {initial}
               </AvatarFallback>
             </Avatar>
-            <div className="absolute -bottom-1 -right-1 h-8 w-8 rounded-full bg-primary flex items-center justify-center shadow-md">
+            <div className={`absolute -bottom-1 -right-1 h-8 w-8 rounded-full bg-primary flex items-center justify-center shadow-md transition-opacity ${avatarUploading ? "opacity-50" : "group-hover:opacity-80"}`}>
               <Camera className="h-3.5 w-3.5 text-white" />
             </div>
-          </div>
-          <p className="text-xs text-muted-foreground font-medium">{t("avatarComingSoon")}</p>
+            {avatarUploading && (
+              <div className="absolute inset-0 rounded-full bg-black/30 flex items-center justify-center">
+                <div className="h-5 w-5 rounded-full border-2 border-white border-t-transparent animate-spin" />
+              </div>
+            )}
+          </button>
+          <input
+            ref={avatarInputRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={handleAvatarChange}
+            data-testid="input-avatar-file"
+          />
+          <p className="text-xs text-muted-foreground font-medium">
+            {avatarUploading ? t("uploading", "Uploading…") : t("tapToChangePhoto", "Tap to change photo")}
+          </p>
         </div>
 
         {/* ── Profile info card ─────────────────────────────────────── */}
