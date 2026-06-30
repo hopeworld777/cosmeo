@@ -350,7 +350,7 @@ export default function Settings() {
         <motion.div whileTap={{ scale: 0.97 }}>
           <Button
             type="submit"
-            disabled={isSubmitting || (!isDirty && !saved)}
+            disabled={isSubmitting || (!isDirty && !pendingAvatarFile && !saved)}
             className={`w-full h-14 rounded-2xl text-base font-bold shadow-md transition-all duration-300 ${
               saved
                 ? "bg-green-500 hover:bg-green-500 text-white shadow-green-200"
@@ -373,7 +373,7 @@ export default function Settings() {
           </Button>
         </motion.div>
 
-        {!isDirty && !saved && (
+        {!isDirty && !pendingAvatarFile && !saved && (
           <p className="text-xs text-center text-muted-foreground font-medium -mt-2">
             {t("makeAChange")}
           </p>
