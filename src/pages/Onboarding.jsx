@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useLocation } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
-import { Sparkles, ShoppingBag, Heart, ChevronRight } from "lucide-react";
+import { Sparkles, ShoppingCart, Tag, CalendarDays, Palette, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useTranslation } from "react-i18next";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
@@ -18,24 +18,44 @@ const SLIDE_CONFIG = [
     descKey: "slide1Desc",
   },
   {
-    icon: ShoppingBag,
-    iconColor: "text-pink-500",
-    iconBg: "bg-pink-100",
-    gradient: "from-pink-100 via-rose-50 to-orange-50",
-    desktopGradient: "from-pink-500 via-rose-500 to-orange-400",
-    accent: "#ec4899",
+    icon: ShoppingCart,
+    iconColor: "text-indigo-500",
+    iconBg: "bg-indigo-100",
+    gradient: "from-indigo-50 via-blue-50 to-sky-50",
+    desktopGradient: "from-indigo-500 via-blue-500 to-sky-400",
+    accent: "#6366f1",
     titleKey: "slide2Title",
     descKey: "slide2Desc",
   },
   {
-    icon: Heart,
-    iconColor: "text-secondary",
-    iconBg: "bg-secondary/10",
-    gradient: "from-fuchsia-50 via-pink-50 to-purple-50",
-    desktopGradient: "from-fuchsia-400 via-pink-400 to-purple-400",
-    accent: "#b07cd4",
+    icon: Tag,
+    iconColor: "text-emerald-500",
+    iconBg: "bg-emerald-100",
+    gradient: "from-emerald-50 via-green-50 to-teal-50",
+    desktopGradient: "from-emerald-500 via-green-500 to-teal-400",
+    accent: "#10b981",
     titleKey: "slide3Title",
     descKey: "slide3Desc",
+  },
+  {
+    icon: CalendarDays,
+    iconColor: "text-orange-500",
+    iconBg: "bg-orange-100",
+    gradient: "from-orange-50 via-amber-50 to-yellow-50",
+    desktopGradient: "from-orange-500 via-amber-500 to-yellow-400",
+    accent: "#f97316",
+    titleKey: "slide4Title",
+    descKey: "slide4Desc",
+  },
+  {
+    icon: Palette,
+    iconColor: "text-pink-500",
+    iconBg: "bg-pink-100",
+    gradient: "from-pink-50 via-rose-50 to-fuchsia-50",
+    desktopGradient: "from-pink-500 via-rose-500 to-fuchsia-400",
+    accent: "#ec4899",
+    titleKey: "slide5Title",
+    descKey: "slide5Desc",
   },
 ];
 
