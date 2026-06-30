@@ -298,12 +298,9 @@ export default function Onboarding() {
               >
                 <Sparkles className="h-6 w-6 text-white" strokeWidth={1.6} />
               </div>
-              <h1 className="text-2xl font-black text-foreground leading-snug mb-2">
+              <h1 className="text-2xl font-black text-foreground leading-snug">
                 {t("slide1Title")}
               </h1>
-              <p className="text-sm text-muted-foreground leading-relaxed">
-                {t("slide1Desc")}
-              </p>
             </div>
 
             {/* Slide progress — thin progress bar */}
