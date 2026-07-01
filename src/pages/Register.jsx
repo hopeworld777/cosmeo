@@ -161,7 +161,17 @@ export default function Register() {
           </div>
 
           <Button
-            onClick={() => setLocation("/")}
+            onClick={async () => {
+              // Re-fetch from the server before navigating so that email
+              // verification done in another tab is reflected immediately.
+              try {
+                const me = await api.auth.me();
+                setUser(me);
+              } catch {
+                // Non-fatal — navigate anyway if the refresh fails.
+              }
+              setLocation("/");
+            }}
             className="w-full h-12 rounded-2xl text-base font-bold bg-gradient-to-r from-primary to-secondary mb-3"
           >
             {t("continueToCosmeo")}

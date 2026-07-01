@@ -27,6 +27,17 @@ export function AuthProvider({ children }) {
     fetchMe();
   }, [fetchMe]);
 
+  // Re-sync user silently whenever the tab regains focus so that actions
+  // performed in another tab (e.g. email verification, avatar change) are
+  // reflected immediately without a full page reload.
+  useEffect(() => {
+    const handleVisibility = () => {
+      if (document.visibilityState === "visible") fetchMe();
+    };
+    document.addEventListener("visibilitychange", handleVisibility);
+    return () => document.removeEventListener("visibilitychange", handleVisibility);
+  }, [fetchMe]);
+
   const login = async (email, password) => {
     const { user: u, token } = await api.auth.login({ email, password });
     localStorage.setItem("kosmeo_token", token);
