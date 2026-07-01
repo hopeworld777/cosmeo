@@ -1,6 +1,6 @@
 import { Resend } from "resend";
 
-const APP_URL = process.env.APP_URL || `https://${process.env.REPLIT_DEV_DOMAIN || "localhost:5000"}`;
+const APP_URL = process.env.CLIENT_URL || "https://www.cosmeo.shop";
 const FROM_NAME = "Cosmeo";
 const FROM_EMAIL = "noreply@cosmeo.shop";
 

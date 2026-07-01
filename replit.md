@@ -31,9 +31,20 @@ Tables: `users`, `auth_tokens`, `listings`, `listing_images`, `favorites`, `conv
 | Key | Notes |
 |-----|-------|
 | `DATABASE_URL` | Auto-injected by Replit — do not set manually |
-| `JWT_SECRET` | Secret for signing JWT tokens (defaults to dev value if unset) |
+| `JWT_SECRET` | Secret for signing JWT tokens |
+| `CLIENT_URL` | Frontend base URL used in email links — defaults to `https://www.cosmeo.shop` if unset |
 | `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET_NAME` | Cloudflare R2 credentials — optional; local upload fallback used if missing |
 | `RESEND_API_KEY` | For transactional email via Resend — optional |
+
+## Render deployment
+
+Add the following environment variables in the Render dashboard under **Environment**:
+
+```
+CLIENT_URL=https://www.cosmeo.shop
+```
+
+This ensures verification and password-reset emails contain links to the production domain instead of localhost.
 
 ## User preferences
 
