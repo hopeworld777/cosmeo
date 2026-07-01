@@ -161,8 +161,8 @@ export default function Home() {
             >
               <ShieldCheck className="h-5 w-5 text-primary shrink-0 mt-0.5" />
               <div className="flex-1 min-w-0">
-                <p className="font-extrabold text-sm text-foreground leading-tight">{t("newToKosmeo")}</p>
-                <p className="text-xs text-muted-foreground font-medium mt-0.5">{t("newToKosmeoDesc")}</p>
+                <p className="font-extrabold text-sm text-foreground leading-tight">{t("newToCosmeo")}</p>
+                <p className="text-xs text-muted-foreground font-medium mt-0.5">{t("newToCosmeoDesc")}</p>
                 <button
                   onClick={() => setLocation("/terms")}
                   className="mt-2 text-xs font-bold text-primary hover:underline"
