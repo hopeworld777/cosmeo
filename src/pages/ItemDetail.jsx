@@ -1,7 +1,7 @@
 import { useParams, Link, useLocation } from "wouter";
 import {
   ChevronLeft, Share2, Heart, ShieldCheck, MapPin,
-  Eye, Star, MessageCircle, Send, X, Loader2, Calendar
+  Eye, Star, MessageCircle, Send, X, Loader2, Calendar, Tag, Package
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -119,7 +119,7 @@ function SellerReviewModal({ listing, onClose, onSubmitted }) {
                 </div>
                 <Button onClick={submit} disabled={loading || rating === 0}
                   className="w-full h-14 rounded-2xl bg-gradient-to-r from-amber-400 to-orange-400 text-white font-bold text-base shadow-md hover:opacity-90 disabled:opacity-40">
-                  {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : "⭐ Submit Review"}
+                  {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : <><Star className="h-4 w-4 mr-1.5" />Submit Review</>}
                 </Button>
               </motion.div>
             )}
@@ -366,7 +366,7 @@ export default function ItemDetail() {
           <img src={imageSrc} alt={listing.title} className="w-full h-full object-cover" />
         ) : (
           <div className="w-full h-full bg-gradient-to-br from-primary/10 to-secondary/10 flex items-center justify-center">
-            <span className="text-6xl">👗</span>
+            <Package className="h-16 w-16 text-muted-foreground/20" />
           </div>
         )}
         <div className="absolute inset-0 bg-gradient-to-t from-background/50 to-transparent pointer-events-none" />
@@ -379,8 +379,8 @@ export default function ItemDetail() {
           {/* Badges */}
           <div className="flex items-center gap-2 mb-4 flex-wrap">
             {listing.status === "sold" && (
-              <Badge className="bg-amber-100 text-amber-700 border border-amber-200 uppercase tracking-wider font-black px-3 py-1 rounded-full text-xs">
-                🏷️ {t("soldLabel")}
+              <Badge className="bg-amber-100 text-amber-700 border border-amber-200 uppercase tracking-wider font-black px-3 py-1 rounded-full text-xs flex items-center gap-1">
+                <Tag className="h-3 w-3" />{t("soldLabel")}
               </Badge>
             )}
             {listing.fandom && (
@@ -441,7 +441,7 @@ export default function ItemDetail() {
 
           {/* Hand-to-Hand Exchange Banner */}
           <div className="flex items-start gap-3 bg-amber-50 border border-amber-200/60 rounded-2xl px-4 py-3 mb-3">
-            <span className="text-lg leading-none mt-0.5 shrink-0">📍</span>
+            <MapPin className="h-4 w-4 text-amber-600 mt-0.5 shrink-0" />
             <p className="text-[13px] font-semibold text-amber-800 leading-snug">
               {t("handoffBanner")}
             </p>
@@ -449,7 +449,7 @@ export default function ItemDetail() {
 
           {/* Safety reminder */}
           <div className="flex items-center gap-2 mb-6 px-1">
-            <span className="text-xs font-semibold text-muted-foreground">🛡️ {t("safetyMeetReminder")}</span>
+            <span className="text-xs font-semibold text-muted-foreground flex items-center gap-1"><ShieldCheck className="h-3.5 w-3.5 text-primary shrink-0" />{t("safetyMeetReminder")}</span>
             <Link href="/terms">
               <span className="text-xs font-bold text-primary hover:underline cursor-pointer">
                 {t("readSafetyGuide")} →
@@ -494,7 +494,7 @@ export default function ItemDetail() {
                 className="mt-4 w-full h-12 rounded-2xl bg-gradient-to-r from-primary to-secondary text-white font-bold flex items-center justify-center gap-2 shadow-[0_4px_14px_rgba(124,58,237,0.3)] hover:opacity-90 transition-opacity"
               >
                 <MessageCircle className="h-5 w-5" />
-                💬 {t("openChat")}
+                {t("openChat")}
               </motion.button>
             )}
             {listing.status === "sold" && user && listing.seller_id !== user.id && (
@@ -504,7 +504,7 @@ export default function ItemDetail() {
                 className="mt-4 w-full h-12 rounded-2xl bg-gradient-to-r from-amber-400 to-orange-400 text-white font-bold flex items-center justify-center gap-2 shadow-md hover:opacity-90 transition-opacity"
               >
                 <Star className="h-5 w-5 fill-white" />
-                ⭐ Rate this Seller
+                Rate this Seller
               </motion.button>
             )}
           </div>
@@ -556,7 +556,7 @@ export default function ItemDetail() {
           /* ── Buyer actions ── */
           listing.status === "sold" ? (
             <div className="flex-1 h-16 rounded-2xl bg-muted/60 border-2 border-muted flex items-center justify-center gap-2">
-              <span className="text-2xl">🏷️</span>
+              <Tag className="h-5 w-5 text-muted-foreground/60" />
               <span className="font-black text-base text-muted-foreground">{t("itemSoldNote")}</span>
             </div>
           ) : (

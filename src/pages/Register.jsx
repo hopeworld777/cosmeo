@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link, useLocation } from "wouter";
 import { motion } from "framer-motion";
-import { Sparkles, Eye, EyeOff, Mail, CheckCircle2, Loader2 } from "lucide-react";
+import { Sparkles, Eye, EyeOff, Mail, CheckCircle2, Loader2, ShieldCheck } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { api } from "@/lib/api";
 import { Button } from "@/components/ui/button";
@@ -256,8 +256,8 @@ export default function Register() {
             )}
 
             <p className="text-center text-xs text-muted-foreground -mt-1">
-              <Link href="/terms" className="text-primary font-semibold hover:underline">
-                🛡️ {t("readSafetyGuide")}
+              <Link href="/terms" className="text-primary font-semibold hover:underline inline-flex items-center gap-1">
+                <ShieldCheck className="h-3.5 w-3.5" />{t("readSafetyGuide")}
               </Link>
             </p>
 

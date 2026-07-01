@@ -1,5 +1,5 @@
 import { Link, useLocation } from "wouter";
-import { Heart, Star, MapPin } from "lucide-react";
+import { Heart, Star, MapPin, Package } from "lucide-react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { useState, useEffect } from "react";
@@ -72,7 +72,7 @@ export default function ListingCard({ listing, index = 0 }) {
               />
             ) : (
               <div className="h-full w-full bg-gradient-to-br from-primary/10 to-secondary/10 flex items-center justify-center">
-                <span className="text-4xl opacity-30">✨</span>
+                <Package className="h-10 w-10 text-primary/20" />
               </div>
             )}
 

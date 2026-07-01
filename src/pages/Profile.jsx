@@ -1,7 +1,7 @@
 import {
   Settings, LogOut, Package, Star, ShoppingBag, Heart, ChevronRight,
   Wallet, ArrowDownToLine, CheckCircle2, Trash2, Tag, X, Loader2,
-  AlertCircle, TrendingUp, ShieldCheck, ScrollText, User, Search
+  AlertCircle, TrendingUp, ShieldCheck, ScrollText, User, Search, MapPin
 } from "lucide-react";
 import HeaderControls from "@/components/HeaderControls";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -407,7 +407,7 @@ function BuyerReviewModal({ listing, onClose, onSubmitted }) {
                   </Button>
                   <Button onClick={submit} disabled={loading || rating === 0 || !selectedBuyer}
                     className="flex-[2] h-13 rounded-2xl bg-gradient-to-r from-amber-400 to-orange-400 text-white font-bold shadow-md hover:opacity-90 disabled:opacity-40">
-                    {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : "⭐ Submit Review"}
+                    {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : <><Star className="h-4 w-4 mr-1.5" />Submit Review</>}
                   </Button>
                 </div>
               </motion.div>
@@ -769,10 +769,10 @@ export default function Profile() {
             </Avatar>
             <h2 className="text-2xl font-black mt-3 text-foreground">@{user.username}</h2>
             {user.location && (
-              <p className="text-sm text-muted-foreground font-medium mt-0.5">📍 {user.location}</p>
+              <p className="text-sm text-muted-foreground font-medium mt-0.5 flex items-center gap-1 justify-center"><MapPin className="h-3.5 w-3.5 text-primary shrink-0" />{user.location}</p>
             )}
             <p className="text-sm font-medium text-center mt-2 max-w-[260px] text-muted-foreground leading-relaxed">
-              {user.bio || "No bio yet — tap ⚙️ to add one!"}
+              {user.bio || "No bio yet — tap Settings to add one!"}
             </p>
 
             {/* Stats — Seller Rating | Sales | Buyer Rating */}
@@ -865,7 +865,7 @@ export default function Profile() {
           </div>
           {balance <= 0 && (
             <p className="text-center text-[10px] text-white/50 mt-2 font-medium">
-              Mark your first listing as Sold to start tracking! 🚀
+              Mark your first listing as Sold to start tracking!
             </p>
           )}
         </motion.div>

@@ -117,7 +117,7 @@ export default function Wishlist() {
             animate={{ opacity: 1 }}
             className="flex flex-col items-center justify-center py-16 text-center"
           >
-            <span className="text-4xl mb-3">🔍</span>
+            <Search className="h-10 w-10 text-muted-foreground/25 mb-3" />
             <p className="font-bold text-foreground mb-1">No matches</p>
             <p className="text-sm text-muted-foreground">Try a different keyword</p>
             <button

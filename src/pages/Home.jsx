@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Search, X, ShieldCheck, ChevronRight, Sparkles } from "lucide-react";
+import { Search, X, ShieldCheck, Sparkles, LayoutGrid, Shirt, Wand2, Footprints, Shield, Scissors, ShoppingBag, Tag, CalendarDays } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import ListingCard from "@/components/ListingCard";
 import { api } from "@/lib/api";
@@ -11,12 +11,12 @@ import HeaderControls from "@/components/HeaderControls";
 const CAT_MAP = { costume: "outfit", armor: "outfit", wig: "wig", prop: "prop", accessories: "prop" };
 
 const CATEGORIES = [
-  { id: "all",      emoji: "✨", tKey: "all",       bg: "from-violet-50 to-purple-50",   border: "border-violet-200/70", text: "text-violet-700" },
-  { id: "outfit",   emoji: "👗", tKey: "outfits",   bg: "from-pink-50 to-rose-50",       border: "border-pink-200/70",   text: "text-pink-700" },
-  { id: "wig",      emoji: "💇", tKey: "wigs",      bg: "from-purple-50 to-violet-50",   border: "border-purple-200/70", text: "text-purple-700" },
-  { id: "shoes",    emoji: "🥾", tKey: "shoes",     bg: "from-sky-50 to-blue-50",        border: "border-sky-200/70",    text: "text-sky-700" },
-  { id: "prop",     emoji: "⚔️",  tKey: "props",     bg: "from-emerald-50 to-teal-50",    border: "border-emerald-200/70",text: "text-emerald-700" },
-  { id: "crafting", emoji: "🧵", tKey: "materials", bg: "from-orange-50 to-amber-50",    border: "border-orange-200/70", text: "text-orange-700" },
+  { id: "all",      icon: LayoutGrid, tKey: "all",       bg: "from-violet-50 to-purple-50",   border: "border-violet-200/70", text: "text-violet-700" },
+  { id: "outfit",   icon: Shirt,      tKey: "outfits",   bg: "from-pink-50 to-rose-50",       border: "border-pink-200/70",   text: "text-pink-700" },
+  { id: "wig",      icon: Wand2,      tKey: "wigs",      bg: "from-purple-50 to-violet-50",   border: "border-purple-200/70", text: "text-purple-700" },
+  { id: "shoes",    icon: Footprints, tKey: "shoes",     bg: "from-sky-50 to-blue-50",        border: "border-sky-200/70",    text: "text-sky-700" },
+  { id: "prop",     icon: Shield,     tKey: "props",     bg: "from-emerald-50 to-teal-50",    border: "border-emerald-200/70",text: "text-emerald-700" },
+  { id: "crafting", icon: Scissors,   tKey: "materials", bg: "from-orange-50 to-amber-50",    border: "border-orange-200/70", text: "text-orange-700" },
 ];
 
 function SkeletonGrid({ count = 8 }) {
@@ -136,7 +136,7 @@ export default function Home() {
           <div className="md:hidden flex items-center justify-between mb-4">
             <div>
               <h1 className="text-3xl font-black tracking-tight text-foreground leading-none">Cosmeo</h1>
-              <p className="text-[11px] font-semibold text-muted-foreground mt-0.5 tracking-wide">ქოსფლეი + მეორადი 💜</p>
+              <p className="text-[11px] font-semibold text-muted-foreground mt-0.5 tracking-wide">ქოსფლეი + მეორადი</p>
             </div>
             <HeaderControls />
           </div>
@@ -187,7 +187,7 @@ export default function Home() {
                 }`}
                 data-testid={`cat-${cat.id}`}
               >
-                <span className="text-base leading-none">{cat.emoji}</span>
+                <cat.icon className="h-4 w-4 shrink-0" />
                 <span>{t(cat.tKey)}</span>
               </motion.button>
             );
@@ -229,12 +229,14 @@ export default function Home() {
           {/* Decorative stat bubbles */}
           <div className="hidden lg:flex flex-col gap-4 shrink-0">
             {[
-              { emoji: "🛍️", label: t("heroBuyLabel", "Buy"),        sub: t("heroBuySub", "Unique cosplay items") },
-              { emoji: "🏷️", label: t("heroSellLabel", "Sell"),       sub: t("heroSellSub", "List in minutes") },
-              { emoji: "👑", label: t("heroRentLabel", "Rent"),       sub: t("heroRentSub", "For one-time events") },
+              { icon: ShoppingBag,   label: t("heroBuyLabel", "Buy"),        sub: t("heroBuySub", "Unique cosplay items"),  color: "text-violet-500 bg-violet-50" },
+              { icon: Tag,           label: t("heroSellLabel", "Sell"),       sub: t("heroSellSub", "List in minutes"),      color: "text-pink-500 bg-pink-50" },
+              { icon: CalendarDays,  label: t("heroRentLabel", "Rent"),       sub: t("heroRentSub", "For one-time events"),  color: "text-sky-500 bg-sky-50" },
             ].map((item) => (
               <div key={item.label} className="flex items-center gap-3 bg-white/80 border border-border/40 rounded-2xl px-5 py-3.5 shadow-sm min-w-[220px]">
-                <span className="text-2xl">{item.emoji}</span>
+                <div className={`h-10 w-10 rounded-xl flex items-center justify-center shrink-0 ${item.color}`}>
+                  <item.icon className="h-5 w-5" />
+                </div>
                 <div>
                   <p className="font-black text-sm text-foreground">{item.label}</p>
                   <p className="text-xs text-muted-foreground font-medium">{item.sub}</p>
@@ -262,7 +264,7 @@ export default function Home() {
                   }`}
                   data-testid={`desktop-cat-${cat.id}`}
                 >
-                  <span className="text-3xl leading-none">{cat.emoji}</span>
+                  <cat.icon className="h-6 w-6" />
                   <span className={`text-xs font-black text-center leading-tight ${active ? "text-primary" : cat.text}`}>
                     {t(cat.tKey)}
                   </span>
@@ -308,7 +310,7 @@ export default function Home() {
               <div className="flex items-center justify-between mb-5 px-1">
                 <p className="text-xl font-black text-foreground tracking-tight">
                   {activeCategory !== "all" && activeCat
-                    ? `${activeCat.emoji} ${t(activeCat.tKey)}`
+                    ? t(activeCat.tKey)
                     : t("searchResults", "Results")}
                 </p>
                 <div className="flex items-center gap-2">
@@ -331,7 +333,7 @@ export default function Home() {
                 <SkeletonGrid count={8} />
               ) : filtered.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-24 text-center">
-                  <span className="text-5xl mb-4">🔍</span>
+                  <Search className="h-12 w-12 text-muted-foreground/25 mb-4" />
                   <p className="text-lg font-bold text-foreground mb-1">{t("noItemsFound")}</p>
                   <p className="text-sm text-muted-foreground">{t("tryDifferentSearch")}</p>
                 </div>
@@ -354,7 +356,7 @@ export default function Home() {
               {/* Empty state */}
               {!loading && apiItems.length === 0 && (
                 <div className="flex flex-col items-center justify-center py-24 text-center">
-                  <span className="text-5xl mb-4">🌟</span>
+                  <Sparkles className="h-12 w-12 text-primary/25 mb-4" />
                   <p className="text-lg font-bold text-foreground mb-1">{t("noListingsYet")}</p>
                   <p className="text-sm text-muted-foreground mb-6">{t("beFirstToList")}</p>
                   <Link href="/sell">

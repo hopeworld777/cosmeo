@@ -3,7 +3,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { motion, AnimatePresence } from "framer-motion";
-import { Camera, CheckCircle2, ChevronLeft, ArrowRight, X, Sparkles, MailCheck, RefreshCw } from "lucide-react";
+import { Camera, CheckCircle2, ChevronLeft, ArrowRight, X, Sparkles, MailCheck, RefreshCw, Shirt, Wand2, Footprints, Shield, Scissors, MapPin } from "lucide-react";
 import CityPicker from "@/components/CityPicker";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -15,11 +15,11 @@ import { useTranslation } from "react-i18next";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
 
 const CATEGORIES = [
-  { id: "outfit",   emoji: "👗", labelKey: "cat_outfit",   bg: "bg-pink-50",   border: "border-pink-300",   text: "text-pink-600",   activeBg: "bg-pink-100"   },
-  { id: "wig",      emoji: "💇", labelKey: "cat_wig",      bg: "bg-violet-50", border: "border-violet-200", text: "text-violet-500", activeBg: "bg-violet-100" },
-  { id: "shoes",    emoji: "🥾", labelKey: "cat_shoes",    bg: "bg-amber-50",  border: "border-amber-300",  text: "text-amber-600",  activeBg: "bg-amber-100"  },
-  { id: "prop",     emoji: "⚔️",  labelKey: "cat_prop",     bg: "bg-blue-50",   border: "border-blue-300",   text: "text-blue-600",   activeBg: "bg-blue-100"   },
-  { id: "crafting", emoji: "🧵", labelKey: "cat_crafting", bg: "bg-green-50",  border: "border-green-300",  text: "text-green-600",  activeBg: "bg-green-100"  },
+  { id: "outfit",   icon: Shirt,      labelKey: "cat_outfit",   bg: "bg-pink-50",   border: "border-pink-300",   text: "text-pink-600",   activeBg: "bg-pink-100"   },
+  { id: "wig",      icon: Wand2,      labelKey: "cat_wig",      bg: "bg-violet-50", border: "border-violet-200", text: "text-violet-500", activeBg: "bg-violet-100" },
+  { id: "shoes",    icon: Footprints, labelKey: "cat_shoes",    bg: "bg-amber-50",  border: "border-amber-300",  text: "text-amber-600",  activeBg: "bg-amber-100"  },
+  { id: "prop",     icon: Shield,     labelKey: "cat_prop",     bg: "bg-blue-50",   border: "border-blue-300",   text: "text-blue-600",   activeBg: "bg-blue-100"   },
+  { id: "crafting", icon: Scissors,   labelKey: "cat_crafting", bg: "bg-green-50",  border: "border-green-300",  text: "text-green-600",  activeBg: "bg-green-100"  },
 ];
 
 const PLACEHOLDER = {
@@ -371,8 +371,10 @@ export default function Sell() {
               initial={{ scale: 0 }}
               animate={{ scale: [0, 1.4, 1] }}
               transition={{ delay: 0.3, duration: 0.5 }}
-              className="absolute -top-1 -right-1 text-2xl"
-            >✨</motion.div>
+              className="absolute -top-1 -right-1 h-8 w-8 rounded-full bg-amber-50 flex items-center justify-center shadow-sm"
+            >
+              <Sparkles className="h-4 w-4 text-amber-400" />
+            </motion.div>
           </div>
           <h1 className="text-2xl font-black text-foreground mb-2">{t("listed")}</h1>
           <p className="text-muted-foreground font-medium">{t("itemIsLive")}</p>
@@ -448,7 +450,7 @@ export default function Sell() {
                           active ? `${cat.activeBg} ${cat.border} shadow-md` : "bg-white border-border/40 hover:border-border"
                         } ${cat.id === "crafting" ? "col-span-2" : ""}`}
                       >
-                        <span className="text-3xl">{cat.emoji}</span>
+                        <cat.icon className="h-7 w-7" />
                         <span className={`text-sm font-bold ${active ? cat.text : "text-foreground"}`}>{t(cat.labelKey)}</span>
                         {active && (
                           <span className={`text-[10px] font-bold ${cat.text} bg-white/60 px-2 py-0.5 rounded-full`}>
@@ -498,7 +500,7 @@ export default function Sell() {
                 <div>
                   <h2 className="text-2xl font-black text-foreground mb-1">{t("tellBuyersMore")}</h2>
                   <p className="text-sm text-muted-foreground font-medium">
-                    {activeCat && <>{activeCat.emoji} {t(activeCat.labelKey)} · </>}{t("goodTitles")}
+                    {activeCat && <>{t(activeCat.labelKey)} · </>}{t("goodTitles")}
                   </p>
                 </div>
 
@@ -616,9 +618,9 @@ export default function Sell() {
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="font-bold text-foreground text-sm line-clamp-1">{getValues("title") || t("yourListingTitle")}</p>
-                        <p className="text-xs text-muted-foreground font-medium mt-0.5">
-                          {activeCat?.emoji} {activeCat && t(activeCat.labelKey)}
-                          {city && <> · 📍 {city}</>}
+                        <p className="text-xs text-muted-foreground font-medium mt-0.5 flex items-center gap-1 flex-wrap">
+                          {activeCat && t(activeCat.labelKey)}
+                          {city && <><MapPin className="h-3 w-3 inline" />{city}</>}
                         </p>
                         <div className="flex gap-2 mt-1.5">
                           {isForSale && salePrice && <span className="text-xs font-bold bg-primary/10 text-primary px-2 py-0.5 rounded-full">₾{salePrice}</span>}

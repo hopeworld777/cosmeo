@@ -11,6 +11,8 @@ import {
   ChevronDown,
   ScrollText,
   Star,
+  Camera,
+  MessageCircle,
 } from "lucide-react";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
 
@@ -71,10 +73,10 @@ function Rule({ n, children }) {
   );
 }
 
-function Tip({ emoji, children }) {
+function Tip({ icon: Icon, children }) {
   return (
     <div className="flex items-start gap-2 bg-white/70 rounded-xl px-3 py-2.5 border border-border/60">
-      <span className="text-base leading-none mt-0.5">{emoji}</span>
+      <Icon size={14} className="shrink-0 mt-0.5 text-primary/70" />
       <p className="text-[13px] leading-snug text-foreground/80">{children}</p>
     </div>
   );
@@ -227,10 +229,10 @@ export default function TermsAndSafety() {
                   {t("tos_safety_tips_title")}
                 </p>
                 <div className="space-y-2">
-                  <Tip emoji="📸">{t("tos_safety_tip1")}</Tip>
-                  <Tip emoji="💬">{t("tos_safety_tip2")}</Tip>
-                  <Tip emoji="🤝">{t("tos_safety_tip3")}</Tip>
-                  <Tip emoji="⭐">{t("tos_safety_tip4")}</Tip>
+                  <Tip icon={Camera}>{t("tos_safety_tip1")}</Tip>
+                  <Tip icon={MessageCircle}>{t("tos_safety_tip2")}</Tip>
+                  <Tip icon={Users}>{t("tos_safety_tip3")}</Tip>
+                  <Tip icon={Star}>{t("tos_safety_tip4")}</Tip>
                 </div>
               </div>
 
