@@ -8,13 +8,18 @@ import { generateToken, requireAuth } from "../middleware/auth.js";
 import { sendVerificationEmail, sendPasswordResetEmail } from "../email.js";
 import { uploadToR2 } from "../r2.js";
 
+const ALLOWED_AVATAR_TYPES = new Set([
+  "image/jpeg", "image/jpg", "image/png", "image/webp",
+  "image/gif", "image/avif", "image/bmp",
+]);
+
 const avatarUpload = multer({
   storage: multer.memoryStorage(),
   limits: { fileSize: 5 * 1024 * 1024 },
   fileFilter: (_req, file, cb) => {
-    file.mimetype.startsWith("image/")
+    ALLOWED_AVATAR_TYPES.has(file.mimetype)
       ? cb(null, true)
-      : cb(new Error("Only image files are allowed"));
+      : cb(new Error("Unsupported image format. Please upload a JPG, PNG, WEBP, or GIF."));
   },
 });
 
@@ -135,7 +140,13 @@ router.get("/me", requireAuth, async (req, res) => {
 });
 
 // POST /api/auth/avatar
-router.post("/avatar", requireAuth, avatarUpload.single("avatar"), async (req, res) => {
+router.post("/avatar", requireAuth, (req, res, next) => {
+  // Run multer manually so format/size errors return JSON instead of a 500.
+  avatarUpload.single("avatar")(req, res, (err) => {
+    if (err) return res.status(400).json({ error: err.message });
+    next();
+  });
+}, async (req, res) => {
   if (!req.file) return res.status(400).json({ error: "No file uploaded" });
   try {
     const ext  = path.extname(req.file.originalname).toLowerCase() || ".jpg";

@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { Sparkles, Eye, EyeOff, Mail, CheckCircle2, Loader2, ShieldCheck, Camera } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { api } from "@/lib/api";
+import { prepareImageFile } from "@/lib/imageUtils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -38,6 +39,7 @@ export default function Register() {
   const [avatarFile, setAvatarFile] = useState(null);
   const [avatarPreview, setAvatarPreview] = useState(null);
   const [avatarError, setAvatarError] = useState("");
+  const [isConverting, setIsConverting] = useState(false);
 
   // Revoke object URL on cleanup to avoid memory leaks
   useEffect(() => {
@@ -49,24 +51,22 @@ export default function Register() {
     if (field === "email") setEmailTaken(false);
   }
 
-  const handleAvatarChange = (e) => {
+  const handleAvatarChange = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    if (!file.type.startsWith("image/")) {
-      setAvatarError("Only image files are allowed.");
-      e.target.value = "";
-      return;
-    }
-    if (file.size > 5 * 1024 * 1024) {
-      setAvatarError("Image must be smaller than 5 MB.");
-      e.target.value = "";
-      return;
-    }
-    if (avatarPreview) URL.revokeObjectURL(avatarPreview);
-    setAvatarPreview(URL.createObjectURL(file));
-    setAvatarFile(file);
-    setAvatarError("");
     e.target.value = "";
+    setIsConverting(true);
+    try {
+      const prepared = await prepareImageFile(file);
+      if (avatarPreview) URL.revokeObjectURL(avatarPreview);
+      setAvatarPreview(URL.createObjectURL(prepared));
+      setAvatarFile(prepared);
+      setAvatarError("");
+    } catch (err) {
+      setAvatarError(err.message);
+    } finally {
+      setIsConverting(false);
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -100,7 +100,15 @@ export default function Register() {
         const { avatar_url } = await api.upload.avatar(avatarFile);
         setUser({ ...u, avatar_url });
       } catch (avatarErr) {
-        console.error("Avatar upload failed:", avatarErr.message);
+        // Account was created — surface the failure so the user knows
+        // they can add a photo in Settings, then continue to success screen.
+        toast({
+          title: "Photo upload failed",
+          description:
+            avatarErr.message ||
+            "Your account was created but the profile photo couldn't be uploaded. You can add it later in Settings.",
+          variant: "destructive",
+        });
       }
 
       setRegistered(true);
@@ -218,17 +226,22 @@ export default function Register() {
               <button
                 type="button"
                 onClick={() => avatarInputRef.current?.click()}
-                disabled={loading}
                 className={`relative focus:outline-none group rounded-full transition-all ${
                   avatarError ? "ring-2 ring-destructive ring-offset-2" : ""
                 }`}
+                disabled={loading || isConverting}
                 aria-label="Upload profile photo"
               >
-                <div className="h-20 w-20 rounded-full overflow-hidden bg-muted border-4 border-white shadow-lg flex items-center justify-center">
+                <div className="h-20 w-20 rounded-full overflow-hidden bg-muted border-4 border-white shadow-lg flex items-center justify-center relative">
                   {avatarPreview ? (
                     <img src={avatarPreview} alt="Profile preview" className="w-full h-full object-cover" />
                   ) : (
                     <Camera className="h-7 w-7 text-muted-foreground/40" />
+                  )}
+                  {isConverting && (
+                    <div className="absolute inset-0 bg-black/30 flex items-center justify-center rounded-full">
+                      <div className="h-5 w-5 rounded-full border-2 border-white border-t-transparent animate-spin" />
+                    </div>
                   )}
                 </div>
                 <div
@@ -242,7 +255,7 @@ export default function Register() {
               <input
                 ref={avatarInputRef}
                 type="file"
-                accept="image/*"
+                accept="image/*,.heic,.heif"
                 className="hidden"
                 onChange={handleAvatarChange}
               />

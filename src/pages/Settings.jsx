@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { api } from "@/lib/api";
+import { prepareImageFile } from "@/lib/imageUtils";
 import { useTranslation } from "react-i18next";
 
 const GEO_CITIES = [
@@ -83,6 +84,7 @@ export default function Settings() {
   const avatarInputRef = useRef(null);
   const [pendingAvatarFile, setPendingAvatarFile] = useState(null);
   const [avatarPreview, setAvatarPreview]         = useState(null);
+  const [isConverting, setIsConverting]           = useState(false);
 
   // Revoke the object URL when the preview is replaced or component unmounts
   useEffect(() => {
@@ -115,12 +117,21 @@ export default function Settings() {
 
   const initial = user.username?.slice(0, 2).toUpperCase() || "U";
 
-  const handleAvatarChange = (e) => {
+  const handleAvatarChange = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    setAvatarPreview(URL.createObjectURL(file));
-    setPendingAvatarFile(file);
     e.target.value = "";
+    setIsConverting(true);
+    try {
+      const prepared = await prepareImageFile(file);
+      if (avatarPreview) URL.revokeObjectURL(avatarPreview);
+      setAvatarPreview(URL.createObjectURL(prepared));
+      setPendingAvatarFile(prepared);
+    } catch (err) {
+      toast({ title: "Cannot upload photo", description: err.message, variant: "destructive" });
+    } finally {
+      setIsConverting(false);
+    }
   };
 
   const onSubmit = async (data) => {
@@ -195,7 +206,7 @@ export default function Settings() {
             <div className={`absolute -bottom-1 -right-1 h-8 w-8 rounded-full flex items-center justify-center shadow-md transition-all ${pendingAvatarFile ? "bg-secondary" : "bg-primary"} group-hover:opacity-80`}>
               <Camera className="h-3.5 w-3.5 text-white" />
             </div>
-            {isSubmitting && pendingAvatarFile && (
+            {((isSubmitting && pendingAvatarFile) || isConverting) && (
               <div className="absolute inset-0 rounded-full bg-black/30 flex items-center justify-center">
                 <div className="h-5 w-5 rounded-full border-2 border-white border-t-transparent animate-spin" />
               </div>
@@ -204,13 +215,15 @@ export default function Settings() {
           <input
             ref={avatarInputRef}
             type="file"
-            accept="image/*"
+            accept="image/*,.heic,.heif"
             className="hidden"
             onChange={handleAvatarChange}
             data-testid="input-avatar-file"
           />
           <p className="text-xs text-muted-foreground font-medium">
-            {pendingAvatarFile
+            {isConverting
+              ? "Converting photo…"
+              : pendingAvatarFile
               ? t("newPhotoSelected", "New photo selected — tap Save")
               : t("tapToChangePhoto", "Tap to change photo")}
           </p>
