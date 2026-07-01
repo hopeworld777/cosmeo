@@ -360,6 +360,7 @@
   "usernameRequired": "Username is required",
   "emailRequired": "Email is required",
   "emailInvalid": "Enter a valid email address",
+  "emailTaken": "An account with this email already exists. Please sign in or use a different email address.",
   "passwordRequired": "Password is required",
   "passwordTooShort": "Password must be at least 6 characters",
   "networkError": "Could not reach the server. Check your connection and try again.",

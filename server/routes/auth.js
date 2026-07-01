@@ -79,6 +79,12 @@ router.post("/register", async (req, res) => {
     const jwtToken = generateToken(user.id);
     res.status(201).json({ user, token: jwtToken, verifyLink });
   } catch (err) {
+    if (err.code === "23505" && err.constraint && err.constraint.includes("email")) {
+      return res.status(409).json({ error: "email_taken" });
+    }
+    if (err.code === "23505" && err.constraint && err.constraint.includes("username")) {
+      return res.status(409).json({ error: "username_taken" });
+    }
     console.error("Register error:", err);
     res.status(500).json({ error: "Registration failed" });
   }

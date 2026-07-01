@@ -65,7 +65,7 @@ export default function Register() {
       const raw = err.message || "";
       if (raw === "email_taken") {
         setEmailTaken(true);
-        setFieldErrors((prev) => ({ ...prev, email: "An account with this email already exists." }));
+        setFieldErrors((prev) => ({ ...prev, email: t("emailTaken") }));
       } else if (raw === "username_taken") {
         setFieldErrors((prev) => ({ ...prev, username: "This username is already taken." }));
       } else if (raw.toLowerCase().includes("failed to fetch") || raw.toLowerCase().includes("networkerror")) {
