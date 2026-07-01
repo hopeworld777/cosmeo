@@ -17,7 +17,7 @@ const createListingSchema = z.object({
   fandom:      z.string().optional().default(""),
   size:        z.string().optional().default(""),
   condition:   z.string().optional().default(""),
-  images:      z.array(z.string().url()).optional().default([]),
+  images:      z.array(z.string().url()).min(1, "At least one image is required"),
 })
   .refine(d => d.is_for_sale || d.is_for_rent, {
     message: "Must be listed for sale or for rent (or both)",
@@ -237,7 +237,7 @@ router.post("/", requireAuth, async (req, res) => {
     );
     const listing = listingResult.rows[0];
 
-    // Insert images (placeholder already included by the client when no upload)
+    // Insert images
     for (let i = 0; i < images.length; i++) {
       await client.query(
         "INSERT INTO listing_images (listing_id, image_url, sort_order) VALUES ($1, $2, $3)",

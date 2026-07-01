@@ -269,6 +269,7 @@ export default function Sell() {
   const [salePrice, setSalePrice] = useState("");
   const [rentPrice, setRentPrice] = useState("");
   const [uploadedImages, setUploadedImages] = useState([]);
+  const [imageError, setImageError] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess]   = useState(false);
@@ -285,6 +286,10 @@ export default function Sell() {
   const goNext = async () => {
     if (step === 0 && !category) {
       toast({ title: t("pickCategoryFirst"), variant: "destructive" });
+      return;
+    }
+    if (step === 0 && uploadedImages.length === 0) {
+      setImageError(true);
       return;
     }
     if (step === 1) {
@@ -304,6 +309,7 @@ export default function Sell() {
     try {
       const { urls } = await api.upload.multiple(files);
       setUploadedImages(prev => [...prev, ...urls]);
+      setImageError(false);
     } catch (err) {
       toast({ title: t("uploadFailed"), description: err.message, variant: "destructive" });
     } finally {
@@ -311,9 +317,20 @@ export default function Sell() {
     }
   };
 
-  const removeImage = (idx) => setUploadedImages(prev => prev.filter((_, i) => i !== idx));
+  const removeImage = (idx) => setUploadedImages(prev => {
+    const next = prev.filter((_, i) => i !== idx);
+    if (next.length === 0) setImageError(true);
+    return next;
+  });
 
   const onPublish = async () => {
+    // Guard: images are required — this should normally be caught on step 0,
+    // but defend here too so the backend rule is never silently bypassed.
+    if (uploadedImages.length === 0) {
+      setImageError(true);
+      toast({ title: "Please upload at least one image.", variant: "destructive" });
+      return;
+    }
     if (!isForSale && !isForRent) {
       toast({ title: t("chooseHowToSell"), description: t("toggleSaleRent"), variant: "destructive" });
       return;
@@ -328,7 +345,7 @@ export default function Sell() {
     }
 
     const { title, description, fandom } = getValues();
-    const images = uploadedImages.length > 0 ? uploadedImages : [PLACEHOLDER[category]];
+    const images = uploadedImages;
 
     setSubmitting(true);
     try {
@@ -465,7 +482,12 @@ export default function Sell() {
                 <div>
                   <p className="text-sm font-bold text-foreground mb-3">
                     {t("photos")}
-                    <span className="text-muted-foreground font-normal ml-2 text-xs">{t("photosOptional")}</span>
+                    <span className="text-red-400 ml-1">*</span>
+                    {imageError && (
+                      <span className="text-destructive font-normal ml-2 text-xs">
+                        Please upload at least one image.
+                      </span>
+                    )}
                   </p>
                   <input type="file" multiple accept="image/*" className="hidden" ref={fileInputRef} onChange={handleFileSelect} />
                   <div className="flex gap-3 overflow-x-auto no-scrollbar pb-1">
@@ -473,10 +495,14 @@ export default function Sell() {
                       type="button"
                       onClick={() => fileInputRef.current?.click()}
                       disabled={uploading}
-                      className="flex h-28 w-28 shrink-0 cursor-pointer flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-primary/40 bg-primary/5 hover:bg-primary/10 transition-colors text-primary disabled:opacity-60"
+                      className={`flex h-28 w-28 shrink-0 cursor-pointer flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed transition-colors disabled:opacity-60 ${
+                        imageError
+                          ? "border-destructive bg-destructive/5 text-destructive hover:bg-destructive/10"
+                          : "border-primary/40 bg-primary/5 hover:bg-primary/10 text-primary"
+                      }`}
                     >
                       {uploading ? (
-                        <span className="h-5 w-5 rounded-full border-2 border-primary/40 border-t-primary animate-spin" />
+                        <span className={`h-5 w-5 rounded-full border-2 animate-spin ${imageError ? "border-destructive/40 border-t-destructive" : "border-primary/40 border-t-primary"}`} />
                       ) : (
                         <><Camera className="h-6 w-6" /><span className="text-xs font-bold">{t("addPhoto")}</span></>
                       )}
