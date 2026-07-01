@@ -7,7 +7,7 @@ import { requireAuth, optionalAuth } from "../middleware/auth.js";
 const createListingSchema = z.object({
   title:       z.string().min(5,  "Title must be at least 5 characters"),
   description: z.string().min(10, "Description must be at least 10 characters"),
-  category:    z.enum(["outfit", "wig", "shoes", "prop", "crafting"], {
+  category:    z.enum(["outfit", "wig", "shoes", "prop", "crafting", "accessories", "collectibles"], {
     errorMap: () => ({ message: "Select a valid category" }),
   }),
   is_for_sale: z.boolean(),
