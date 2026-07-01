@@ -122,7 +122,7 @@ router.post("/login", async (req, res) => {
 router.get("/me", requireAuth, async (req, res) => {
   try {
     const result = await pool.query(
-      `SELECT id, username, email, bio, avatar_url, rating, review_count, sales_count, buyer_rating, buyer_review_count, balance, email_verified, created_at, location
+      `SELECT id, username, email, bio, avatar_url, rating, review_count, sales_count, balance, email_verified, created_at, location
        FROM users WHERE id = $1`,
       [req.userId]
     );
@@ -261,7 +261,7 @@ router.post("/verify-email", async (req, res) => {
     // Generate a fresh JWT so user is logged in after verifying
     const jwtToken = generateToken(row.user_id);
     const userResult = await pool.query(
-      "SELECT id, username, email, bio, avatar_url, email_verified, rating, review_count, sales_count, buyer_rating, buyer_review_count FROM users WHERE id = $1",
+      "SELECT id, username, email, bio, avatar_url, email_verified, rating, review_count, sales_count FROM users WHERE id = $1",
       [row.user_id]
     );
     res.json({ success: true, user: userResult.rows[0], token: jwtToken });
@@ -325,7 +325,7 @@ router.post("/reset-password", async (req, res) => {
     // Auto-login after reset
     const jwtToken = generateToken(row.user_id);
     const userResult = await pool.query(
-      "SELECT id, username, email, bio, avatar_url, email_verified, rating, review_count, sales_count, buyer_rating, buyer_review_count FROM users WHERE id = $1",
+      "SELECT id, username, email, bio, avatar_url, email_verified, rating, review_count, sales_count FROM users WHERE id = $1",
       [row.user_id]
     );
     res.json({ success: true, user: userResult.rows[0], token: jwtToken });
