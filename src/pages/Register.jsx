@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Link, useLocation } from "wouter";
 import { motion } from "framer-motion";
-import { Sparkles, Eye, EyeOff, Mail, CheckCircle2, Loader2, ShieldCheck } from "lucide-react";
+import { Sparkles, Eye, EyeOff, Mail, CheckCircle2, Loader2, ShieldCheck, Camera } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { api } from "@/lib/api";
 import { Button } from "@/components/ui/button";
@@ -17,7 +17,7 @@ function isValidEmail(str) {
 
 export default function Register() {
   const { t } = useTranslation();
-  const { register } = useAuth();
+  const { register, setUser } = useAuth();
   const [, setLocation] = useLocation();
   const { toast } = useToast();
 
@@ -33,13 +33,46 @@ export default function Register() {
   const [fieldErrors, setFieldErrors] = useState({ username: "", email: "", password: "", general: "" });
   const [emailTaken, setEmailTaken] = useState(false);
 
+  // Avatar state
+  const avatarInputRef = useRef(null);
+  const [avatarFile, setAvatarFile] = useState(null);
+  const [avatarPreview, setAvatarPreview] = useState(null);
+  const [avatarError, setAvatarError] = useState("");
+
+  // Revoke object URL on cleanup to avoid memory leaks
+  useEffect(() => {
+    return () => { if (avatarPreview) URL.revokeObjectURL(avatarPreview); };
+  }, [avatarPreview]);
+
   function clearFieldError(field) {
     setFieldErrors((prev) => ({ ...prev, [field]: "" }));
     if (field === "email") setEmailTaken(false);
   }
 
+  const handleAvatarChange = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      setAvatarError("Only image files are allowed.");
+      e.target.value = "";
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      setAvatarError("Image must be smaller than 5 MB.");
+      e.target.value = "";
+      return;
+    }
+    if (avatarPreview) URL.revokeObjectURL(avatarPreview);
+    setAvatarPreview(URL.createObjectURL(file));
+    setAvatarFile(file);
+    setAvatarError("");
+    e.target.value = "";
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    // Collect all validation errors before bailing
     const errors = { username: "", email: "", password: "", general: "" };
     if (!username.trim()) errors.username = t("usernameRequired");
     if (!email.trim()) errors.email = t("emailRequired");
@@ -47,11 +80,11 @@ export default function Register() {
     if (!password) errors.password = t("passwordRequired");
     else if (password.length < 6) errors.password = t("passwordTooShort");
 
-    if (errors.username || errors.email || errors.password) {
-      setFieldErrors(errors);
-      return;
-    }
-    if (!ageConfirmed) { setAgeError(true); return; }
+    const hasFieldErrors = errors.username || errors.email || errors.password;
+    if (hasFieldErrors) setFieldErrors(errors);
+    if (!avatarFile) setAvatarError("A profile photo is required.");
+    if (!ageConfirmed) setAgeError(true);
+    if (hasFieldErrors || !avatarFile || !ageConfirmed) return;
 
     setFieldErrors({ username: "", email: "", password: "", general: "" });
     setEmailTaken(false);
@@ -59,7 +92,17 @@ export default function Register() {
     setLoading(true);
 
     try {
-      await register(username.trim(), email.trim(), password);
+      // Register the user — JWT is stored in localStorage after this resolves
+      const u = await register(username.trim(), email.trim(), password);
+
+      // Upload avatar now that we have a valid session token
+      try {
+        const { avatar_url } = await api.upload.avatar(avatarFile);
+        setUser({ ...u, avatar_url });
+      } catch (avatarErr) {
+        console.error("Avatar upload failed:", avatarErr.message);
+      }
+
       setRegistered(true);
     } catch (err) {
       const raw = err.message || "";
@@ -159,6 +202,49 @@ export default function Register() {
         {/* Form card */}
         <div className="bg-white rounded-3xl p-6 card-shadow md:bg-transparent md:p-0 md:shadow-none md:rounded-none space-y-4">
           <form onSubmit={handleSubmit} noValidate className="space-y-4">
+
+            {/* ── Profile photo ─────────────────────────────────────── */}
+            <div className="flex flex-col items-center gap-2 pt-1 pb-1">
+              <button
+                type="button"
+                onClick={() => avatarInputRef.current?.click()}
+                disabled={loading}
+                className={`relative focus:outline-none group rounded-full transition-all ${
+                  avatarError ? "ring-2 ring-destructive ring-offset-2" : ""
+                }`}
+                aria-label="Upload profile photo"
+              >
+                <div className="h-20 w-20 rounded-full overflow-hidden bg-muted border-4 border-white shadow-lg flex items-center justify-center">
+                  {avatarPreview ? (
+                    <img src={avatarPreview} alt="Profile preview" className="w-full h-full object-cover" />
+                  ) : (
+                    <Camera className="h-7 w-7 text-muted-foreground/40" />
+                  )}
+                </div>
+                <div
+                  className={`absolute -bottom-1 -right-1 h-7 w-7 rounded-full flex items-center justify-center shadow-md transition-colors ${
+                    avatarFile ? "bg-secondary" : "bg-primary"
+                  } group-hover:opacity-80`}
+                >
+                  <Camera className="h-3 w-3 text-white" />
+                </div>
+              </button>
+              <input
+                ref={avatarInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={handleAvatarChange}
+              />
+              {avatarError ? (
+                <p className="text-xs text-destructive font-medium">{avatarError}</p>
+              ) : (
+                <p className="text-xs text-muted-foreground font-medium">
+                  {avatarFile ? "Photo selected ✓" : "Upload a profile photo"}
+                </p>
+              )}
+            </div>
+
             <div className="space-y-1">
               <Label htmlFor="reg-username" className="font-bold">{t("username")}</Label>
               <Input
