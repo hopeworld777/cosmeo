@@ -13,6 +13,8 @@ CREATE TABLE IF NOT EXISTS users (
   rating          NUMERIC(3,2),
   review_count    INTEGER        DEFAULT 0,
   sales_count     INTEGER        DEFAULT 0,
+  buyer_rating       NUMERIC(3,2),
+  buyer_review_count INTEGER     DEFAULT 0,
   email_verified  BOOLEAN        DEFAULT false,
   is_admin        BOOLEAN        DEFAULT false,
   is_verified     BOOLEAN        DEFAULT false,
@@ -91,10 +93,12 @@ CREATE TABLE IF NOT EXISTS reviews (
   listing_id   INTEGER  REFERENCES listings(id) ON DELETE SET NULL,
   reviewer_id  INTEGER  REFERENCES users(id)    ON DELETE CASCADE,
   seller_id    INTEGER  REFERENCES users(id)    ON DELETE CASCADE,
+  buyer_id     INTEGER  REFERENCES users(id)    ON DELETE CASCADE,
+  review_type  VARCHAR(10) NOT NULL DEFAULT 'seller' CHECK (review_type IN ('seller', 'buyer')),
   rating       INTEGER  CHECK (rating >= 1 AND rating <= 5),
   comment      TEXT,
   created_at   TIMESTAMPTZ DEFAULT NOW(),
-  UNIQUE(listing_id, reviewer_id)
+  UNIQUE(listing_id, reviewer_id, review_type)
 );
 
 CREATE TABLE IF NOT EXISTS reports (
@@ -115,3 +119,19 @@ CREATE TABLE IF NOT EXISTS reports (
 -- Idempotent migration guard: ensures is_featured exists even if this schema
 -- file is re-run against a database created before the column was added.
 ALTER TABLE listings ADD COLUMN IF NOT EXISTS is_featured BOOLEAN DEFAULT false;
+
+-- Idempotent migration guards for the reviews/buyer-rating feature, in case
+-- this schema file is re-run against a database created before it existed.
+ALTER TABLE users ADD COLUMN IF NOT EXISTS buyer_rating NUMERIC(3,2);
+ALTER TABLE users ADD COLUMN IF NOT EXISTS buyer_review_count INTEGER DEFAULT 0;
+ALTER TABLE reviews ADD COLUMN IF NOT EXISTS buyer_id INTEGER REFERENCES users(id) ON DELETE CASCADE;
+ALTER TABLE reviews ADD COLUMN IF NOT EXISTS review_type VARCHAR(10) NOT NULL DEFAULT 'seller' CHECK (review_type IN ('seller', 'buyer'));
+DO $migration$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint WHERE conname = 'reviews_listing_id_reviewer_id_review_type_key'
+  ) THEN
+    ALTER TABLE reviews DROP CONSTRAINT IF EXISTS reviews_listing_id_reviewer_id_key;
+    ALTER TABLE reviews ADD CONSTRAINT reviews_listing_id_reviewer_id_review_type_key UNIQUE (listing_id, reviewer_id, review_type);
+  END IF;
+END $migration$;
