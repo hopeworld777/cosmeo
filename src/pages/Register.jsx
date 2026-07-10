@@ -82,9 +82,8 @@ export default function Register() {
 
     const hasFieldErrors = errors.username || errors.email || errors.password;
     if (hasFieldErrors) setFieldErrors(errors);
-    if (!avatarFile) setAvatarError("A profile photo is required.");
     if (!ageConfirmed) setAgeError(true);
-    if (hasFieldErrors || !avatarFile || !ageConfirmed) return;
+    if (hasFieldErrors || !ageConfirmed) return;
 
     setFieldErrors({ username: "", email: "", password: "", general: "" });
     setEmailTaken(false);
@@ -95,20 +94,24 @@ export default function Register() {
       // Register the user — JWT is stored in localStorage after this resolves
       const u = await register(username.trim(), email.trim(), password);
 
-      // Upload avatar now that we have a valid session token
-      try {
-        const { avatar_url } = await api.upload.avatar(avatarFile);
-        setUser({ ...u, avatar_url });
-      } catch (avatarErr) {
-        // Account was created — surface the failure so the user knows
-        // they can add a photo in Settings, then continue to success screen.
-        toast({
-          title: "Photo upload failed",
-          description:
-            avatarErr.message ||
-            "Your account was created but the profile photo couldn't be uploaded. You can add it later in Settings.",
-          variant: "destructive",
-        });
+      // Upload avatar only if the user chose one — otherwise avatar_url stays
+      // null and every avatar-rendering surface (header, chat, profile, settings)
+      // already falls back to a clean initial-letter placeholder.
+      if (avatarFile) {
+        try {
+          const { avatar_url } = await api.upload.avatar(avatarFile);
+          setUser({ ...u, avatar_url });
+        } catch (avatarErr) {
+          // Account was created — surface the failure so the user knows
+          // they can add a photo in Settings, then continue to success screen.
+          toast({
+            title: "Photo upload failed",
+            description:
+              avatarErr.message ||
+              "Your account was created but the profile photo couldn't be uploaded. You can add it later in Settings.",
+            variant: "destructive",
+          });
+        }
       }
 
       setRegistered(true);
@@ -263,7 +266,7 @@ export default function Register() {
                 <p className="text-xs text-destructive font-medium">{avatarError}</p>
               ) : (
                 <p className="text-xs text-muted-foreground font-medium">
-                  {avatarFile ? "Photo selected ✓" : "Upload a profile photo"}
+                  {avatarFile ? "Photo selected ✓" : "Add a profile photo (optional)"}
                 </p>
               )}
             </div>
