@@ -210,8 +210,8 @@ export default function Home() {
           <HeaderControls />
         </div>
 
-        {/* Search bar */}
-        <div className="px-5 md:px-8 md:pt-4 pb-3 md:max-w-[1600px]">
+        {/* Search bar — mobile only (desktop search lives in the centered hero below) */}
+        <div className="md:hidden px-5 pb-3">
           <div className="relative">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-primary pointer-events-none" />
             <input
@@ -240,10 +240,10 @@ export default function Home() {
 
       </div>
 
-      {/* ── Desktop Hero ──────────────────────────────────────────────── */}
+      {/* ── Centered hero + search (desktop) ─────────────────────────── */}
       <div className="hidden md:block bg-gradient-to-br from-violet-50 via-purple-50/60 to-fuchsia-50/40 border-b border-border/20">
-        <div className="max-w-[1600px] px-8 py-12 flex items-center justify-between gap-12">
-          <div className="flex-1 min-w-0">
+        <div className="px-8 py-14">
+          <div className="flex flex-col items-center justify-center text-center max-w-4xl mx-auto mb-8 w-full">
             <div className="flex items-center gap-2.5 mb-4">
               <div className="h-8 w-8 rounded-xl bg-primary/15 flex items-center justify-center">
                 <Sparkles className="h-4 w-4 text-primary" />
@@ -256,7 +256,7 @@ export default function Home() {
             <p className="text-lg text-muted-foreground font-medium leading-relaxed max-w-lg mb-7">
               {t("heroTagline")}
             </p>
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 mb-8">
               <Link href="/sell">
                 <button className="h-11 px-7 rounded-2xl bg-primary text-white text-sm font-bold hover:bg-primary/90 transition-all shadow-md shadow-primary/20">
                   {t("sellBtn")}
@@ -269,33 +269,32 @@ export default function Home() {
                 {t("heroExplore", "Explore listings")}
               </button>
             </div>
-          </div>
 
-          {/* Decorative stat bubbles */}
-          <div className="hidden lg:flex flex-col gap-3 shrink-0">
-            {MARKETPLACE_TYPES.map((mtype) => (
-              <button
-                key={mtype.id}
-                onClick={() => handleTypeChange(mtype.id)}
-                className={`flex items-center gap-3 border rounded-2xl px-5 py-3.5 shadow-sm min-w-[200px] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md text-left ${
-                  marketplaceType === mtype.id
-                    ? "bg-white border-primary/30 ring-2 ring-primary/20"
-                    : "bg-white/80 border-border/40"
-                }`}
-              >
-                <div className={`h-10 w-10 rounded-xl flex items-center justify-center shrink-0 ${mtype.iconBg}`}>
-                  <mtype.icon className="h-5 w-5" />
-                </div>
-                <div>
-                  <p className="font-black text-sm text-foreground">{t(mtype.tKey)}</p>
-                  <p className="text-xs text-muted-foreground font-medium">
-                    {mtype.id === "buy"        && t("heroBuySub", "Unique cosplay items")}
-                    {mtype.id === "rent"       && t("heroRentSub", "For one-time events")}
-                    {mtype.id === "commission" && t("commissionSub", "Custom-made creations")}
-                  </p>
-                </div>
-              </button>
-            ))}
+            {/* Search bar */}
+            <div className="relative w-full">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-primary pointer-events-none" />
+              <input
+                type="text"
+                placeholder={t("searchBrowsePlaceholder")}
+                value={query}
+                onChange={e => setQuery(e.target.value)}
+                className="w-full h-14 pl-12 pr-10 py-3.5 rounded-2xl bg-white card-shadow text-base font-medium placeholder:text-muted-foreground/60 border-none outline-none focus:ring-2 focus:ring-primary/25 transition-shadow"
+                data-testid="input-home-search-desktop"
+              />
+              <AnimatePresence>
+                {query && (
+                  <motion.button
+                    initial={{ opacity: 0, scale: 0.7 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.7 }}
+                    onClick={() => setQuery("")}
+                    className="absolute right-3.5 top-1/2 -translate-y-1/2 h-6 w-6 rounded-full bg-muted-foreground/20 flex items-center justify-center"
+                  >
+                    <X className="h-3.5 w-3.5 text-muted-foreground" />
+                  </motion.button>
+                )}
+              </AnimatePresence>
+            </div>
           </div>
         </div>
       </div>
