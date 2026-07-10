@@ -305,12 +305,32 @@ export default function Home() {
         ref={listingsRef}
       >
 
-        {/* ── Sidebar (desktop: fixed column / mobile: horizontal scroll) ── */}
-        <div className="md:col-span-1 md:sticky md:top-28 flex flex-col gap-4 -mx-4 px-4 md:mx-0 md:px-0">
+        {/* ── Sidebar (desktop: fixed column / mobile: compact bars) ──── */}
+        <div className="md:col-span-1 md:sticky md:top-28 flex flex-col gap-3 md:gap-4 -mx-4 px-4 md:mx-0 md:px-0">
 
-          {/* Nav actions */}
-          <div className="flex md:flex-col gap-2 overflow-x-auto md:overflow-visible whitespace-nowrap md:whitespace-normal no-scrollbar pb-1 md:pb-0 md:bg-white md:card-shadow md:rounded-2xl md:p-3">
-            <span className="hidden md:block text-[10px] font-black text-muted-foreground uppercase tracking-widest px-2 pb-1">
+          {/* Nav actions — mobile: sleek segmented control / desktop: stacked list */}
+          <div className="flex md:hidden items-center gap-1 bg-muted/70 rounded-2xl p-1">
+            {MARKETPLACE_TYPES.map(type => {
+              const active = marketplaceType === type.id;
+              return (
+                <motion.button
+                  key={type.id}
+                  whileTap={{ scale: 0.96 }}
+                  onClick={() => handleTypeChange(type.id)}
+                  data-testid={`mobile-type-${type.id}`}
+                  aria-pressed={active}
+                  className={`flex-1 flex items-center justify-center gap-1.5 px-2 py-2 rounded-xl text-xs font-bold transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 ${
+                    active ? type.activeClass : "text-muted-foreground"
+                  }`}
+                >
+                  <type.icon className="h-3.5 w-3.5 shrink-0" />
+                  <span className="truncate">{t(type.tKey)}</span>
+                </motion.button>
+              );
+            })}
+          </div>
+          <div className="hidden md:flex md:flex-col gap-2 md:bg-white md:card-shadow md:rounded-2xl md:p-3">
+            <span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest px-2 pb-1">
               {t("browseLabel", "Browse")}
             </span>
             {MARKETPLACE_TYPES.map(type => {
@@ -322,8 +342,8 @@ export default function Home() {
                   onClick={() => handleTypeChange(type.id)}
                   data-testid={`desktop-type-${type.id}`}
                   aria-pressed={active}
-                  className={`flex items-center gap-2 px-4 py-2.5 md:px-3 rounded-2xl text-sm font-bold shrink-0 md:w-full transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 ${
-                    active ? type.desktopActiveClass : "bg-muted md:bg-transparent text-muted-foreground hover:bg-muted/80"
+                  className={`flex items-center gap-2 px-3 py-2.5 rounded-2xl text-sm font-bold w-full transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 ${
+                    active ? type.desktopActiveClass : "text-muted-foreground hover:bg-muted/80"
                   }`}
                 >
                   <type.icon className="h-4 w-4 shrink-0" />
@@ -333,9 +353,30 @@ export default function Home() {
             })}
           </div>
 
-          {/* Categories */}
-          <div className="flex md:flex-col gap-2 overflow-x-auto md:overflow-visible whitespace-nowrap md:whitespace-normal no-scrollbar pb-1 md:pb-0 md:bg-white md:card-shadow md:rounded-2xl md:p-3">
-            <span className="hidden md:block text-[10px] font-black text-muted-foreground uppercase tracking-widest px-2 pb-1">
+          {/* Categories — mobile: horizontal-scroll pill bar / desktop: stacked list */}
+          <div className="flex overflow-x-auto whitespace-nowrap gap-2 py-2 no-scrollbar md:hidden">
+            {CATEGORIES.map(cat => {
+              const active = activeCategory === cat.id;
+              return (
+                <motion.button
+                  key={cat.id}
+                  whileTap={{ scale: 0.96 }}
+                  onClick={() => handleCategoryClick(cat.id)}
+                  data-testid={`mobile-cat-${cat.id}`}
+                  aria-pressed={active}
+                  className={`px-3 py-1 text-xs font-bold rounded-full border shrink-0 transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 ${
+                    active
+                      ? "bg-primary text-white border-primary"
+                      : "border-gray-200 bg-secondary/30 text-muted-foreground active:bg-primary/20"
+                  }`}
+                >
+                  {t(cat.tKey)}
+                </motion.button>
+              );
+            })}
+          </div>
+          <div className="hidden md:flex md:flex-col gap-2 md:bg-white md:card-shadow md:rounded-2xl md:p-3">
+            <span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest px-2 pb-1">
               {t("categories")}
             </span>
             {CATEGORIES.map(cat => {
@@ -347,10 +388,10 @@ export default function Home() {
                   onClick={() => handleCategoryClick(cat.id)}
                   data-testid={`desktop-cat-${cat.id}`}
                   aria-pressed={active}
-                  className={`flex items-center gap-2 px-3.5 py-2 md:py-2 rounded-xl text-sm font-bold shrink-0 md:w-full transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 ${
+                  className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-sm font-bold w-full transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 ${
                     active
                       ? cat.activeBg
-                      : "bg-muted/60 md:bg-transparent text-muted-foreground hover:text-primary hover:bg-muted"
+                      : "text-muted-foreground hover:text-primary hover:bg-muted"
                   }`}
                 >
                   <cat.icon className="h-3.5 w-3.5 shrink-0" />
