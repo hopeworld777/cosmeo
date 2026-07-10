@@ -57,7 +57,7 @@ const CATEGORIES = [
 
 function SkeletonGrid({ count = 8 }) {
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+    <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
       {Array.from({ length: count }).map((_, i) => (
         <div key={i} className="rounded-3xl overflow-hidden bg-white card-shadow">
           <div className="aspect-[3/4] bg-muted animate-pulse" />
@@ -238,51 +238,6 @@ export default function Home() {
           </div>
         </div>
 
-        {/* ── Marketplace type — mobile only ─────────────────────────── */}
-        <div className="md:hidden px-5 pb-3">
-          <div className="flex gap-2">
-            {MARKETPLACE_TYPES.map(type => {
-              const active = marketplaceType === type.id;
-              return (
-                <motion.button
-                  key={type.id}
-                  whileTap={{ scale: 0.96 }}
-                  onClick={() => handleTypeChange(type.id)}
-                  data-testid={`type-${type.id}`}
-                  className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-2xl text-sm font-bold transition-all duration-200 ${
-                    active ? type.activeClass : "bg-muted text-muted-foreground hover:bg-muted/70"
-                  }`}
-                >
-                  <type.icon className="h-4 w-4 shrink-0" />
-                  <span>{t(type.tKey)}</span>
-                </motion.button>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* ── Category pills — mobile only ─────────────────────────────── */}
-        <div className="md:hidden flex gap-2 overflow-x-auto no-scrollbar px-5 pb-3.5">
-          {CATEGORIES.map(cat => {
-            const active = activeCategory === cat.id;
-            return (
-              <motion.button
-                key={cat.id}
-                whileTap={{ scale: 0.93 }}
-                onClick={() => setActiveCategory(cat.id)}
-                className={`flex items-center gap-1.5 px-3.5 py-2 rounded-full text-sm font-bold whitespace-nowrap transition-all duration-200 ${
-                  active
-                    ? "bg-primary text-white shadow-[0_4px_14px_rgba(124,58,237,0.3)]"
-                    : "bg-white text-foreground card-shadow hover:bg-primary/5"
-                }`}
-                data-testid={`cat-${cat.id}`}
-              >
-                <cat.icon className="h-3.5 w-3.5 shrink-0" />
-                <span>{t(cat.tKey)}</span>
-              </motion.button>
-            );
-          })}
-        </div>
       </div>
 
       {/* ── Desktop Hero ──────────────────────────────────────────────── */}
@@ -345,39 +300,43 @@ export default function Home() {
         </div>
       </div>
 
-      {/* ── Desktop filter bar (type + categories) ───────────────────── */}
-      <div className="hidden md:block bg-white/80 border-b border-border/20">
-        <div className="max-w-6xl mx-auto px-8 py-4">
+      {/* ── Main content: sidebar + feed grid ───────────────────────── */}
+      <div
+        className="flex-1 px-4 pt-5 pb-20 md:px-8 md:pt-8 md:max-w-6xl md:mx-auto md:w-full grid grid-cols-1 md:grid-cols-4 gap-6 items-start"
+        ref={listingsRef}
+      >
 
-          {/* Type tabs row */}
-          <div className="flex items-center gap-6 mb-3.5">
-            <span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest shrink-0">
+        {/* ── Sidebar (desktop: fixed column / mobile: horizontal scroll) ── */}
+        <div className="md:col-span-1 md:sticky md:top-28 flex flex-col gap-4 -mx-4 px-4 md:mx-0 md:px-0">
+
+          {/* Nav actions */}
+          <div className="flex md:flex-col gap-2 overflow-x-auto md:overflow-visible whitespace-nowrap md:whitespace-normal no-scrollbar pb-1 md:pb-0 md:bg-white md:card-shadow md:rounded-2xl md:p-3">
+            <span className="hidden md:block text-[10px] font-black text-muted-foreground uppercase tracking-widest px-2 pb-1">
               {t("browseLabel", "Browse")}
             </span>
-            <div className="flex gap-2">
-              {MARKETPLACE_TYPES.map(type => {
-                const active = marketplaceType === type.id;
-                return (
-                  <motion.button
-                    key={type.id}
-                    whileTap={{ scale: 0.96 }}
-                    onClick={() => handleTypeChange(type.id)}
-                    data-testid={`desktop-type-${type.id}`}
-                    className={`flex items-center gap-2 px-5 py-2.5 rounded-2xl text-sm font-bold transition-all duration-200 ${
-                      active ? type.desktopActiveClass : "bg-muted text-muted-foreground hover:bg-muted/80"
-                    }`}
-                  >
-                    <type.icon className="h-4 w-4 shrink-0" />
-                    {t(type.tKey)}
-                  </motion.button>
-                );
-              })}
-            </div>
+            {MARKETPLACE_TYPES.map(type => {
+              const active = marketplaceType === type.id;
+              return (
+                <motion.button
+                  key={type.id}
+                  whileTap={{ scale: 0.96 }}
+                  onClick={() => handleTypeChange(type.id)}
+                  data-testid={`desktop-type-${type.id}`}
+                  aria-pressed={active}
+                  className={`flex items-center gap-2 px-4 py-2.5 md:px-3 rounded-2xl text-sm font-bold shrink-0 md:w-full transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 ${
+                    active ? type.desktopActiveClass : "bg-muted md:bg-transparent text-muted-foreground hover:bg-muted/80"
+                  }`}
+                >
+                  <type.icon className="h-4 w-4 shrink-0" />
+                  {t(type.tKey)}
+                </motion.button>
+              );
+            })}
           </div>
 
-          {/* Category chips row */}
-          <div className="flex items-center gap-2 flex-wrap">
-            <span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest shrink-0">
+          {/* Categories */}
+          <div className="flex md:flex-col gap-2 overflow-x-auto md:overflow-visible whitespace-nowrap md:whitespace-normal no-scrollbar pb-1 md:pb-0 md:bg-white md:card-shadow md:rounded-2xl md:p-3">
+            <span className="hidden md:block text-[10px] font-black text-muted-foreground uppercase tracking-widest px-2 pb-1">
               {t("categories")}
             </span>
             {CATEGORIES.map(cat => {
@@ -388,10 +347,11 @@ export default function Home() {
                   whileTap={{ scale: 0.96 }}
                   onClick={() => handleCategoryClick(cat.id)}
                   data-testid={`desktop-cat-${cat.id}`}
-                  className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-sm font-bold transition-all duration-200 ${
+                  aria-pressed={active}
+                  className={`flex items-center gap-2 px-3.5 py-2 md:py-2 rounded-xl text-sm font-bold shrink-0 md:w-full transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 ${
                     active
                       ? cat.activeBg
-                      : "bg-muted/60 text-muted-foreground hover:bg-muted"
+                      : "bg-muted/60 md:bg-transparent text-muted-foreground hover:text-primary hover:bg-muted"
                   }`}
                 >
                   <cat.icon className="h-3.5 w-3.5 shrink-0" />
@@ -401,10 +361,9 @@ export default function Home() {
             })}
           </div>
         </div>
-      </div>
 
-      {/* ── Main content ─────────────────────────────────────────────── */}
-      <div className="flex-1 px-4 pt-5 pb-20 md:px-8 md:pt-8 md:max-w-6xl md:mx-auto md:w-full" ref={listingsRef}>
+        {/* ── Product feed ─────────────────────────────────────────── */}
+        <div className="md:col-span-3 min-w-0">
 
         {/* Safety card */}
         <AnimatePresence>
@@ -459,7 +418,7 @@ export default function Home() {
                   <section>
                     <SectionHeader title={t("featuredListings")} count={featuredListings.length} t={t} />
                     {loading ? <SkeletonGrid count={8} /> : (
-                      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+                      <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
                         {featuredListings.map((item, i) => (
                           <motion.div key={item.id} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.035 }}>
                             <ListingCard listing={item} index={i} />
@@ -474,7 +433,7 @@ export default function Home() {
                   <section>
                     <SectionHeader title={t("newArrivals")} count={newArrivals.length} t={t} />
                     {loading ? <SkeletonGrid count={8} /> : (
-                      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+                      <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
                         {newArrivals.map((item, i) => (
                           <motion.div key={item.id} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.035 }}>
                             <ListingCard listing={item} index={i} />
@@ -533,7 +492,7 @@ export default function Home() {
                     </button>
                   </div>
                 ) : (
-                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+                  <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
                     {filtered.map((item, i) => (
                       <motion.div key={item.id} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.035, duration: 0.25 }}>
                         <ListingCard listing={item} index={i} />
@@ -546,6 +505,7 @@ export default function Home() {
 
           </AnimatePresence>
         )}
+        </div>
       </div>
     </div>
   );
