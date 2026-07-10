@@ -101,6 +101,7 @@ function DesktopNav() {
     { href: "/browse",   labelKey: "browse"   },
     { href: "/sell",     labelKey: "sell"     },
     { href: "/messages", labelKey: "messages" },
+    ...(user?.is_admin ? [{ href: "/admin", labelKey: "adminPanel", testId: "nav-admin" }] : []),
   ];
 
   return (
@@ -118,6 +119,7 @@ function DesktopNav() {
             <Link
               key={l.href}
               href={l.href}
+              data-testid={l.testId}
               className={`text-sm font-bold transition-colors ${
                 isActive ? "text-primary" : "text-muted-foreground hover:text-foreground"
               }`}
