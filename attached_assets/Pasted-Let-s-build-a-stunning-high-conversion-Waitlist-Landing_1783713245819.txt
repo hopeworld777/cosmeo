@@ -1,0 +1,30 @@
+Let's build a stunning, high-conversion Waitlist Landing Page at the root domain ('/') for all unauthenticated users. This will be the first impression of Kosmeo for the local community! 
+
+We need to implement this in three parts:
+
+**Part 1: Database Migration**
+* Create a new table named `waitlist` in PostgreSQL with columns: `id` (serial), `email` (varchar, unique), `status` (varchar, default 'pending'), and `created_at` (timestamp). Run this as an idempotent migration.
+
+**Part 2: Backend API**
+* Create a new POST endpoint `/api/waitlist` that accepts an email, validates it, and saves it uniquely to the `waitlist` table. Return a success or duplicate email message.
+
+**Part 3: Frontend Waitlist UI**
+* Move our current main marketplace home page feed from `/` to a new gated route like `/browse`. Unauthenticated users at the root ('/') must see this new landing page.
+* Design a premium, minimalist dark-mode landing page that screams "premium cosplay marketplace." Match our charcoal, pink, and orange theme perfectly.
+
+* Key UI Elements (Centered):*
+   1. **Logo:** Use our high-resolution Kosmeo logo.
+   2. **Headline (Localized):** 
+      * KA: "კოსპლეის პირველი ქართული მარკეტპლეისი"
+      * EN: "The First Georgian Cosplay Marketplace"
+   3. **Subtitle (Localized):**
+      * KA: "ჩვენ ვემზადებით გაშვებისთვის. შემოგვიერთდით ექსკლუზიურ სიაში და პირველად გაიგეთ, როდესაც კარი გაიღება!"
+      * EN: "We're gearing up for launch. Join our exclusive waitlist and be the first to know when the doors open!"
+   4. **Input & Button:** Add a sleek email input field and a glowing pink button that says "შემოუერთდი ვეითლისტს" / "Join the Waitlist".
+
+* Form States:*
+   * **Submitting State:** Show a loading spinner.
+   * **Success Message (KA):** "შენ წარმატებით დაემატე სიაში! ✨"
+   * **Duplicate Message (KA):** "ეს მეილი უკვე დარეგისტრირებულია!"
+
+Please ensure this landing page is optimized for mobile, loads incredibly fast, and gates the active marketplace completely.
