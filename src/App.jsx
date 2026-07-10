@@ -20,6 +20,7 @@ import Settings from "@/pages/Settings";
 import Chat from "@/pages/Chat";
 import TermsAndSafety from "@/pages/TermsAndSafety";
 import AdminDashboard from "@/pages/AdminDashboard";
+import NewDashboard from "@/pages/NewDashboard";
 import { AuthProvider } from "@/context/AuthContext";
 import { useAuth } from "@/hooks/useAuth";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
@@ -38,6 +39,10 @@ const HIDE_BOTTOM_NAV_EXTRA = ["/chat/", "/terms", "/item/", "/admin"];
 // floating mobile one to avoid duplication.  Prefix-matched for /settings/*.
 // /chat is also listed here so the floating switcher is never shown inside chat.
 const OWN_LANG_ROUTES = ["/", "/sell", "/browse", "/messages", "/profile", "/wishlist", "/settings", "/terms", "/item", "/chat", "/admin"];
+
+// Routes that render a fully standalone page (own header/chrome) — the
+// global desktop nav and phone-frame shell must not wrap these.
+const STANDALONE_ROUTES = ["/new-dashboard"];
 
 function ownsLangSwitcher(location) {
   return OWN_LANG_ROUTES.some((r) => {
@@ -162,7 +167,9 @@ function AppShell() {
 
   // Show the floating mobile LanguageSwitcher only when the current page does
   // NOT provide its own (and we're not on an auth/onboarding page).
-  const showMobileFloatLang = !isAuthRoute && !isOnboardingRoute && !ownsLangSwitcher(location);
+  const isStandaloneRoute = STANDALONE_ROUTES.some(r => location.startsWith(r));
+
+  const showMobileFloatLang = !isAuthRoute && !isOnboardingRoute && !isStandaloneRoute && !ownsLangSwitcher(location);
 
   // Reset the mobile scroll container to the top on every route change.
   const scrollRef = useRef(null);
@@ -173,15 +180,17 @@ function AppShell() {
   return (
     <div className="flex justify-center bg-background min-h-[100dvh] w-full">
       {/* Desktop nav only for logged-in app pages */}
-      {!isAuthRoute && !isOnboardingRoute && <DesktopNav />}
+      {!isAuthRoute && !isOnboardingRoute && !isStandaloneRoute && <DesktopNav />}
 
       <div className={[
         "flex flex-col w-full relative bg-background",
-        "max-w-[430px] h-[100dvh] overflow-hidden border-x border-border/30 shadow-2xl",
+        !isStandaloneRoute && "max-w-[430px] h-[100dvh] overflow-hidden border-x border-border/30 shadow-2xl",
         // Non-auth app pages: expand + add top padding for the fixed DesktopNav
-        !isAuthRoute && !isOnboardingRoute && "md:max-w-none md:h-auto md:min-h-[100dvh] md:overflow-visible md:border-x-0 md:shadow-none md:pt-16",
+        !isAuthRoute && !isOnboardingRoute && !isStandaloneRoute && "md:max-w-none md:h-auto md:min-h-[100dvh] md:overflow-visible md:border-x-0 md:shadow-none md:pt-16",
         // Auth + onboarding pages: expand but no top padding (they own their layout)
-        (isAuthRoute || isOnboardingRoute) && "md:max-w-none md:h-auto md:min-h-[100dvh] md:overflow-visible md:border-x-0 md:shadow-none",
+        (isAuthRoute || isOnboardingRoute) && !isStandaloneRoute && "md:max-w-none md:h-auto md:min-h-[100dvh] md:overflow-visible md:border-x-0 md:shadow-none",
+        // Standalone pages (own full-bleed layout/header) — no phone frame, no padding at any size
+        isStandaloneRoute && "w-full h-auto min-h-[100dvh] overflow-visible",
       ].filter(Boolean).join(" ")}>
         <OnboardingGuard />
 
@@ -199,7 +208,8 @@ function AppShell() {
           className={[
             "flex-1 overflow-y-auto no-scrollbar relative z-0",
             !hideBottomNav && "pb-20",
-            !isAuthRoute && "md:overflow-visible md:pb-0",
+            !isAuthRoute && !isStandaloneRoute && "md:overflow-visible md:pb-0",
+            isStandaloneRoute && "overflow-visible pb-0",
           ].filter(Boolean).join(" ")}
         >
           <Switch>
@@ -220,6 +230,7 @@ function AppShell() {
             <Route path="/wishlist"><ProtectedRoute component={Wishlist} /></Route>
             <Route path="/terms" component={TermsAndSafety} />
             <Route path="/admin"><AdminRoute component={AdminDashboard} /></Route>
+            <Route path="/new-dashboard" component={NewDashboard} />
             <Route>
               <div className="flex h-full items-center justify-center p-8 text-center text-muted-foreground">
                 404 - Lost in the multiverse

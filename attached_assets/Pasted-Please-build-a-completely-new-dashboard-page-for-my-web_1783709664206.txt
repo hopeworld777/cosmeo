@@ -1,0 +1,27 @@
+Please build a completely new dashboard page for my web application. The design must be a pixel-perfect dark mode interface, following the exact layout and color scheme provided in the referenced image. The design style is modern minimalist with vibrant glowing accents.
+
+1.  **Layout Structure:** Implement a three-column layout:
+    *   A narrow left-hand sidebar.
+    *   A large central content area.
+    *   A column of small widgets on the right.
+2.  **Color Palette:**
+    *   Background: Deep charcoal/black (#1A1A1D)
+    *   Container Cards: Darker grey (#252529) with subtle rounded corners and clean borders.
+    *   Accents (Critical): Electric pink/purple (#B645E9), electric blue (#00D2FF), and sunset orange (#FF9F43) for glowing effects, icons, chart segments, and active states.
+3.  **Left Sidebar:**
+    *   A top "logotype" section with a stylized 'O' logo and the text "logotype" in white.
+    *   A navigation list (line art icons with text): Home, Statistics, Media, Dashboard (selected state: pink-purple glow, icon and text colored), Reports (with a small '3' notification badge), and Settings.
+    *   A bottom user section with a placeholder avatar and text "User Name."
+4.  **Central Content Area:**
+    *   Page title: "Welcome to Your Dashboard" (Large font) and subtitle "Hello, User Name" (Small font).
+    *   **Large Top Card:**
+        *   Numerical statistic: "4725.05."
+        *   Vertical breakdown list (Pink, Orange, Blue horizontal progress bars with labels and percentages 40%, 35%, 15%).
+        *   A prominent glowing dual-ring doughnut chart (Outer: Blue/Orange segments; Inner: Deep pink/purple).
+    *   **Mid-Center Sparkline Cards:** Three identical small cards for "Category $1282," showing "+136" and a pink stylized sparkline graph.
+    *   **Bottom Large Callout Card:** A unique, solid, glowing pink-purple card with white placeholder text and a distinct white button that says "Button." Include the 'x' close icon in the top right.
+5.  **Right Widget Column:**
+    *   Three vertical cards, each containing: "Category name," placeholder text, a percentage (e.g., 40%), and a matching progress bar.
+    *   Icons for each card must use the correct accent colors: Top Card (Pink), Middle Card (Blue), Bottom Card (Orange).
+
+Please ensure all icons are minimal line-art, all elements have glowing accents where indicated, and the overall feel matches the futuristic, high-end dark UI aesthetic of the vector image.
