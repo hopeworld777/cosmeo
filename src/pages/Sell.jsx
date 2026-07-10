@@ -3,7 +3,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { motion, AnimatePresence } from "framer-motion";
-import { Camera, CheckCircle2, ChevronLeft, ArrowRight, X, Sparkles, MailCheck, RefreshCw, Shirt, Wand2, Footprints, Shield, Scissors, MapPin } from "lucide-react";
+import { Camera, CheckCircle2, ChevronLeft, ArrowRight, X, Sparkles, MailCheck, RefreshCw, Shirt, Wand2, Footprints, Shield, Scissors, MapPin, AlertTriangle } from "lucide-react";
 import CityPicker from "@/components/CityPicker";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -31,6 +31,20 @@ const PLACEHOLDER = {
 };
 
 const STEP_KEYS = ["stepCategory", "stepDetails", "stepPricing"];
+
+const BRAND_OPTIONS = [
+  { id: "dokidoki_ssr",     labelKey: "brand_dokidoki_ssr" },
+  { id: "dokidoki_sr",      labelKey: "brand_dokidoki_sr" },
+  { id: "delusion",         labelKey: "brand_delusion" },
+  { id: "uwowo",            labelKey: "brand_uwowo" },
+  { id: "dragon_essence",   labelKey: "brand_dragon_essence" },
+  { id: "miccostumes",      labelKey: "brand_miccostumes" },
+  { id: "ezcosplay",        labelKey: "brand_ezcosplay" },
+  { id: "procosplay",       labelKey: "brand_procosplay" },
+  { id: "rolecosplay",      labelKey: "brand_rolecosplay" },
+  { id: "selfmade",         labelKey: "brand_selfmade" },
+  { id: "other",            labelKey: "brand_other" },
+];
 
 const slide = {
   enter:  (dir) => ({ x: dir > 0 ? 50 : -50, opacity: 0 }),
@@ -268,6 +282,7 @@ export default function Sell() {
   const [isForRent, setIsForRent] = useState(false);
   const [salePrice, setSalePrice] = useState("");
   const [rentPrice, setRentPrice] = useState("");
+  const [brand, setBrand] = useState("");
   const [uploadedImages, setUploadedImages] = useState([]);
   const [imageError, setImageError] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -353,6 +368,7 @@ export default function Sell() {
         title,
         description,
         fandom: fandom || "",
+        brand: brand || "",
         category,
         location: city || "",
         is_for_sale: isForSale,
@@ -516,6 +532,14 @@ export default function Sell() {
                       </div>
                     ))}
                   </div>
+
+                  {/* Real Photos Only warning */}
+                  <div className="mt-4 flex items-start gap-3 rounded-2xl border border-amber-500/30 bg-amber-500/10 p-4 text-amber-800">
+                    <AlertTriangle className="h-5 w-5 shrink-0 mt-0.5 text-amber-500" />
+                    <p className="text-xs font-semibold leading-relaxed">
+                      <span className="font-black">{t("realPhotosWarningTitle")}:</span> {t("realPhotosWarningBody")}
+                    </p>
+                  </div>
                 </div>
               </>
             )}
@@ -565,6 +589,24 @@ export default function Sell() {
                       placeholder="e.g. Genshin Impact, Sailor Moon, Demon Slayer…"
                       className="bg-muted border-none h-12 rounded-xl text-sm font-medium focus-visible:ring-primary/30"
                     />
+                  </div>
+
+                  {/* Brand / Maker */}
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-sm font-bold text-foreground">
+                      {t("brandLabel")}
+                      <span className="text-muted-foreground font-normal ml-2 text-xs">{t("optional")}</span>
+                    </label>
+                    <select
+                      value={brand}
+                      onChange={e => setBrand(e.target.value)}
+                      className="bg-muted border-none h-12 rounded-xl text-sm font-medium px-3.5 outline-none focus:ring-2 focus:ring-primary/25 text-foreground"
+                    >
+                      <option value="">{t("brandPlaceholder")}</option>
+                      {BRAND_OPTIONS.map(b => (
+                        <option key={b.id} value={b.id}>{t(b.labelKey)}</option>
+                      ))}
+                    </select>
                   </div>
 
                   {/* Location */}

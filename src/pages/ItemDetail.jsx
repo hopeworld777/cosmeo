@@ -399,6 +399,11 @@ export default function ItemDetail() {
                 {listing.category}
               </Badge>
             )}
+            {listing.brand && (
+              <Badge className="bg-violet-100 text-violet-700 border-none font-bold px-3 py-1 rounded-full text-xs">
+                {t(`brand_${listing.brand}`, { defaultValue: listing.brand })}
+              </Badge>
+            )}
           </div>
 
           {/* Title */}

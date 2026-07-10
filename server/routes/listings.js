@@ -15,6 +15,7 @@ const createListingSchema = z.object({
   price:       z.number().positive("Sale price must be greater than 0").nullable().optional(),
   rent_price:  z.number().positive("Rental price must be greater than 0").nullable().optional(),
   fandom:      z.string().optional().default(""),
+  brand:       z.string().max(255, "Brand must be 255 characters or fewer").optional().default(""),
   size:        z.string().optional().default(""),
   condition:   z.string().optional().default(""),
   images:      z.array(z.string().url()).min(1, "At least one image is required"),
@@ -218,7 +219,7 @@ router.post("/", requireAuth, async (req, res) => {
 
   const {
     title, description, price, rent_price, is_for_rent, is_for_sale,
-    category, fandom, size, condition, images,
+    category, fandom, brand, size, condition, images,
   } = parsed.data;
 
   const client = await pool.connect();
@@ -228,14 +229,14 @@ router.post("/", requireAuth, async (req, res) => {
     const listingResult = await client.query(
       `INSERT INTO listings
          (seller_id, title, description, price, rent_price, is_for_rent, is_for_sale,
-          category, fandom, size, condition)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)
+          category, fandom, brand, size, condition)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)
        RETURNING *`,
       [req.userId, title, description,
        is_for_sale ? price : null,
        is_for_rent ? rent_price : null,
        is_for_rent, is_for_sale,
-       category, fandom, size, condition]
+       category, fandom, brand, size, condition]
     );
     const listing = listingResult.rows[0];
 

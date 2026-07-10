@@ -120,6 +120,9 @@ CREATE TABLE IF NOT EXISTS reports (
 -- file is re-run against a database created before the column was added.
 ALTER TABLE listings ADD COLUMN IF NOT EXISTS is_featured BOOLEAN DEFAULT false;
 
+-- Idempotent migration guard: cosplay brand/maker field on listings.
+ALTER TABLE listings ADD COLUMN IF NOT EXISTS brand VARCHAR(255);
+
 -- Idempotent migration guards for the reviews/buyer-rating feature, in case
 -- this schema file is re-run against a database created before it existed.
 ALTER TABLE users ADD COLUMN IF NOT EXISTS buyer_rating NUMERIC(3,2);
