@@ -175,6 +175,10 @@ export default function Home() {
     typeFiltered.filter(i => i.images?.length > 0).slice(0, 8),
     [typeFiltered]
   );
+  const spotlightListings = useMemo(() =>
+    apiItems.filter(i => i.is_featured && i.images?.length > 0),
+    [apiItems]
+  );
   const newArrivals = useMemo(() => typeFiltered.slice(0, 8), [typeFiltered]);
 
   const scrollToListings = () =>
@@ -440,6 +444,45 @@ export default function Home() {
             {/* ── Editorial sections (buy + all + no search) ─────────── */}
             {showEditorial && (
               <motion.div key="editorial" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex flex-col gap-10">
+
+                {/* Featured Spotlight carousel — curated by admins */}
+                {!loading && spotlightListings.length > 0 && (
+                  <section>
+                    <div className="flex items-center gap-2 mb-5 px-1">
+                      <div className="h-7 w-7 rounded-lg bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center shrink-0">
+                        <Sparkles className="h-3.5 w-3.5 text-white" />
+                      </div>
+                      <h2 className="text-xl font-black text-foreground tracking-tight">{t("featuredSpotlight", "Featured Spotlight")}</h2>
+                    </div>
+                    <div className="flex gap-4 overflow-x-auto no-scrollbar pb-2 -mx-1 px-1 snap-x snap-mandatory">
+                      {spotlightListings.map((item, i) => (
+                        <motion.div
+                          key={item.id}
+                          initial={{ opacity: 0, y: 16 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ delay: i * 0.05 }}
+                          className="shrink-0 w-[220px] snap-start"
+                        >
+                          <Link href={`/item/${item.id}`}>
+                            <div className="relative rounded-3xl overflow-hidden aspect-[3/4] shadow-[0_10px_30px_rgba(245,158,11,0.25)] ring-2 ring-amber-300/60 cursor-pointer group">
+                              <img src={item.images[0]} alt={item.title} className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105" />
+                              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent" />
+                              <div className="absolute top-2.5 left-2.5 flex items-center gap-1 bg-gradient-to-r from-amber-400 to-orange-500 text-white text-[10px] font-black px-2 py-1 rounded-full shadow">
+                                <Sparkles className="h-2.5 w-2.5" /> SPOTLIGHT
+                              </div>
+                              <div className="absolute bottom-0 left-0 right-0 p-3.5">
+                                <p className="text-white font-bold text-sm leading-snug line-clamp-2">{item.title}</p>
+                                {item.price && (
+                                  <p className="text-white/90 font-black text-base mt-1">₾{Number(item.price).toFixed(0)}</p>
+                                )}
+                              </div>
+                            </div>
+                          </Link>
+                        </motion.div>
+                      ))}
+                    </div>
+                  </section>
+                )}
 
                 {!loading && typeFiltered.length === 0 && (
                   <div className="flex flex-col items-center justify-center py-24 text-center">

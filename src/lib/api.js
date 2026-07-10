@@ -52,6 +52,7 @@ export const api = {
       return request(`/listings${qs ? `?${qs}` : ""}`);
     },
     trending: () => request("/listings/trending"),
+    featured: () => request("/listings?limit=80").then(rows => rows.filter(r => r.is_featured)),
     get: (id) => request(`/listings/${id}`),
     create: (body) =>
       request("/listings", { method: "POST", body: JSON.stringify(body) }),
@@ -123,6 +124,7 @@ export const api = {
   },
 
   admin: {
+    stats: () => request("/admin/stats"),
     reports: (params = {}) => {
       const qs = new URLSearchParams(
         Object.entries(params).filter(([, v]) => v != null && v !== "")
@@ -136,6 +138,22 @@ export const api = {
     suspendUser: (id) => request(`/admin/users/${id}/suspend`, { method: "POST" }),
     banUser:     (id) => request(`/admin/users/${id}/ban`,     { method: "POST" }),
     unbanUser:   (id) => request(`/admin/users/${id}/unban`,   { method: "POST" }),
+    verifyUser:  (id) => request(`/admin/users/${id}/verify`,  { method: "POST" }),
+    users: (params = {}) => {
+      const qs = new URLSearchParams(
+        Object.entries(params).filter(([, v]) => v != null && v !== "")
+      ).toString();
+      return request(`/admin/users${qs ? `?${qs}` : ""}`);
+    },
+    listings: (params = {}) => {
+      const qs = new URLSearchParams(
+        Object.entries(params).filter(([, v]) => v != null && v !== "")
+      ).toString();
+      return request(`/admin/listings${qs ? `?${qs}` : ""}`);
+    },
+    featureListing: (id) => request(`/admin/listings/${id}/feature`, { method: "POST" }),
+    approveListing: (id) => request(`/admin/listings/${id}/approve`, { method: "POST" }),
+    deleteListing:  (id) => request(`/admin/listings/${id}`, { method: "DELETE" }),
   },
 
   upload: {

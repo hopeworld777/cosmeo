@@ -33,10 +33,12 @@ router.get("/stats", async (req, res) => {
       pool.query("SELECT COUNT(*) AS count FROM listings WHERE is_flagged = true OR status = 'pending'"),
       pool.query("SELECT COUNT(*) AS count FROM reports WHERE status = 'open'"),
     ]);
+    const activeListings = await pool.query("SELECT COUNT(*) AS count FROM listings WHERE is_active = true");
 
     res.json({
       totalUsers: parseInt(users.rows[0].count),
       totalListings: parseInt(listings.rows[0].count),
+      activeListings: parseInt(activeListings.rows[0].count),
       // Note: "Commission" is a frontend-only marketplace filter, not a persisted
       // listing type — listing creation requires is_for_sale or is_for_rent, so
       // there is no commission bucket to report here.
@@ -84,6 +86,22 @@ router.get("/listings", async (req, res) => {
   }
 });
 
+// ── POST /api/admin/listings/:id/feature ────────────────────────────────────
+// Toggle "Featured Spotlight" for a listing
+router.post("/listings/:id/feature", requireNumericId, async (req, res) => {
+  try {
+    const result = await pool.query(`
+      UPDATE listings SET is_featured = NOT is_featured WHERE id = $1
+      RETURNING id, title, is_featured
+    `, [req.params.id]);
+    if (!result.rows[0]) return res.status(404).json({ error: "Listing not found" });
+    res.json({ success: true, listing: result.rows[0] });
+  } catch (err) {
+    console.error("Feature listing error:", err);
+    res.status(500).json({ error: "Failed to update featured status" });
+  }
+});
+
 // ── POST /api/admin/listings/:id/approve ────────────────────────────────────
 // Toggle a listing's active/pending status — approves a pending listing and
 // clears any flag raised against it.
@@ -116,6 +134,36 @@ router.delete("/listings/:id", requireNumericId, async (req, res) => {
   } catch (err) {
     console.error("Delete listing error:", err);
     res.status(500).json({ error: "Failed to delete listing" });
+  }
+});
+
+// ── GET /api/admin/users ────────────────────────────────────────────────────
+// Query params: search, limit, offset
+router.get("/users", async (req, res) => {
+  const { search, limit = 50, offset = 0 } = req.query;
+  try {
+    const conditions = [];
+    const params = [];
+    let idx = 1;
+    if (search) {
+      conditions.push(`(username ILIKE $${idx} OR email ILIKE $${idx})`);
+      params.push(`%${search}%`);
+      idx++;
+    }
+    const where = conditions.length ? `WHERE ${conditions.join(" AND ")}` : "";
+    const result = await pool.query(`
+      SELECT id, username, email, avatar_url, is_admin, is_verified, is_banned,
+             warning_count, sales_count, rating, review_count, created_at,
+             (SELECT COUNT(*) FROM listings WHERE seller_id = users.id) AS listings_count
+      FROM users
+      ${where}
+      ORDER BY created_at DESC
+      LIMIT $${idx} OFFSET $${idx + 1}
+    `, [...params, parseInt(limit), parseInt(offset)]);
+    res.json(result.rows);
+  } catch (err) {
+    console.error("Admin users error:", err);
+    res.status(500).json({ error: "Failed to fetch users" });
   }
 });
 

@@ -13,6 +13,7 @@ import { api } from "@/lib/api";
 import { useAuth } from "@/hooks/useAuth";
 import { useTranslation } from "react-i18next";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
+import VerifiedBadge from "@/components/VerifiedBadge";
 
 // ── Seller Review Modal — buyer rates the seller from a sold listing ──────────
 function SellerReviewModal({ listing, onClose, onSubmitted }) {
@@ -474,7 +475,10 @@ export default function ItemDetail() {
                   <AvatarFallback className="bg-primary/10 text-primary font-black text-lg">{sellerInitial}</AvatarFallback>
                 </Avatar>
                 <div>
-                  <p className="font-extrabold text-foreground text-lg leading-tight">{listing.seller_username}</p>
+                  <p className="font-extrabold text-foreground text-lg leading-tight flex items-center gap-1.5">
+                    {listing.seller_username}
+                    {listing.seller_is_verified && <VerifiedBadge size={16} />}
+                  </p>
                   <div className="flex items-center gap-1.5 text-sm font-bold text-muted-foreground mt-1">
                     <Star className="h-4 w-4 fill-amber-400 text-amber-400" />
                     <span className="text-foreground">{listing.seller_rating ? Number(listing.seller_rating).toFixed(1) : "New"}</span>
@@ -619,7 +623,10 @@ export default function ItemDetail() {
                     <AvatarFallback className="bg-primary/10 text-primary font-black">{sellerInitial}</AvatarFallback>
                   </Avatar>
                   <div>
-                    <p className="font-extrabold text-foreground leading-tight">{listing.seller_username}</p>
+                    <p className="font-extrabold text-foreground leading-tight flex items-center gap-1.5">
+                      {listing.seller_username}
+                      {listing.seller_is_verified && <VerifiedBadge size={14} />}
+                    </p>
                     <p className="text-xs text-muted-foreground font-medium line-clamp-1">{listing.title}</p>
                   </div>
                 </div>

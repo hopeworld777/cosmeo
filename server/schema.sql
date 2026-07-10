@@ -47,6 +47,7 @@ CREATE TABLE IF NOT EXISTS listings (
   status       VARCHAR(20)    DEFAULT 'active',
   is_active    BOOLEAN        DEFAULT true,
   is_flagged   BOOLEAN        DEFAULT false,
+  is_featured  BOOLEAN        DEFAULT false,
   views        INTEGER        DEFAULT 0,
   sold_at      TIMESTAMPTZ,
   created_at   TIMESTAMPTZ    DEFAULT NOW()
@@ -110,3 +111,7 @@ CREATE TABLE IF NOT EXISTS reports (
   reviewed_by      INTEGER      REFERENCES users(id)         ON DELETE SET NULL,
   created_at       TIMESTAMPTZ  DEFAULT NOW()
 );
+
+-- Idempotent migration guard: ensures is_featured exists even if this schema
+-- file is re-run against a database created before the column was added.
+ALTER TABLE listings ADD COLUMN IF NOT EXISTS is_featured BOOLEAN DEFAULT false;

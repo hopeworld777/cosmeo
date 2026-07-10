@@ -13,6 +13,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { api } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
 import { useTranslation } from "react-i18next";
+import VerifiedBadge from "@/components/VerifiedBadge";
 
 // ── Withdraw Modal ─────────────────────────────────────────────────────────────
 function WithdrawModal({ balance, onClose, onSuccess }) {
@@ -767,7 +768,10 @@ export default function Profile() {
                 {initial}
               </AvatarFallback>
             </Avatar>
-            <h2 className="text-2xl font-black mt-3 text-foreground">@{user.username}</h2>
+            <h2 className="text-2xl font-black mt-3 text-foreground flex items-center gap-1.5">
+              @{user.username}
+              {user.is_verified && <VerifiedBadge size={18} />}
+            </h2>
             {user.location && (
               <p className="text-sm text-muted-foreground font-medium mt-0.5 flex items-center gap-1 justify-center"><MapPin className="h-3.5 w-3.5 text-primary shrink-0" />{user.location}</p>
             )}

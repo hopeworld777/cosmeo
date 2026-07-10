@@ -19,7 +19,7 @@ import VerifyEmail from "@/pages/VerifyEmail";
 import Settings from "@/pages/Settings";
 import Chat from "@/pages/Chat";
 import TermsAndSafety from "@/pages/TermsAndSafety";
-import Admin from "@/pages/Admin";
+import AdminDashboard from "@/pages/AdminDashboard";
 import { AuthProvider } from "@/context/AuthContext";
 import { useAuth } from "@/hooks/useAuth";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
@@ -217,7 +217,7 @@ function AppShell() {
             <Route path="/profile"><ProtectedRoute component={Profile} /></Route>
             <Route path="/wishlist"><ProtectedRoute component={Wishlist} /></Route>
             <Route path="/terms" component={TermsAndSafety} />
-            <Route path="/admin"><AdminRoute component={Admin} /></Route>
+            <Route path="/admin"><AdminRoute component={AdminDashboard} /></Route>
             <Route>
               <div className="flex h-full items-center justify-center p-8 text-center text-muted-foreground">
                 404 - Lost in the multiverse

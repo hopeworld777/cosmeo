@@ -64,12 +64,13 @@ router.get("/", optionalAuth, async (req, res) => {
       SELECT l.*, 
              u.username as seller_username, u.avatar_url as seller_avatar, u.rating as seller_rating,
              u.review_count as seller_review_count, u.location as seller_location,
+             u.is_verified as seller_is_verified,
              (SELECT json_agg(image_url ORDER BY sort_order) FROM listing_images WHERE listing_id = l.id) as images,
              (SELECT COUNT(*) FROM favorites WHERE listing_id = l.id) as favorited_count
       FROM listings l
       JOIN users u ON u.id = l.seller_id
       ${where}
-      ORDER BY l.created_at DESC
+      ORDER BY l.is_featured DESC, l.created_at DESC
       LIMIT $${idx} OFFSET $${idx + 1}
     `;
     params.push(parseInt(limit), parseInt(offset));
@@ -87,6 +88,7 @@ router.get("/trending", async (req, res) => {
     const result = await pool.query(`
       SELECT l.*, 
              u.username as seller_username, u.avatar_url as seller_avatar, u.rating as seller_rating,
+             u.is_verified as seller_is_verified,
              (SELECT json_agg(image_url ORDER BY sort_order) FROM listing_images WHERE listing_id = l.id) as images,
              (SELECT COUNT(*) FROM favorites WHERE listing_id = l.id) as favorited_count
       FROM listings l
@@ -157,7 +159,7 @@ router.get("/:id", optionalAuth, async (req, res) => {
       SELECT l.*,
              u.username as seller_username, u.avatar_url as seller_avatar, u.rating as seller_rating,
              u.review_count as seller_review_count, u.bio as seller_bio, u.sales_count as seller_sales,
-             u.location as seller_location,
+             u.location as seller_location, u.is_verified as seller_is_verified,
              (SELECT json_agg(image_url ORDER BY sort_order) FROM listing_images WHERE listing_id = l.id) as images,
              (SELECT COUNT(*) FROM favorites WHERE listing_id = l.id) as favorited_count
       FROM listings l
@@ -323,10 +325,11 @@ router.patch("/:id/available", requireAuth, async (req, res) => {
 router.get("/user/:userId", async (req, res) => {
   try {
     const result = await pool.query(`
-      SELECT l.*,
+      SELECT l.*, u.is_verified as seller_is_verified,
              (SELECT json_agg(image_url ORDER BY sort_order) FROM listing_images WHERE listing_id = l.id) as images,
              (SELECT COUNT(*) FROM favorites WHERE listing_id = l.id) as favorited_count
       FROM listings l
+      JOIN users u ON u.id = l.seller_id
       WHERE l.seller_id = $1 AND l.status != 'deleted'
       ORDER BY l.created_at DESC
     `, [req.params.userId]);
