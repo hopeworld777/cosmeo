@@ -15,6 +15,7 @@ CREATE TABLE IF NOT EXISTS users (
   sales_count     INTEGER        DEFAULT 0,
   email_verified  BOOLEAN        DEFAULT false,
   is_admin        BOOLEAN        DEFAULT false,
+  is_verified     BOOLEAN        DEFAULT false,
   is_banned       BOOLEAN        DEFAULT false,
   warning_count   INTEGER        DEFAULT 0,
   created_at      TIMESTAMPTZ    DEFAULT NOW()
