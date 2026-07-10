@@ -124,16 +124,39 @@ router.post("/listings/:id/approve", requireNumericId, async (req, res) => {
 // ── DELETE /api/admin/listings/:id ──────────────────────────────────────────
 // Remove spam/violating listings entirely
 router.delete("/listings/:id", requireNumericId, async (req, res) => {
+  let deleted;
   try {
+    // Atomic delete — RETURNING gives us the pre-delete row in one statement,
+    // so there's no separate SELECT that a concurrent request could race with.
     const result = await pool.query(
-      "DELETE FROM listings WHERE id = $1 RETURNING id",
+      "DELETE FROM listings WHERE id = $1 RETURNING id, title, seller_id",
       [req.params.id]
     );
-    if (!result.rows[0]) return res.status(404).json({ error: "Listing not found" });
+    deleted = result.rows[0];
+    if (!deleted) return res.status(404).json({ error: "Listing not found" });
     res.json({ success: true });
   } catch (err) {
     console.error("Delete listing error:", err);
-    res.status(500).json({ error: "Failed to delete listing" });
+    return res.status(500).json({ error: "Failed to delete listing" });
+  }
+
+  // Notification write is best-effort: the listing is already gone and the
+  // response already sent, so a failure here must never surface as an error
+  // to the admin or imply the delete didn't happen.
+  if (deleted.seller_id) {
+    try {
+      await pool.query(
+        `INSERT INTO notifications (user_id, type, message_en, message_ka)
+         VALUES ($1, 'listing_removed', $2, $3)`,
+        [
+          deleted.seller_id,
+          `Your listing "${deleted.title}" was removed by our moderation team for violating our marketplace guidelines. Reminder: all listing photos must be real photos of the actual item — no stock or stolen images ("Real Photos Only" policy).`,
+          `თქვენი განცხადება "${deleted.title}" წაიშალა მოდერაციის მიერ წესების დარღვევის გამო. შეგახსენებთ: ყველა ფოტო უნდა იყოს ნივთის რეალური ფოტო — არ დაუშვებთ საწყობის ან სხვისი ფოტოების გამოყენებას ("მხოლოდ რეალური ფოტოები" წესი).`,
+        ]
+      );
+    } catch (err) {
+      console.error("Listing-removed notification insert failed:", err);
+    }
   }
 });
 
@@ -271,16 +294,34 @@ router.patch("/reports/:id", requireNumericId, async (req, res) => {
 
 // ── POST /api/admin/users/:id/warn ────────────────────────────────────────
 router.post("/users/:id/warn", requireNumericId, async (req, res) => {
+  let user;
   try {
     const result = await pool.query(`
       UPDATE users SET warning_count = warning_count + 1 WHERE id = $1
       RETURNING id, username, warning_count, is_banned
     `, [req.params.id]);
-    if (!result.rows[0]) return res.status(404).json({ error: "User not found" });
-    res.json({ success: true, user: result.rows[0] });
+    user = result.rows[0];
+    if (!user) return res.status(404).json({ error: "User not found" });
+    res.json({ success: true, user });
   } catch (err) {
     console.error("Warn user error:", err);
-    res.status(500).json({ error: "Failed to warn user" });
+    return res.status(500).json({ error: "Failed to warn user" });
+  }
+
+  // Best-effort: the warning has already been applied and the response sent,
+  // so a notification failure must not surface as an error to the admin.
+  try {
+    await pool.query(
+      `INSERT INTO notifications (user_id, type, message_en, message_ka)
+       VALUES ($1, 'warning', $2, $3)`,
+      [
+        user.id,
+        "You have received a warning from our moderation team for violating our community marketplace guidelines. Please review our Terms & Safety policy.",
+        "თქვენ მიიღეთ გაფრთხილება მოდერაციისგან საზოგადოების წესების დარღვევის გამო. გთხოვთ გაეცნოთ ჩვენს წესებსა და უსაფრთხოების პოლიტიკას.",
+      ]
+    );
+  } catch (err) {
+    console.error("Warning notification insert failed:", err);
   }
 });
 

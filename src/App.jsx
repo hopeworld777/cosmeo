@@ -24,6 +24,8 @@ import NewDashboard from "@/pages/NewDashboard";
 import { AuthProvider } from "@/context/AuthContext";
 import { useAuth } from "@/hooks/useAuth";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
+import NotificationBell from "@/components/NotificationBell";
+import RestrictedScreen from "@/components/RestrictedScreen";
 
 // Routes that hide everything (login / register / etc.)
 const AUTH_ROUTES = ["/login", "/register", "/forgot-password", "/reset-password", "/verify-email"];
@@ -137,6 +139,7 @@ function DesktopNav() {
 
       <div className="flex items-center gap-4 shrink-0">
         <LanguageSwitcher />
+        {user && <NotificationBell />}
         {user ? (
           <Link href="/profile">
             <div className="h-9 w-9 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center text-white font-black text-sm cursor-pointer hover:opacity-90 transition-opacity">
@@ -157,6 +160,7 @@ function DesktopNav() {
 
 function AppShell() {
   const [location] = useLocation();
+  const { user } = useAuth();
 
   // Auth routes hide everything (desktop nav, bottom nav, floating lang switcher).
   const isAuthRoute = AUTH_ROUTES.some(r => location.startsWith(r));
@@ -176,6 +180,12 @@ function AppShell() {
   useLayoutEffect(() => {
     if (scrollRef.current) scrollRef.current.scrollTop = 0;
   }, [location]);
+
+  // Banned/suspended accounts are locked out of the entire app, on every
+  // route, the instant their session reports is_banned — no partial browsing.
+  // This check runs after all hooks above so hook order stays stable across
+  // the user object changing from null -> banned -> unbanned.
+  if (user?.is_banned) return <RestrictedScreen />;
 
   return (
     <div className="flex justify-center bg-background min-h-[100dvh] w-full">

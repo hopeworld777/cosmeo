@@ -13,6 +13,7 @@ import walletRoutes from "./routes/wallet.js";
 import reviewsRoutes from "./routes/reviews.js";
 import reportsRoutes from "./routes/reports.js";
 import adminRoutes from "./routes/admin.js";
+import notificationsRoutes from "./routes/notifications.js";
 import { r2, streamFromR2 } from "./r2.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -49,6 +50,7 @@ app.use("/api/reviews", reviewsRoutes);
 app.use("/api/upload", uploadRoutes);
 app.use("/api/reports", reportsRoutes);
 app.use("/api/admin", adminRoutes);
+app.use("/api/notifications", notificationsRoutes);
 
 // Health check
 app.get("/api/health", (req, res) => res.json({ ok: true, ts: new Date().toISOString() }));

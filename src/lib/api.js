@@ -156,6 +156,11 @@ export const api = {
     deleteListing:  (id) => request(`/admin/listings/${id}`, { method: "DELETE" }),
   },
 
+  notifications: {
+    list: () => request("/notifications"),
+    markRead: (id) => request(`/notifications/${id}/read`, { method: "PUT" }),
+  },
+
   upload: {
     avatar: async (file) => {
       const formData = new FormData();

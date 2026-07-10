@@ -4,6 +4,7 @@ import { Settings } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useTranslation } from "react-i18next";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
+import NotificationBell from "@/components/NotificationBell";
 
 /**
  * Shared right-side header group: language pill + avatar/settings button.
@@ -20,6 +21,7 @@ export default function HeaderControls({ variant = "avatar" }) {
   return (
     <div className="md:hidden flex items-center gap-2 shrink-0">
       <LanguageSwitcher />
+      <NotificationBell />
 
       {variant === "settings" ? (
         <Link href="/settings">

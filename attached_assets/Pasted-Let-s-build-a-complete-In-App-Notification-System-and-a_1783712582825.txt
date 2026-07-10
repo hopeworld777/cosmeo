@@ -1,0 +1,35 @@
+Let's build a complete In-App Notification System and a Restricted/Banned Account Lockout Screen to connect our Admin actions to real user feedback.
+
+Please implement these changes step-by-step:
+
+1. Create the Notifications Database Table:
+   - Create a table named 'notifications' with columns:
+     * id (SERIAL PRIMARY KEY)
+     * user_id (INTEGER references users(id) ON DELETE CASCADE)
+     * type (VARCHAR - e.g., 'warning', 'listing_removed', 'system')
+     * message_en (TEXT)
+     * message_ka (TEXT)
+     * is_read (BOOLEAN DEFAULT false)
+     * created_at (TIMESTAMP DEFAULT CURRENT_TIMESTAMP)
+   - Ensure the database migration is safe and idempotent.
+
+2. Backend API Setup for Notifications:
+   - Create a GET endpoint '/api/notifications' that fetches the current logged-in user's notifications, ordered by newest first.
+   - Create a PUT endpoint '/api/notifications/:id/read' to mark a specific notification as read.
+   - Update our Admin Panel actions (Warn User, Delete/Flag Listing):
+     * When you Warn a user, automatically insert a warning notification into the DB for that user (in both English and Georgian).
+     * When you Delete/Flag a listing, insert a 'listing_removed' notification explaining that the listing was removed (e.g., reminding them of our "Real Photos Only" policy!).
+
+3. Frontend Notification Bell Component:
+   - In the Header/Navbar, add a sleek notification bell icon (e.g., using Lucide's 'Bell' icon) next to the user profile.
+   - Show a glowing pink badge with the count of unread notifications if there are any.
+   - Clicking the bell should open a clean dark-mode dropdown showing their list of notifications with localized text. Clicking a notification should mark it as read.
+
+4. Banned Account Lockout Screen:
+   - Create a clean, full-screen 'Restricted' route/view (e.g., '/restricted' or a direct conditional layout block in App.jsx).
+   - In App.jsx (our route/auth wrapper), if 'user.is_banned === true' is returned from our session check, do not allow them to browse the app. Instantly intercept and render this locked screen instead.
+   - The Lockout Screen should have a beautiful, clean dark-mode lockout aesthetic:
+     * English: "Account Restricted. Your account has been suspended for violating our community marketplace guidelines. If you believe this is a mistake, please contact support."
+     * Georgian: "ანგარიში შეზღუდულია. თქვენი პროფილი დაიბლოკა წესების დარღვევის გამო. თუ ფიქრობთ, რომ ეს შეცდომაა, გთხოვთ დაუკავშირდეთ მხარდაჭერას."
+
+Please run these database, backend, and frontend updates, and verify that they load beautifully without breaking our active layouts!
