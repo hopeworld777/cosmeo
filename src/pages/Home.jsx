@@ -211,7 +211,7 @@ export default function Home() {
         </div>
 
         {/* Search bar */}
-        <div className="px-5 md:px-8 md:pt-4 pb-3 md:max-w-6xl md:mx-auto">
+        <div className="px-5 md:px-8 md:pt-4 pb-3 md:max-w-[1600px]">
           <div className="relative">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-primary pointer-events-none" />
             <input
@@ -242,7 +242,7 @@ export default function Home() {
 
       {/* ── Desktop Hero ──────────────────────────────────────────────── */}
       <div className="hidden md:block bg-gradient-to-br from-violet-50 via-purple-50/60 to-fuchsia-50/40 border-b border-border/20">
-        <div className="max-w-6xl mx-auto px-8 py-12 flex items-center justify-between gap-12">
+        <div className="max-w-[1600px] px-8 py-12 flex items-center justify-between gap-12">
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2.5 mb-4">
               <div className="h-8 w-8 rounded-xl bg-primary/15 flex items-center justify-center">
@@ -302,7 +302,7 @@ export default function Home() {
 
       {/* ── Main content: sidebar + feed grid ───────────────────────── */}
       <div
-        className="flex-1 px-4 pt-5 pb-20 md:px-8 md:pt-8 md:max-w-6xl md:mx-auto md:w-full grid grid-cols-1 md:grid-cols-4 gap-6 items-start"
+        className="flex-1 px-4 pt-5 pb-20 md:px-8 md:pt-8 md:max-w-[1600px] md:w-full grid grid-cols-1 md:grid-cols-4 gap-6 items-start"
         ref={listingsRef}
       >
 
