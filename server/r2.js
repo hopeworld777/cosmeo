@@ -16,6 +16,14 @@ const R2_ACCESS_KEY_ID     = process.env.R2_ACCESS_KEY_ID?.trim();
 const R2_SECRET_ACCESS_KEY = process.env.R2_SECRET_ACCESS_KEY?.trim();
 const R2_BUCKET_NAME       = process.env.R2_BUCKET_NAME?.trim();
 
+// Startup diagnostic — never logs actual secret values, only presence/length.
+console.log("[r2] env check →", {
+  R2_ACCOUNT_ID:        R2_ACCOUNT_ID        ? `set (${R2_ACCOUNT_ID.length} chars)`        : "MISSING",
+  R2_ACCESS_KEY_ID:     R2_ACCESS_KEY_ID     ? `set (${R2_ACCESS_KEY_ID.length} chars)`     : "MISSING",
+  R2_SECRET_ACCESS_KEY: R2_SECRET_ACCESS_KEY ? `set (${R2_SECRET_ACCESS_KEY.length} chars)` : "MISSING",
+  R2_BUCKET_NAME:       R2_BUCKET_NAME       ? `set (${R2_BUCKET_NAME.length} chars)`       : "MISSING",
+});
+
 export const r2 = R2_ACCOUNT_ID
   ? new S3Client({
       region: "auto",
