@@ -76,9 +76,11 @@ app.get("/api/media/{*key}", async (req, res) => {
 // receive 403 immediately, so even direct curl/fetch calls can't bypass the
 // frontend gate and pull real data.
 // /api/media/* is registered above this block and never reaches this middleware.
-const WAITLIST_GATE_PUBLIC = ["/auth", "/waitlist", "/health", "/media"];
+// Routes accessible without a login (public launch).
+// Everything else — sell, messages, wallet, upload, admin, etc. — still requires JWT.
+const PUBLIC_API_PREFIXES = ["/auth", "/waitlist", "/health", "/media", "/listings", "/reviews"];
 app.use("/api", (req, res, next) => {
-  const isPublic = WAITLIST_GATE_PUBLIC.some(
+  const isPublic = PUBLIC_API_PREFIXES.some(
     p => req.path === p || req.path.startsWith(p + "/")
   );
   if (isPublic) return next();

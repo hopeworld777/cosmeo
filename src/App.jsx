@@ -33,24 +33,8 @@ import ThemeToggle from "@/components/ThemeToggle";
 // Routes that hide everything (login / register / etc.)
 const AUTH_ROUTES = ["/login", "/register", "/forgot-password", "/reset-password", "/verify-email", "/vip-signup"];
 
-// ── Waitlist gate ─────────────────────────────────────────────────────────────
-// During pre-launch, ONLY these paths are reachable without an admin account.
-// Every other route — /browse, /home, /item/:id, etc. — is intercepted and the
-// visitor is sent back to the waitlist landing page at "/".
-// Secret admin-only login path — not listed anywhere public.
-// Share only with trusted testers/admins. Visiting /login or /register
-// now redirects unauthenticated users back to the waitlist landing page.
+// Secret admin login path — not linked anywhere public.
 export const ADMIN_LOGIN_PATH = "/secret-admin-gate";
-
-const WAITLIST_PUBLIC = [
-  "/",
-  ADMIN_LOGIN_PATH,       // secret admin login
-  "/forgot-password",     // needed so admins can recover their password
-  "/reset-password",      // needed to complete a password reset
-  "/verify-email",        // needed to verify email after registration
-  "/terms",
-  "/vip-signup",          // secret tester registration — not linked anywhere public
-];
 
 // Onboarding gets its own full-screen desktop layout — no DesktopNav, but
 // the shell should expand to full width on desktop (not stay phone-framed).
@@ -58,7 +42,7 @@ const ONBOARDING_ROUTES = ["/onboarding"];
 
 // Routes that additionally hide the bottom tab bar (but NOT the desktop nav)
 // "/" is the waitlist landing — it's a standalone pre-auth page, no bottom nav.
-const HIDE_BOTTOM_NAV_EXTRA = ["/chat/", "/terms", "/item/", "/admin", "/"];
+const HIDE_BOTTOM_NAV_EXTRA = ["/chat/", "/terms", "/item/", "/admin"];
 
 // Routes where the page renders its own LanguageSwitcher — suppress the
 // floating mobile one to avoid duplication.  Prefix-matched for /settings/*.
@@ -82,9 +66,7 @@ function ProtectedRoute({ component: Component, ...rest }) {
   const [, setLocation] = useLocation();
 
   useEffect(() => {
-    // Send unauthenticated visitors back to the waitlist landing, not /login
-    // (the public login route no longer exists — only the secret admin path does).
-    if (!loading && !user) setLocation("/");
+    if (!loading && !user) setLocation("/login");
   }, [loading, user]);
 
   if (loading) return null;
@@ -114,48 +96,18 @@ function OnboardingGuard() {
   return null;
 }
 
-// Renders nothing — exists purely for its redirect side-effect.
-// Pre-launch gate: any route not on WAITLIST_PUBLIC is accessible only to
-// logged-in admins. Non-admin authenticated users are logged out and bounced
-// to "/"; unauthenticated visitors are sent straight to "/".
-function WaitlistGate() {
-  const { user, loading, logout } = useAuth();
-  const [location, setLocation] = useLocation();
-
-  useEffect(() => {
-    if (loading) return;
-
-    const isPublic = WAITLIST_PUBLIC.some(r =>
-      r === "/" ? location === "/" : location === r || location.startsWith(r + "/")
-    );
-    if (isPublic) return;
-
-    if (!user) {
-      // Unauthenticated visitor typed a private URL directly → waitlist landing
-      setLocation("/");
-      return;
-    }
-    if (!user.is_admin) {
-      // Logged-in but not an admin → clear session and send back to landing
-      logout();
-      setLocation("/");
-    }
-  }, [loading, user, location]);
-
-  return null;
-}
-
-// "/" — shows the waitlist landing for guests; sends logged-in users to /home.
+// "/" — redirect logged-in users to /home; send guests to /browse.
 function RootRoute() {
   const { user, loading } = useAuth();
   const [, setLocation] = useLocation();
 
   useEffect(() => {
-    if (!loading && user) setLocation("/home");
+    if (loading) return;
+    setLocation(user ? "/home" : "/browse");
   }, [loading, user]);
 
-  if (loading || user) return null;
-  return <WaitlistLanding />;
+  // Show nothing while redirect resolves — avoids a flash of wrong content.
+  return null;
 }
 
 // ── Desktop top navigation bar ────────────────────────────────────────────────
@@ -228,10 +180,7 @@ function AppShell() {
   // Auth routes hide everything (desktop nav, bottom nav, floating lang switcher).
   const isAuthRoute = AUTH_ROUTES.some(r => location.startsWith(r));
   const isOnboardingRoute = ONBOARDING_ROUTES.some(r => location.startsWith(r));
-  // "/" is the waitlist landing — a full-screen standalone page for guests.
-  // Authenticated users are redirected to /home immediately, so "/" always
-  // means "unauthenticated" in practice; suppress the app chrome completely.
-  const isWaitlist = location === "/";
+  const isWaitlist = false; // waitlist pre-launch mode disabled — site is live
 
   // Some non-auth routes also hide the bottom nav (chat, terms).
   const hideBottomNav = isAuthRoute || isOnboardingRoute || HIDE_BOTTOM_NAV_EXTRA.some(r => location.startsWith(r));
@@ -272,7 +221,6 @@ function AppShell() {
         isStandaloneRoute && "w-full h-auto min-h-[100dvh] overflow-visible",
       ].filter(Boolean).join(" ")}>
         <OnboardingGuard />
-        <WaitlistGate />
 
         {showMobileFloatLang && (
           <div className="md:hidden absolute top-3 right-3 z-[60] min-h-[44px] flex items-center">
@@ -297,10 +245,10 @@ function AppShell() {
             <Route path="/home" component={Home} />
             <Route path="/browse" component={Browse} />
             <Route path="/item/:id" component={ItemDetail} />
-            {/* Secret admin login — path not linked anywhere public */}
+            <Route path="/login" component={Login} />
+            <Route path="/register" component={Register} />
+            {/* Secret admin login — not listed anywhere public */}
             <Route path={ADMIN_LOGIN_PATH} component={Login} />
-            {/* Registration disabled during closed-waitlist period */}
-            {/* <Route path="/register" component={Register} /> */}
             <Route path="/onboarding" component={Onboarding} />
             <Route path="/forgot-password" component={ForgotPassword} />
             <Route path="/reset-password" component={ResetPassword} />
