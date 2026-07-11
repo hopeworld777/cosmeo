@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { useLocation } from "wouter";
 import { api } from "@/lib/api";
+import { prepareImageFile } from "@/lib/imageUtils";
 import { useAuth } from "@/hooks/useAuth";
 import { useTranslation } from "react-i18next";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
@@ -346,7 +347,11 @@ export default function Sell() {
     setUploading(true);
 
     try {
-      const { urls } = await api.upload.multiple(files);
+      // Convert HEIC/HEIF (default iPhone photo format) to JPEG before
+      // upload — browsers can't render HEIC in an <img> tag, so skipping
+      // this step produces a "successful" upload with a broken thumbnail.
+      const prepared = await Promise.all(files.map(prepareImageFile));
+      const { urls } = await api.upload.multiple(prepared);
       setUploadedImages(prev => prev.map(img => {
         const idx = pending.findIndex(p => p.id === img.id);
         if (idx === -1) return img;
