@@ -3,6 +3,7 @@ import bcrypt from "bcryptjs";
 import crypto from "crypto";
 import multer from "multer";
 import path from "path";
+import rateLimit from "express-rate-limit";
 import pool from "../db.js";
 import { generateToken, requireAuth } from "../middleware/auth.js";
 import { sendVerificationEmail, sendPasswordResetEmail } from "../email.js";
@@ -25,6 +26,31 @@ const avatarUpload = multer({
 
 const router = Router();
 
+// Rate limiters for sensitive auth endpoints
+const loginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 10,                   // 10 attempts per IP per window
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: "Too many login attempts. Please try again in 15 minutes." },
+});
+
+const registerLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000, // 1 hour
+  max: 5,                    // 5 registrations per IP per hour
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: "Too many accounts created from this IP. Please try again later." },
+});
+
+const forgotPasswordLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000, // 1 hour
+  max: 5,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: "Too many password reset requests. Please try again later." },
+});
+
 function generateSecureToken() {
   return crypto.randomBytes(48).toString("hex");
 }
@@ -40,7 +66,7 @@ async function createAuthToken(userId, type, expiresInHours = 24) {
 }
 
 // POST /api/auth/register
-router.post("/register", async (req, res) => {
+router.post("/register", registerLimiter, async (req, res) => {
   const { username, email, password, bio } = req.body;
   if (!username || !email || !password) {
     return res.status(400).json({ error: "Username, email and password are required" });
@@ -154,7 +180,7 @@ router.post("/vip-register", async (req, res) => {
 const BCRYPT_ROUNDS = 10; // cost 10 ≈ 100 ms; cost 12 (old default) ≈ 400–2000 ms on shared CPU
 
 // POST /api/auth/login
-router.post("/login", async (req, res) => {
+router.post("/login", loginLimiter, async (req, res) => {
   const { email, password } = req.body;
   if (!email || !password) {
     return res.status(400).json({ error: "Email and password are required" });
@@ -368,7 +394,7 @@ router.post("/verify-email", async (req, res) => {
 });
 
 // POST /api/auth/forgot-password
-router.post("/forgot-password", async (req, res) => {
+router.post("/forgot-password", forgotPasswordLimiter, async (req, res) => {
   const { email } = req.body;
   if (!email) return res.status(400).json({ error: "Email required" });
   // Always respond success to prevent email enumeration
