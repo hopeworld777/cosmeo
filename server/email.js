@@ -2,9 +2,7 @@ import { Resend } from "resend";
 
 const APP_URL = process.env.CLIENT_URL || "https://www.cosmeo.shop";
 const FROM_NAME = "cosmeo";
-// Resend sandbox: only "onboarding@resend.dev" works until your domain is verified.
-// Once cosmeo.shop is verified in the Resend dashboard, change this to "noreply@cosmeo.shop".
-const FROM_EMAIL = "onboarding@resend.dev";
+const FROM_EMAIL = "hello@cosmeo.shop";
 
 if (process.env.RESEND_API_KEY) {
   console.log("[email] RESEND_API_KEY is set — live email enabled");
