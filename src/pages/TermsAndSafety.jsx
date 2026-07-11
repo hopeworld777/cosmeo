@@ -370,10 +370,10 @@ export default function TermsAndSafety() {
               <div className="mt-4 rounded-2xl border border-border/50 bg-muted/50 px-4 py-3 text-[12.5px] text-muted-foreground text-center">
                 {t("tos_contactLine")}{" "}
                 <a
-                  href="mailto:hello@kosmeo.ge"
+                  href="mailto:hello@cosmeo.ge"
                   className="text-primary font-bold underline underline-offset-2"
                 >
-                  hello@kosmeo.ge
+                  hello@cosmeo.ge
                 </a>
               </div>
             </motion.div>

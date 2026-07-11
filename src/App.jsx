@@ -38,7 +38,7 @@ const AUTH_ROUTES = ["/login", "/register", "/forgot-password", "/reset-password
 // Secret admin-only login path — not listed anywhere public.
 // Share only with trusted testers/admins. Visiting /login or /register
 // now redirects unauthenticated users back to the waitlist landing page.
-export const ADMIN_LOGIN_PATH = "/cosmeo-admin-jk9";
+export const ADMIN_LOGIN_PATH = "/secret-admin-gate";
 
 const WAITLIST_PUBLIC = [
   "/",

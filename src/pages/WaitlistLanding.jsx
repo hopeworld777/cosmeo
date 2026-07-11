@@ -118,7 +118,7 @@ export default function WaitlistLanding() {
       {/* Top bar: Language switcher only — no public login link */}
       <div className="relative z-10 flex items-center justify-between px-6 pt-6">
         <div className="text-white/30 text-xs font-bold tracking-widest uppercase select-none">
-          kosmeo
+          cosmeo
         </div>
         <LanguageSwitcher />
       </div>
@@ -214,7 +214,7 @@ export default function WaitlistLanding() {
                     autoComplete="email"
                     className={[
                       "w-full rounded-2xl px-5 py-4 text-[14px] font-semibold outline-none transition-all",
-                      "bg-white/8 text-white placeholder-white/35",
+                      "bg-white/8 text-white placeholder-purple-300/40",
                       "border focus:ring-0",
                       isDuplicate
                         ? "border-rose-500/60 focus:border-rose-400 bg-rose-500/5"
