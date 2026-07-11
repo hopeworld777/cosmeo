@@ -25,7 +25,12 @@ function BrandPanel() {
         </p>
       </div>
 
-      <p className="absolute bottom-8 text-white/40 text-xs font-medium z-10">cosmeo.ge</p>
+      <a
+        href="https://cosmeo.shop"
+        className="absolute bottom-8 text-white/40 text-xs font-medium z-10 hover:text-white/60 transition-colors"
+      >
+        cosmeo.shop
+      </a>
     </div>
   );
 }

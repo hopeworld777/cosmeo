@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link, useLocation } from "wouter";
 import { motion } from "framer-motion";
-import { Sparkles, Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -50,7 +50,7 @@ export default function Login() {
         {/* Logo — mobile only */}
         <div className="md:hidden text-center mb-10">
           <div className="flex items-center justify-center gap-2 mb-3">
-            <Sparkles className="h-7 w-7 text-primary" />
+            <BrandMark className="h-7 w-7" />
             <h1 className="text-3xl font-black text-foreground">cosmeo</h1>
           </div>
           <p className="text-muted-foreground text-sm font-medium">{t("signInTitle")}</p>
