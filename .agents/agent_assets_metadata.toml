@@ -1,5 +1,4 @@
 uploads = []
-outputs = []
 
 [[generated]]
 id = "dQvyLGyNUfdPs1OPfDL71"
@@ -60,3 +59,21 @@ id = "A-dnZVkw4DDkTmMS_7-J8"
 uri = "file://src/assets/images/wig-pink.png"
 type = "image"
 title = "Long Pink Cosplay Wig"
+
+[[outputs]]
+id = "yb6hTvrfgK-9_6uaAETEW"
+uri = "file://attached_assets/logo_v1.png"
+type = "image"
+title = "Logo V1 — Purple & Pink, S-curve thread"
+
+[[outputs]]
+id = "xvzXqjspt0sQmvK-OOvbN"
+uri = "file://attached_assets/logo_v2.png"
+type = "image"
+title = "Logo V2 — Lavender, looping thread"
+
+[[outputs]]
+id = "0uE_XtesLVfl13QEHeLuM"
+uri = "file://attached_assets/logo_v3.png"
+type = "image"
+title = "Logo V3 — Deep purple, monochromatic"
