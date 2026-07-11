@@ -95,7 +95,7 @@ export default function WaitlistLanding() {
             transition={{ delay: 0.1, duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
             className="mb-6"
           >
-            <img src="/waitlist-logo.png" alt="Cosmeo" className="h-[76px] w-[76px] object-contain" />
+            <img src="/waitlist-logo.png" alt="Cosmeo" className="h-[104px] w-[104px] object-contain" />
           </motion.div>
 
           {/* Badge pill */}
