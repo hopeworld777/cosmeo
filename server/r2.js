@@ -1,11 +1,12 @@
 import { S3Client, PutObjectCommand, GetObjectCommand } from "@aws-sdk/client-s3";
 
-const {
-  R2_ACCOUNT_ID,
-  R2_ACCESS_KEY_ID,
-  R2_SECRET_ACCESS_KEY,
-  R2_BUCKET_NAME,
-} = process.env;
+// Trim defensively: a stray trailing newline/space from copy-pasting a
+// secret value silently breaks SigV4 signing and surfaces as an opaque
+// "signature mismatch" error with no indication the credential itself is at fault.
+const R2_ACCOUNT_ID        = process.env.R2_ACCOUNT_ID?.trim();
+const R2_ACCESS_KEY_ID     = process.env.R2_ACCESS_KEY_ID?.trim();
+const R2_SECRET_ACCESS_KEY = process.env.R2_SECRET_ACCESS_KEY?.trim();
+const R2_BUCKET_NAME       = process.env.R2_BUCKET_NAME?.trim();
 
 export const r2 = R2_ACCOUNT_ID
   ? new S3Client({
@@ -15,6 +16,13 @@ export const r2 = R2_ACCOUNT_ID
         accessKeyId: R2_ACCESS_KEY_ID,
         secretAccessKey: R2_SECRET_ACCESS_KEY,
       },
+      // AWS SDK v3 (>=3.729) defaults to adding a request checksum (CRC32)
+      // header that Cloudflare R2 does not support in its signature
+      // validation, which surfaces as a "signature mismatch" error on every
+      // upload. Disabling automatic checksum calculation/validation restores
+      // plain SigV4 requests that R2 accepts.
+      requestChecksumCalculation: "WHEN_REQUIRED",
+      responseChecksumValidation: "WHEN_REQUIRED",
     })
   : null;
 
