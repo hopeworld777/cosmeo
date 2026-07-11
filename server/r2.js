@@ -1,4 +1,12 @@
 import { S3Client, PutObjectCommand, GetObjectCommand } from "@aws-sdk/client-s3";
+import fs from "fs";
+import path from "path";
+import { fileURLToPath } from "url";
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+// server/uploads is served statically at /uploads (see index.js) — this is
+// the local fallback storage location used when R2 is not configured.
+const LOCAL_UPLOADS_DIR = path.join(__dirname, "../uploads");
 
 // Trim defensively: a stray trailing newline/space from copy-pasting a
 // secret value silently breaks SigV4 signing and surfaces as an opaque
@@ -29,7 +37,14 @@ export const r2 = R2_ACCOUNT_ID
 export const BUCKET = R2_BUCKET_NAME || "cosmeo";
 
 export async function uploadToR2(buffer, key, contentType) {
-  if (!r2) throw new Error("R2 not configured");
+  if (!r2) {
+    // Local fallback (dev workspaces without R2 credentials configured):
+    // write under server/uploads/, served statically at /uploads/<key>.
+    const destPath = path.join(LOCAL_UPLOADS_DIR, key);
+    await fs.promises.mkdir(path.dirname(destPath), { recursive: true });
+    await fs.promises.writeFile(destPath, buffer);
+    return `/uploads/${key}`;
+  }
   await r2.send(
     new PutObjectCommand({
       Bucket: BUCKET,
