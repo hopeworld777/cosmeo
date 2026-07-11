@@ -77,3 +77,27 @@ id = "0uE_XtesLVfl13QEHeLuM"
 uri = "file://attached_assets/logo_v3.png"
 type = "image"
 title = "Logo V3 — Deep purple, monochromatic"
+
+[[outputs]]
+id = "5anEoJc4MNBKOxY7DUWe4"
+uri = "file://public/logo.png"
+type = "image"
+title = "Cosmeo logo — transparent PNG (480 × 660 px)"
+
+[[outputs]]
+id = "2qbB6SOsPYtbTelLKeqG0"
+uri = "file://public/logo-dark.png"
+type = "image"
+title = "Cosmeo logo — dark app-icon PNG (512 × 512 px)"
+
+[[outputs]]
+id = "SZaIVZdAfUoS_eYy-WswL"
+uri = "file://public/logo.svg"
+type = "image"
+title = "Cosmeo logo — SVG (transparent, scalable)"
+
+[[outputs]]
+id = "esKH-Alo62mOkAkDsf5Gh"
+uri = "file://public/logo-dark.svg"
+type = "image"
+title = "Cosmeo logo — SVG dark (rounded-square icon)"

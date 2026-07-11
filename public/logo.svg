@@ -1,0 +1,68 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 220" fill="none">
+  <!--
+    Cosmeo logo — needle + thread + sparkle
+    Flat, no gradients, no shadows, transparent background.
+    Pastel lavender needle, pastel pink thread and sparkle.
+
+    Needle axis: tip (35, 185) → eye-end centre (80, 42)
+    Direction unit  ≈ ( 0.300, −0.954 )
+    Perpendicular   ≈ ( 0.954,  0.300 )
+    Half-width at top: 7 px  →  right edge (86.7, 44.1)  left edge (73.3, 39.9)
+  -->
+
+  <!-- ── NEEDLE BODY (pastel lavender) ─────────────────────────────────────── -->
+  <!--
+    Right side:  straight from tip → top-right corner
+    Top cap:     two cubic beziers over the blunt end (rounded)
+    Left side:   straight back to tip (Z)
+  -->
+  <path
+    d="M 35 185
+       L 86.7 44.1
+       C 87.5 37, 82 34, 80 34
+       C 78 34, 72.5 37, 73.3 39.9
+       Z"
+    fill="#B8A9DE"
+  />
+
+  <!-- Eye hole — white ellipse, tilted to match the needle angle (-17 °) -->
+  <ellipse cx="80" cy="53" rx="4" ry="7"
+    transform="rotate(-17 80 53)"
+    fill="white"
+  />
+
+  <!-- ── THREAD S-CURVE (pastel pink) ─────────────────────────────────────── -->
+  <!--
+    Exits the right side of the eye (~86, 58), sweeps right then
+    back left in a graceful S, terminating exactly at the sparkle
+    top point (90, 196) so the star reads as the thread's final flourish.
+  -->
+  <path
+    d="M 86 58
+       C 124 70, 112 130, 90 158
+       C 68 186, 104 193, 90 196"
+    stroke="#F2B8D2" stroke-width="5" stroke-linecap="round" fill="none"
+  />
+
+  <!-- ── SPARKLE — upright 4-point star (pastel pink) ─────────────────────── -->
+  <!--
+    Centre (90, 216).  Outer radius 20 (top/bottom/left/right).
+    Quadratic bezier control points pulled toward the centre to create
+    the characteristic concave pinch between each arm.
+
+    Points:  top (90,196)  right (110,216)  bottom (90,236)  left (70,216)
+    Controls (concave midpoints, pulled ~60 % toward centre):
+      top→right : (95, 213)
+      right→bot : (95, 219)
+      bot→left  : (85, 219)
+      left→top  : (85, 213)
+  -->
+  <path
+    d="M 90 196
+       Q 95 213, 110 216
+       Q 95 219,  90 236
+       Q 85 219,  70 216
+       Q 85 213,  90 196 Z"
+    fill="#F2B8D2"
+  />
+</svg>

@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 280 280" fill="none">
+  <!-- Dark-background app-icon version.
+       Same icon centred inside a rounded-square dark canvas (280 × 280).
+       Icon is scaled 1× and offset so it sits centred. -->
+
+  <!-- Dark rounded-square background -->
+  <rect width="280" height="280" rx="62" fill="#0F0D1A"/>
+
+  <!-- Subtle ambient glow behind the icon -->
+  <ellipse cx="148" cy="152" rx="80" ry="70" fill="#B8A9DE" opacity="0.06"/>
+
+  <!-- ── NEEDLE (icon shifted to sit centred with breathing room below) ── -->
+  <!-- Shift: +60 x, +18 y vs logo.svg so sparkle stays within canvas    -->
+  <path
+    d="M 95 203
+       L 146.7 62.1
+       C 147.5 55, 142 52, 140 52
+       C 138 52, 132.5 55, 133.3 57.9
+       Z"
+    fill="#C9BCEB"
+  />
+  <ellipse cx="140" cy="71" rx="4" ry="7"
+    transform="rotate(-17 140 71)"
+    fill="#0F0D1A"
+  />
+
+  <!-- ── THREAD ────────────────────────────────────────────────────────── -->
+  <path
+    d="M 146 76
+       C 184 88, 172 148, 150 176
+       C 128 204, 164 211, 150 214"
+    stroke="#F2B8D2" stroke-width="5" stroke-linecap="round" fill="none"
+  />
+
+  <!-- ── SPARKLE (centre 150, 234 — outer radius 20, fully inside canvas) -->
+  <path
+    d="M 150 214
+       Q 155 231, 170 234
+       Q 155 237, 150 254
+       Q 145 237, 130 234
+       Q 145 231, 150 214 Z"
+    fill="#F2B8D2"
+  />
+</svg>
