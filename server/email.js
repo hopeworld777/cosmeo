@@ -25,19 +25,26 @@ async function sendEmail({ to, subject, html, text }) {
     return { devMode: true };
   }
 
-  const { data, error } = await resend.emails.send({
-    from: `${FROM_NAME} <${FROM_EMAIL}>`,
-    to,
-    subject,
-    html,
-    text,
-  });
+  let data, error;
+  try {
+    ({ data, error } = await resend.emails.send({
+      from: `${FROM_NAME} <${FROM_EMAIL}>`,
+      to,
+      subject,
+      html,
+      text,
+    }));
+  } catch (err) {
+    console.error("Email delivery failed (exception):", err);
+    throw err;
+  }
 
   if (error) {
-    console.error("Resend error:", error);
+    console.error("Email delivery failed:", JSON.stringify(error, null, 2));
     throw new Error(error.message || "Failed to send email");
   }
 
+  console.log("Email sent successfully to:", to, "| id:", data?.id);
   return data;
 }
 
