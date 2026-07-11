@@ -2,6 +2,7 @@ import { Link } from "wouter";
 import { ArrowLeft } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
+import ThemeToggle from "@/components/ThemeToggle";
 import BrandMark from "@/components/BrandMark";
 
 function BrandPanel() {
@@ -50,8 +51,9 @@ export default function AuthLayout({ children, backHref, backLabel }) {
     <div className="flex min-h-full md:min-h-[100dvh] flex-col md:flex-row bg-background">
       <BrandPanel />
 
-      <div className="relative flex flex-col justify-center flex-1 md:flex-none md:w-[520px] md:shrink-0 items-center px-6 pb-12 pt-14 md:px-14 md:py-12 bg-background md:bg-white">
-        <div className="absolute top-11 right-6 md:top-8 md:right-8 z-50">
+      <div className="relative flex flex-col justify-center flex-1 md:flex-none md:w-[520px] md:shrink-0 items-center px-6 pb-12 pt-14 md:px-14 md:py-12 bg-background md:bg-card">
+        <div className="absolute top-11 right-6 md:top-8 md:right-8 z-50 flex items-center gap-2">
+          <ThemeToggle />
           <LanguageSwitcher />
         </div>
 

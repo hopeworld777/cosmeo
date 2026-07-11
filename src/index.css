@@ -36,36 +36,37 @@
     --radius: 1.25rem;
   }
 
-  /* Dark Cosmos — mirrors the waitlist landing page's deep purple/indigo
-     backdrop so the in-app dark theme and the pre-launch page feel like the
-     same brand universe. Applied via a "dark" class on <html>, toggled by
-     ThemeContext (default theme is dark — see main.jsx / index.html). */
+  /* Dark mode — neutral dark grays to avoid eye strain.
+     Backgrounds are near-black neutral (not purple), text is off-white,
+     accents are desaturated so brand colors don't "vibrate" against dark bg.
+     Applied via a "dark" class on <html>, toggled by ThemeContext. */
   .dark {
-    --background: 258 35% 6%;
-    --foreground: 250 25% 92%;
-    --card: 258 30% 9%;
-    --card-foreground: 250 25% 92%;
-    --popover: 258 30% 9%;
-    --popover-foreground: 250 25% 92%;
+    --background: 0 0% 8%;          /* ~#141414 — dark neutral, not pure black */
+    --foreground: 0 0% 88%;         /* ~#E0E0E0 — off-white, not pure white */
+    --card: 0 0% 13%;               /* ~#212121 — slightly lighter than bg for depth */
+    --card-foreground: 0 0% 88%;
+    --popover: 0 0% 13%;
+    --popover-foreground: 0 0% 88%;
 
-    --primary: 265 65% 70%;
-    --primary-foreground: 258 35% 8%;
+    /* Desaturated so they don't vibrate against the dark neutral bg */
+    --primary: 265 42% 64%;
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 320 55% 66%;
-    --secondary-foreground: 258 35% 8%;
+    --secondary: 320 36% 60%;
+    --secondary-foreground: 0 0% 100%;
 
-    --muted: 258 22% 15%;
-    --muted-foreground: 250 15% 65%;
+    --muted: 0 0% 17%;              /* ~#2B2B2B */
+    --muted-foreground: 0 0% 56%;   /* ~#8F8F8F */
 
-    --accent: 265 40% 18%;
-    --accent-foreground: 265 55% 85%;
+    --accent: 265 22% 22%;
+    --accent-foreground: 265 38% 82%;
 
     --destructive: 0 72% 58%;
     --destructive-foreground: 0 0% 98%;
 
-    --border: 258 22% 18%;
-    --input: 258 22% 15%;
-    --ring: 265 65% 70%;
+    --border: 0 0% 22%;             /* subtle neutral border */
+    --input: 0 0% 17%;
+    --ring: 265 42% 64%;
   }
 }
 
@@ -92,6 +93,12 @@
 
 .card-shadow {
   box-shadow: 0 4px 20px rgba(147, 120, 210, 0.10), 0 1px 4px rgba(0, 0, 0, 0.04);
+}
+
+/* Dark mode: replace purple glow shadow with a subtle border for clean depth */
+.dark .card-shadow {
+  box-shadow: none;
+  border: 1px solid hsl(var(--border));
 }
 
 .pastel-gradient {
