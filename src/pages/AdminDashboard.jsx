@@ -5,6 +5,7 @@ import {
   ShieldCheck, Users, Package, Flag, Star, BadgeCheck, Trash2,
   CheckCircle2, XCircle, AlertTriangle, Ban, UserX, ChevronDown, ChevronUp,
   ExternalLink, MessageSquare, RefreshCw, Filter, Clock, LayoutGrid, Search,
+  Mail, Lock, TrendingUp,
 } from "lucide-react";
 import { api } from "@/lib/api";
 import { useAuth } from "@/hooks/useAuth";
@@ -82,10 +83,11 @@ function KpiCard({ icon, label, value, gradient, delay = 0 }) {
 
 /* ── Tabs ─────────────────────────────────────────────────────────────── */
 const TABS = [
-  { id: "overview", label: "მიმოხილვა",     icon: LayoutGrid },
-  { id: "listings",  label: "განცხადებები", icon: Package },
+  { id: "overview",  label: "მიმოხილვა",     icon: LayoutGrid },
+  { id: "listings",  label: "განცხადებები",  icon: Package },
   { id: "users",     label: "მომხმარებლები", icon: Users },
-  { id: "reports",   label: "საჩივრები",    icon: Flag },
+  { id: "reports",   label: "საჩივრები",     icon: Flag },
+  { id: "waitlist",  label: "Waitlist",       icon: Mail },
 ];
 
 /* ── Listings tab ─────────────────────────────────────────────────────── */
@@ -651,6 +653,191 @@ function ReportsTab() {
   );
 }
 
+/* ── Waitlist tab ────────────────────────────────────────────────────────── */
+const SESSION_KEY = "cosmeo_admin_vip";
+
+function WaitlistTab() {
+  const [codeInput, setCodeInput] = useState("");
+  const [code, setCode] = useState(() => sessionStorage.getItem(SESSION_KEY) || "");
+  const [rows, setRows] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+
+  async function fetchWaitlist(c) {
+    setLoading(true);
+    setError(null);
+    try {
+      const data = await api.admin.waitlist(c);
+      setRows(data);
+      sessionStorage.setItem(SESSION_KEY, c);
+      setCode(c);
+    } catch (err) {
+      setError(err.message);
+      setCode("");
+      sessionStorage.removeItem(SESSION_KEY);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  // Auto-load if code already stored
+  useEffect(() => {
+    if (code) fetchWaitlist(code);
+  }, []);
+
+  function handleSubmit(e) {
+    e.preventDefault();
+    if (codeInput.trim()) fetchWaitlist(codeInput.trim());
+  }
+
+  /* ── Code gate ── */
+  if (!code) {
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="flex items-center justify-center py-20"
+      >
+        <div className="w-full max-w-sm">
+          <div className="rounded-3xl border border-border bg-[#FFFDF9] p-8 shadow-sm text-center">
+            <div className="mx-auto mb-5 h-14 w-14 rounded-2xl bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center shadow-lg shadow-violet-200">
+              <Lock size={22} className="text-white" />
+            </div>
+            <h2 className="text-[18px] font-black text-foreground mb-1">Waitlist Access</h2>
+            <p className="text-[13px] text-muted-foreground mb-6">Enter your VIP code to view subscriber data.</p>
+            {error && (
+              <p className="text-[12px] font-semibold text-rose-500 bg-rose-50 border border-rose-100 rounded-xl px-3 py-2 mb-4">
+                {error === "Unauthorized" ? "Wrong code — try again." : error}
+              </p>
+            )}
+            <form onSubmit={handleSubmit} className="flex flex-col gap-3">
+              <input
+                type="password"
+                value={codeInput}
+                onChange={e => setCodeInput(e.target.value)}
+                placeholder="VIP code"
+                autoFocus
+                className="w-full rounded-xl border border-border bg-white px-4 py-3 text-[14px] font-medium text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 transition"
+              />
+              <button
+                type="submit"
+                disabled={!codeInput.trim() || loading}
+                className="w-full rounded-xl bg-gradient-to-r from-violet-500 to-purple-600 py-3 text-[14px] font-bold text-white shadow-md shadow-violet-200 hover:opacity-90 disabled:opacity-50 transition-all active:scale-95"
+              >
+                {loading ? "Checking…" : "Unlock"}
+              </button>
+            </form>
+          </div>
+        </div>
+      </motion.div>
+    );
+  }
+
+  /* ── Loaded view ── */
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 6 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.22 }}
+      className="flex flex-col gap-5"
+    >
+      {/* Header row */}
+      <div className="flex items-center justify-between flex-wrap gap-3">
+        <div className="flex items-center gap-3">
+          <div className="h-10 w-10 rounded-2xl bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center shadow-md shadow-violet-200">
+            <TrendingUp size={18} className="text-white" />
+          </div>
+          <div>
+            <h2 className="text-[17px] font-black text-foreground leading-tight">Waitlist</h2>
+            <p className="text-[12px] text-muted-foreground font-medium">Pre-launch signups</p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2">
+          {/* Total badge */}
+          <div className="flex items-center gap-2 rounded-2xl bg-[#FFFDF9] border border-violet-200 px-4 py-2.5 shadow-sm">
+            <span className="text-[11px] font-bold text-violet-500 uppercase tracking-wide">Total Subscribers</span>
+            <span className="text-[22px] font-black text-violet-600 leading-none tabular-nums">
+              {loading ? "—" : rows.length}
+            </span>
+          </div>
+
+          {/* Refresh */}
+          <button
+            onClick={() => fetchWaitlist(code)}
+            disabled={loading}
+            className="h-10 w-10 rounded-xl border border-border bg-[#FFFDF9] flex items-center justify-center text-muted-foreground hover:text-foreground hover:border-violet-300 transition-all disabled:opacity-50 active:scale-95"
+          >
+            <RefreshCw size={15} className={loading ? "animate-spin" : ""} />
+          </button>
+
+          {/* Lock (clear code) */}
+          <button
+            onClick={() => { setCode(""); setRows([]); sessionStorage.removeItem(SESSION_KEY); }}
+            className="h-10 w-10 rounded-xl border border-border bg-[#FFFDF9] flex items-center justify-center text-muted-foreground hover:text-rose-500 hover:border-rose-200 transition-all active:scale-95"
+            title="Lock"
+          >
+            <Lock size={15} />
+          </button>
+        </div>
+      </div>
+
+      {/* Table card */}
+      <div className="rounded-2xl border border-border bg-[#FFFDF9] overflow-hidden shadow-sm">
+        {loading ? (
+          <div className="flex items-center justify-center py-20 text-muted-foreground text-[13px] font-medium gap-2">
+            <span className="h-4 w-4 rounded-full border-2 border-violet-400 border-t-transparent animate-spin" />
+            Loading…
+          </div>
+        ) : rows.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-20 gap-2 text-muted-foreground">
+            <Mail size={28} className="opacity-30" />
+            <p className="text-[13px] font-medium">No signups yet.</p>
+          </div>
+        ) : (
+          <>
+            {/* Table header */}
+            <div className="grid grid-cols-[1fr_auto] gap-4 px-5 py-3 border-b border-border bg-white/60">
+              <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider">Email</span>
+              <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider text-right">Signed up</span>
+            </div>
+
+            {/* Rows */}
+            <div className="divide-y divide-border/60">
+              {rows.map((row, i) => (
+                <motion.div
+                  key={row.id ?? row.email}
+                  initial={{ opacity: 0, x: -6 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ duration: 0.15, delay: Math.min(i * 0.02, 0.3) }}
+                  className="grid grid-cols-[1fr_auto] gap-4 items-center px-5 py-3.5 hover:bg-violet-50/40 transition-colors"
+                >
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="h-7 w-7 rounded-full bg-gradient-to-br from-violet-400 to-purple-500 flex items-center justify-center shrink-0">
+                      <span className="text-white text-[10px] font-black">
+                        {row.email.charAt(0).toUpperCase()}
+                      </span>
+                    </div>
+                    <span className="text-[13.5px] font-semibold text-foreground truncate">{row.email}</span>
+                  </div>
+                  <span className="text-[12px] text-muted-foreground font-medium text-right whitespace-nowrap">
+                    {row.created_at
+                      ? new Date(row.created_at).toLocaleString("en-GB", {
+                          day: "2-digit", month: "short", year: "numeric",
+                          hour: "2-digit", minute: "2-digit",
+                        })
+                      : "—"}
+                  </span>
+                </motion.div>
+              ))}
+            </div>
+          </>
+        )}
+      </div>
+    </motion.div>
+  );
+}
+
 /* ── Main dashboard ─────────────────────────────────────────────────────── */
 export default function AdminDashboard() {
   const { user } = useAuth();
@@ -733,10 +920,11 @@ export default function AdminDashboard() {
         {/* ── Tab content ── */}
         <AnimatePresence mode="wait">
           <motion.div key={tab} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.18 }}>
-            {tab === "overview" && <QuickModerationTab toast={toast} />}
-            {tab === "listings" && <ListingsTab toast={toast} />}
-            {tab === "users" && <UsersTab toast={toast} />}
-            {tab === "reports" && <ReportsTab />}
+            {tab === "overview"  && <QuickModerationTab toast={toast} />}
+            {tab === "listings"  && <ListingsTab toast={toast} />}
+            {tab === "users"     && <UsersTab toast={toast} />}
+            {tab === "reports"   && <ReportsTab />}
+            {tab === "waitlist"  && <WaitlistTab />}
           </motion.div>
         </AnimatePresence>
 
