@@ -5,7 +5,7 @@ import {
   ShieldCheck, Users, Package, Flag, Star, BadgeCheck, Trash2,
   CheckCircle2, XCircle, AlertTriangle, Ban, UserX, ChevronDown, ChevronUp,
   ExternalLink, MessageSquare, RefreshCw, Filter, Clock, LayoutGrid, Search,
-  Mail, Lock, TrendingUp,
+  Mail, TrendingUp,
 } from "lucide-react";
 import { api } from "@/lib/api";
 import { useAuth } from "@/hooks/useAuth";
@@ -654,86 +654,26 @@ function ReportsTab() {
 }
 
 /* ── Waitlist tab ────────────────────────────────────────────────────────── */
-const SESSION_KEY = "cosmeo_admin_vip";
-
 function WaitlistTab() {
-  const [codeInput, setCodeInput] = useState("");
-  const [code, setCode] = useState(() => sessionStorage.getItem(SESSION_KEY) || "");
   const [rows, setRows] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  async function fetchWaitlist(c) {
+  async function fetchWaitlist() {
     setLoading(true);
     setError(null);
     try {
-      const data = await api.admin.waitlist(c);
+      const data = await api.admin.waitlist();
       setRows(data);
-      sessionStorage.setItem(SESSION_KEY, c);
-      setCode(c);
     } catch (err) {
       setError(err.message);
-      setCode("");
-      sessionStorage.removeItem(SESSION_KEY);
     } finally {
       setLoading(false);
     }
   }
 
-  // Auto-load if code already stored
-  useEffect(() => {
-    if (code) fetchWaitlist(code);
-  }, []);
+  useEffect(() => { fetchWaitlist(); }, []);
 
-  function handleSubmit(e) {
-    e.preventDefault();
-    if (codeInput.trim()) fetchWaitlist(codeInput.trim());
-  }
-
-  /* ── Code gate ── */
-  if (!code) {
-    return (
-      <motion.div
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="flex items-center justify-center py-20"
-      >
-        <div className="w-full max-w-sm">
-          <div className="rounded-3xl border border-border bg-[#FFFDF9] p-8 shadow-sm text-center">
-            <div className="mx-auto mb-5 h-14 w-14 rounded-2xl bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center shadow-lg shadow-violet-200">
-              <Lock size={22} className="text-white" />
-            </div>
-            <h2 className="text-[18px] font-black text-foreground mb-1">Waitlist Access</h2>
-            <p className="text-[13px] text-muted-foreground mb-6">Enter your VIP code to view subscriber data.</p>
-            {error && (
-              <p className="text-[12px] font-semibold text-rose-500 bg-rose-50 border border-rose-100 rounded-xl px-3 py-2 mb-4">
-                {error === "Unauthorized" ? "Wrong code — try again." : error}
-              </p>
-            )}
-            <form onSubmit={handleSubmit} className="flex flex-col gap-3">
-              <input
-                type="password"
-                value={codeInput}
-                onChange={e => setCodeInput(e.target.value)}
-                placeholder="VIP code"
-                autoFocus
-                className="w-full rounded-xl border border-border bg-white px-4 py-3 text-[14px] font-medium text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 transition"
-              />
-              <button
-                type="submit"
-                disabled={!codeInput.trim() || loading}
-                className="w-full rounded-xl bg-gradient-to-r from-violet-500 to-purple-600 py-3 text-[14px] font-bold text-white shadow-md shadow-violet-200 hover:opacity-90 disabled:opacity-50 transition-all active:scale-95"
-              >
-                {loading ? "Checking…" : "Unlock"}
-              </button>
-            </form>
-          </div>
-        </div>
-      </motion.div>
-    );
-  }
-
-  /* ── Loaded view ── */
   return (
     <motion.div
       initial={{ opacity: 0, y: 6 }}
@@ -764,20 +704,11 @@ function WaitlistTab() {
 
           {/* Refresh */}
           <button
-            onClick={() => fetchWaitlist(code)}
+            onClick={fetchWaitlist}
             disabled={loading}
             className="h-10 w-10 rounded-xl border border-border bg-[#FFFDF9] flex items-center justify-center text-muted-foreground hover:text-foreground hover:border-violet-300 transition-all disabled:opacity-50 active:scale-95"
           >
             <RefreshCw size={15} className={loading ? "animate-spin" : ""} />
-          </button>
-
-          {/* Lock (clear code) */}
-          <button
-            onClick={() => { setCode(""); setRows([]); sessionStorage.removeItem(SESSION_KEY); }}
-            className="h-10 w-10 rounded-xl border border-border bg-[#FFFDF9] flex items-center justify-center text-muted-foreground hover:text-rose-500 hover:border-rose-200 transition-all active:scale-95"
-            title="Lock"
-          >
-            <Lock size={15} />
           </button>
         </div>
       </div>

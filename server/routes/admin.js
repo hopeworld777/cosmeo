@@ -4,31 +4,7 @@ import { requireAdmin } from "../middleware/auth.js";
 
 const router = Router();
 
-// ── GET /api/admin/waitlist ──────────────────────────────────────────────────
-// Public (no JWT required) — protected by VIP_CODE secret instead.
-// Pass the code via header:  x-vip-code: <secret>
-//                  or query: ?code=<secret>
-router.get("/waitlist", async (req, res) => {
-  const vipCode = process.env.VIP_CODE;
-  if (!vipCode) {
-    return res.status(503).json({ error: "VIP_CODE is not configured on the server." });
-  }
-  const provided = req.headers["x-vip-code"] || req.query.code;
-  if (!provided || provided !== vipCode) {
-    return res.status(401).json({ error: "Unauthorized" });
-  }
-  try {
-    const result = await pool.query(
-      "SELECT * FROM waitlist ORDER BY created_at DESC"
-    );
-    res.json(result.rows);
-  } catch (err) {
-    console.error("Admin waitlist error:", err);
-    res.status(500).json({ error: "Failed to fetch waitlist" });
-  }
-});
-
-// All routes below require admin
+// All routes require admin JWT
 router.use(requireAdmin);
 
 // Ensures :id route params are numeric before they hit a SQL integer column,
@@ -39,6 +15,19 @@ function requireNumericId(req, res, next) {
   }
   next();
 }
+
+// ── GET /api/admin/waitlist ──────────────────────────────────────────────────
+router.get("/waitlist", async (req, res) => {
+  try {
+    const result = await pool.query(
+      "SELECT * FROM waitlist ORDER BY created_at DESC"
+    );
+    res.json(result.rows);
+  } catch (err) {
+    console.error("Admin waitlist error:", err);
+    res.status(500).json({ error: "Failed to fetch waitlist" });
+  }
+});
 
 // ── GET /api/admin/stats ────────────────────────────────────────────────────
 // Total users, total listings, breakdown by marketplace type (buy/rent/commission)

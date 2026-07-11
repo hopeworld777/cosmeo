@@ -138,12 +138,7 @@ export const api = {
   },
 
   admin: {
-    waitlist: async (code) => {
-      const res = await fetch(`${BASE}/admin/waitlist?code=${encodeURIComponent(code)}`);
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data.error || `Request failed: ${res.status}`);
-      return data;
-    },
+    waitlist: () => request("/admin/waitlist"),
     stats: () => request("/admin/stats"),
     reports: (params = {}) => {
       const qs = new URLSearchParams(
