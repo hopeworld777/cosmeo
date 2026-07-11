@@ -139,6 +139,8 @@ export const api = {
 
   admin: {
     waitlist: () => request("/admin/waitlist"),
+    sendWaitlistLink:      (id) => request(`/admin/waitlist/${id}/send-link`,       { method: "POST" }),
+    sendWaitlistVipInvite: (id) => request(`/admin/waitlist/${id}/send-vip-invite`, { method: "POST" }),
     stats: () => request("/admin/stats"),
     reports: (params = {}) => {
       const qs = new URLSearchParams(

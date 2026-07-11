@@ -1,6 +1,7 @@
 import { Router } from "express";
 import pool from "../db.js";
 import { requireAdmin } from "../middleware/auth.js";
+import { sendWaitlistLinkEmail, sendWaitlistVipInvite } from "../email.js";
 
 const router = Router();
 
@@ -26,6 +27,42 @@ router.get("/waitlist", async (req, res) => {
   } catch (err) {
     console.error("Admin waitlist error:", err);
     res.status(500).json({ error: "Failed to fetch waitlist" });
+  }
+});
+
+// ── POST /api/admin/waitlist/:id/send-link ───────────────────────────────────
+router.post("/waitlist/:id/send-link", requireNumericId, async (req, res) => {
+  try {
+    const { rows } = await pool.query("SELECT * FROM waitlist WHERE id = $1", [req.params.id]);
+    if (!rows[0]) return res.status(404).json({ error: "Not found" });
+    await sendWaitlistLinkEmail(rows[0].email);
+    const updated = await pool.query(
+      "UPDATE waitlist SET link_sent = true, link_sent_at = NOW() WHERE id = $1 RETURNING *",
+      [req.params.id]
+    );
+    res.json(updated.rows[0]);
+  } catch (err) {
+    console.error("send-link error:", err);
+    res.status(500).json({ error: err.message || "Failed to send link email" });
+  }
+});
+
+// ── POST /api/admin/waitlist/:id/send-vip-invite ─────────────────────────────
+router.post("/waitlist/:id/send-vip-invite", requireNumericId, async (req, res) => {
+  const vipCode = process.env.VIP_CODE?.trim();
+  if (!vipCode) return res.status(503).json({ error: "VIP_CODE is not configured on the server." });
+  try {
+    const { rows } = await pool.query("SELECT * FROM waitlist WHERE id = $1", [req.params.id]);
+    if (!rows[0]) return res.status(404).json({ error: "Not found" });
+    await sendWaitlistVipInvite(rows[0].email, vipCode);
+    const updated = await pool.query(
+      "UPDATE waitlist SET vip_invited = true, vip_invited_at = NOW() WHERE id = $1 RETURNING *",
+      [req.params.id]
+    );
+    res.json(updated.rows[0]);
+  } catch (err) {
+    console.error("send-vip-invite error:", err);
+    res.status(500).json({ error: err.message || "Failed to send VIP invite" });
   }
 });
 

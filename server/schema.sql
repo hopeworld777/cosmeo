@@ -137,10 +137,14 @@ CREATE TABLE IF NOT EXISTS notifications (
 -- this schema file is re-run against a database created before it existed.
 -- Waitlist table for pre-launch email capture
 CREATE TABLE IF NOT EXISTS waitlist (
-  id         SERIAL PRIMARY KEY,
-  email      VARCHAR(255) NOT NULL UNIQUE,
-  status     VARCHAR(50)  NOT NULL DEFAULT 'pending',
-  created_at TIMESTAMPTZ  DEFAULT NOW()
+  id              SERIAL PRIMARY KEY,
+  email           VARCHAR(255) NOT NULL UNIQUE,
+  status          VARCHAR(50)  NOT NULL DEFAULT 'pending',
+  created_at      TIMESTAMPTZ  DEFAULT NOW(),
+  link_sent       BOOLEAN      NOT NULL DEFAULT false,
+  link_sent_at    TIMESTAMPTZ,
+  vip_invited     BOOLEAN      NOT NULL DEFAULT false,
+  vip_invited_at  TIMESTAMPTZ
 );
 
 ALTER TABLE users ADD COLUMN IF NOT EXISTS buyer_rating NUMERIC(3,2);

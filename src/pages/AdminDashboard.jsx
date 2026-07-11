@@ -654,25 +654,47 @@ function ReportsTab() {
 }
 
 /* ── Waitlist tab ────────────────────────────────────────────────────────── */
+function fmtDate(ts) {
+  if (!ts) return null;
+  return new Date(ts).toLocaleString("en-GB", {
+    day: "2-digit", month: "short", year: "numeric",
+    hour: "2-digit", minute: "2-digit",
+  });
+}
+
 function WaitlistTab() {
-  const [rows, setRows] = useState([]);
+  const [rows, setRows]       = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [error, setError]     = useState(null);
+  const [busy, setBusy]       = useState(null); // "<id>-link" | "<id>-vip"
 
   async function fetchWaitlist() {
     setLoading(true);
     setError(null);
-    try {
-      const data = await api.admin.waitlist();
-      setRows(data);
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
+    try { setRows(await api.admin.waitlist()); }
+    catch (err) { setError(err.message); }
+    finally { setLoading(false); }
   }
 
   useEffect(() => { fetchWaitlist(); }, []);
+
+  function patchRow(updated) {
+    setRows(prev => prev.map(r => r.id === updated.id ? updated : r));
+  }
+
+  async function handleSendLink(row) {
+    setBusy(`${row.id}-link`);
+    try { patchRow(await api.admin.sendWaitlistLink(row.id)); }
+    catch (err) { alert(err.message); }
+    finally { setBusy(null); }
+  }
+
+  async function handleVipInvite(row) {
+    setBusy(`${row.id}-vip`);
+    try { patchRow(await api.admin.sendWaitlistVipInvite(row.id)); }
+    catch (err) { alert(err.message); }
+    finally { setBusy(null); }
+  }
 
   return (
     <motion.div
@@ -681,7 +703,7 @@ function WaitlistTab() {
       transition={{ duration: 0.22 }}
       className="flex flex-col gap-5"
     >
-      {/* Header row */}
+      {/* Header */}
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div className="flex items-center gap-3">
           <div className="h-10 w-10 rounded-2xl bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center shadow-md shadow-violet-200">
@@ -692,17 +714,13 @@ function WaitlistTab() {
             <p className="text-[12px] text-muted-foreground font-medium">Pre-launch signups</p>
           </div>
         </div>
-
         <div className="flex items-center gap-2">
-          {/* Total badge */}
           <div className="flex items-center gap-2 rounded-2xl bg-[#FFFDF9] border border-violet-200 px-4 py-2.5 shadow-sm">
             <span className="text-[11px] font-bold text-violet-500 uppercase tracking-wide">Total Subscribers</span>
             <span className="text-[22px] font-black text-violet-600 leading-none tabular-nums">
               {loading ? "—" : rows.length}
             </span>
           </div>
-
-          {/* Refresh */}
           <button
             onClick={fetchWaitlist}
             disabled={loading}
@@ -720,6 +738,10 @@ function WaitlistTab() {
             <span className="h-4 w-4 rounded-full border-2 border-violet-400 border-t-transparent animate-spin" />
             Loading…
           </div>
+        ) : error ? (
+          <div className="flex flex-col items-center justify-center py-20 gap-2 text-rose-500">
+            <p className="text-[13px] font-medium">{error}</p>
+          </div>
         ) : rows.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 gap-2 text-muted-foreground">
             <Mail size={28} className="opacity-30" />
@@ -728,39 +750,89 @@ function WaitlistTab() {
         ) : (
           <>
             {/* Table header */}
-            <div className="grid grid-cols-[1fr_auto] gap-4 px-5 py-3 border-b border-border bg-white/60">
+            <div className="grid grid-cols-[1fr_auto_auto] gap-4 px-5 py-3 border-b border-border bg-white/60">
               <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider">Email</span>
               <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider text-right">Signed up</span>
+              <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider text-right">Actions</span>
             </div>
 
             {/* Rows */}
             <div className="divide-y divide-border/60">
-              {rows.map((row, i) => (
-                <motion.div
-                  key={row.id ?? row.email}
-                  initial={{ opacity: 0, x: -6 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ duration: 0.15, delay: Math.min(i * 0.02, 0.3) }}
-                  className="grid grid-cols-[1fr_auto] gap-4 items-center px-5 py-3.5 hover:bg-violet-50/40 transition-colors"
-                >
-                  <div className="flex items-center gap-3 min-w-0">
-                    <div className="h-7 w-7 rounded-full bg-gradient-to-br from-violet-400 to-purple-500 flex items-center justify-center shrink-0">
-                      <span className="text-white text-[10px] font-black">
-                        {row.email.charAt(0).toUpperCase()}
-                      </span>
+              {rows.map((row, i) => {
+                const linkBusy = busy === `${row.id}-link`;
+                const vipBusy  = busy === `${row.id}-vip`;
+
+                return (
+                  <motion.div
+                    key={row.id ?? row.email}
+                    initial={{ opacity: 0, x: -6 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ duration: 0.15, delay: Math.min(i * 0.02, 0.3) }}
+                    className="grid grid-cols-[1fr_auto_auto] gap-4 items-center px-5 py-3 hover:bg-violet-50/40 transition-colors"
+                  >
+                    {/* Email */}
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="h-7 w-7 rounded-full bg-gradient-to-br from-violet-400 to-purple-500 flex items-center justify-center shrink-0">
+                        <span className="text-white text-[10px] font-black">
+                          {row.email.charAt(0).toUpperCase()}
+                        </span>
+                      </div>
+                      <span className="text-[13.5px] font-semibold text-foreground truncate">{row.email}</span>
                     </div>
-                    <span className="text-[13.5px] font-semibold text-foreground truncate">{row.email}</span>
-                  </div>
-                  <span className="text-[12px] text-muted-foreground font-medium text-right whitespace-nowrap">
-                    {row.created_at
-                      ? new Date(row.created_at).toLocaleString("en-GB", {
-                          day: "2-digit", month: "short", year: "numeric",
-                          hour: "2-digit", minute: "2-digit",
-                        })
-                      : "—"}
-                  </span>
-                </motion.div>
-              ))}
+
+                    {/* Signed up date */}
+                    <span className="text-[12px] text-muted-foreground font-medium text-right whitespace-nowrap">
+                      {fmtDate(row.created_at) ?? "—"}
+                    </span>
+
+                    {/* Action buttons */}
+                    <div className="flex items-center gap-1.5 justify-end">
+                      {/* Send Link — hidden once VIP-invited */}
+                      {!row.vip_invited && (
+                        row.link_sent ? (
+                          <span className="text-[11px] font-semibold text-slate-400 bg-slate-100 border border-slate-200 rounded-lg px-2.5 py-1 whitespace-nowrap">
+                            Sent ✓
+                          </span>
+                        ) : (
+                          <button
+                            onClick={() => handleSendLink(row)}
+                            disabled={!!busy}
+                            className="flex items-center gap-1 text-[11.5px] font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 border border-slate-200 rounded-lg px-2.5 py-1 transition-all disabled:opacity-50 active:scale-95 whitespace-nowrap"
+                          >
+                            {linkBusy
+                              ? <span className="h-3 w-3 rounded-full border-2 border-slate-400 border-t-transparent animate-spin" />
+                              : <Mail size={11} />
+                            }
+                            Send Link
+                          </button>
+                        )
+                      )}
+
+                      {/* VIP Invite */}
+                      {row.vip_invited ? (
+                        <span
+                          title={fmtDate(row.vip_invited_at) ?? ""}
+                          className="text-[11px] font-semibold text-violet-400 bg-violet-50 border border-violet-200 rounded-lg px-2.5 py-1 whitespace-nowrap cursor-default"
+                        >
+                          VIP ✓
+                        </span>
+                      ) : (
+                        <button
+                          onClick={() => handleVipInvite(row)}
+                          disabled={!!busy}
+                          className="flex items-center gap-1 text-[11.5px] font-bold text-white bg-gradient-to-r from-violet-500 to-purple-600 hover:opacity-90 rounded-lg px-2.5 py-1 shadow-sm shadow-violet-200 transition-all disabled:opacity-50 active:scale-95 whitespace-nowrap"
+                        >
+                          {vipBusy
+                            ? <span className="h-3 w-3 rounded-full border-2 border-white border-t-transparent animate-spin" />
+                            : <Star size={11} />
+                          }
+                          VIP Invite
+                        </button>
+                      )}
+                    </div>
+                  </motion.div>
+                );
+              })}
             </div>
           </>
         )}
