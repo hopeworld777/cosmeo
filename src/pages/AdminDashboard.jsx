@@ -13,9 +13,9 @@ import { useToast } from "@/hooks/use-toast";
 import VerifiedBadge from "@/components/VerifiedBadge";
 
 const STATUS_CONFIG = {
-  open:     { label: "მოთხოვნილია",  color: "bg-amber-100 text-amber-700 border-amber-200" },
-  resolved: { label: "მოგვარებულია", color: "bg-emerald-100 text-emerald-700 border-emerald-200" },
-  ignored:  { label: "იგნორირებულია", color: "bg-slate-100 text-slate-500 border-slate-200" },
+  open:     { label: "მოთხოვნილია",  color: "bg-amber-100 text-amber-700 border-amber-200 dark:bg-amber-900/30 dark:text-amber-400 dark:border-amber-800" },
+  resolved: { label: "მოგვარებულია", color: "bg-emerald-100 text-emerald-700 border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-400 dark:border-emerald-800" },
+  ignored:  { label: "იგნორირებულია", color: "bg-slate-100 text-slate-500 border-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:border-slate-700" },
 };
 
 const REASON_LABELS = {
@@ -193,12 +193,12 @@ function ListingsTab({ toast }) {
                 <div className="flex items-center gap-2 flex-wrap">
                   <p className="font-extrabold text-[14px] text-foreground truncate">{l.title}</p>
                   {l.is_featured && (
-                    <span className="flex items-center gap-1 text-[10px] font-bold bg-amber-100 text-amber-700 border border-amber-200 px-2 py-0.5 rounded-full">
+                    <span className="flex items-center gap-1 text-[10px] font-bold bg-amber-100 text-amber-700 border border-amber-200 dark:bg-amber-900/30 dark:text-amber-400 dark:border-amber-800 px-2 py-0.5 rounded-full">
                       <Star size={10} className="fill-amber-500 text-amber-500" /> გამორჩეული
                     </span>
                   )}
                   {l.is_flagged && (
-                    <span className="text-[10px] font-bold bg-red-100 text-red-600 border border-red-200 px-2 py-0.5 rounded-full">დაფლაგირებული</span>
+                    <span className="text-[10px] font-bold bg-red-100 text-red-600 border border-red-200 dark:bg-red-900/30 dark:text-red-400 dark:border-red-800 px-2 py-0.5 rounded-full">დაფლაგირებული</span>
                   )}
                 </div>
                 <p className="text-[12px] text-muted-foreground font-medium mt-0.5 flex items-center gap-1">
@@ -211,7 +211,7 @@ function ListingsTab({ toast }) {
                 <ActionBtn
                   icon={<Star size={14} className={l.is_featured ? "fill-current" : ""} />}
                   label={l.is_featured ? "მოხსნა" : "გამორჩევა"}
-                  color={l.is_featured ? "bg-amber-500 hover:bg-amber-600 text-white" : "bg-amber-100 hover:bg-amber-200 text-amber-700 border border-amber-300"}
+                  color={l.is_featured ? "bg-amber-500 hover:bg-amber-600 text-white" : "bg-amber-100 hover:bg-amber-200 text-amber-700 border border-amber-300 dark:bg-amber-900/30 dark:hover:bg-amber-900/50 dark:text-amber-400 dark:border-amber-800"}
                   busy={busyId === l.id + "-feature"}
                   onClick={() => toggleFeature(l)}
                   testId={`button-feature-${l.id}`}
@@ -229,7 +229,7 @@ function ListingsTab({ toast }) {
                 <ActionBtn
                   icon={<Trash2 size={14} />}
                   label="წაშლა"
-                  color="bg-red-100 hover:bg-red-200 text-red-700 border border-red-300"
+                  color="bg-red-100 hover:bg-red-200 text-red-700 border border-red-300 dark:bg-red-900/30 dark:hover:bg-red-900/50 dark:text-red-400 dark:border-red-800"
                   busy={busyId === l.id + "-delete"}
                   onClick={() => remove(l)}
                   testId={`button-delete-listing-${l.id}`}
@@ -328,7 +328,7 @@ function UsersTab({ toast }) {
                   @{u.username}
                   {u.is_verified && <VerifiedBadge size={15} />}
                   {u.is_admin && <span className="text-[10px] font-bold bg-primary/10 text-primary px-1.5 py-0.5 rounded-full">ADMIN</span>}
-                  {u.is_banned && <span className="text-[10px] font-bold bg-red-100 text-red-600 px-1.5 py-0.5 rounded-full">დაბლოკილი</span>}
+                  {u.is_banned && <span className="text-[10px] font-bold bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400 px-1.5 py-0.5 rounded-full">დაბლოკილი</span>}
                 </p>
                 <p className="text-[11.5px] text-muted-foreground font-medium mt-0.5">
                   {u.email} · {u.listings_count} განცხადება · {u.warning_count} გაფრთხილება
@@ -338,7 +338,7 @@ function UsersTab({ toast }) {
                 <ActionBtn
                   icon={<BadgeCheck size={14} />}
                   label={u.is_verified ? "მოხსნა" : "ვერიფიკაცია"}
-                  color={u.is_verified ? "bg-pink-500 hover:bg-pink-600 text-white" : "bg-pink-100 hover:bg-pink-200 text-pink-700 border border-pink-300"}
+                  color={u.is_verified ? "bg-pink-500 hover:bg-pink-600 text-white" : "bg-pink-100 hover:bg-pink-200 text-pink-700 border border-pink-300 dark:bg-pink-900/30 dark:hover:bg-pink-900/50 dark:text-pink-400 dark:border-pink-800"}
                   busy={busyId === u.id + "-verify"}
                   onClick={() => toggleVerify(u)}
                   testId={`button-verify-${u.id}`}
@@ -346,7 +346,7 @@ function UsersTab({ toast }) {
                 <ActionBtn
                   icon={<AlertTriangle size={14} />}
                   label="გაფრთხილება"
-                  color="bg-amber-100 hover:bg-amber-200 text-amber-700 border border-amber-300"
+                  color="bg-amber-100 hover:bg-amber-200 text-amber-700 border border-amber-300 dark:bg-amber-900/30 dark:hover:bg-amber-900/50 dark:text-amber-400 dark:border-amber-800"
                   busy={busyId === u.id + "-warn"}
                   onClick={() => act(u, "warn")}
                   testId={`button-warn-user-${u.id}`}
@@ -355,7 +355,7 @@ function UsersTab({ toast }) {
                   <ActionBtn
                     icon={<Ban size={14} />}
                     label="დაბლოკვა"
-                    color="bg-red-100 hover:bg-red-200 text-red-700 border border-red-300"
+                    color="bg-red-100 hover:bg-red-200 text-red-700 border border-red-300 dark:bg-red-900/30 dark:hover:bg-red-900/50 dark:text-red-400 dark:border-red-800"
                     busy={busyId === u.id + "-ban"}
                     onClick={() => act(u, "ban")}
                     testId={`button-ban-user-${u.id}`}
@@ -364,7 +364,7 @@ function UsersTab({ toast }) {
                   <ActionBtn
                     icon={<CheckCircle2 size={14} />}
                     label="განბლოკვა"
-                    color="bg-emerald-100 hover:bg-emerald-200 text-emerald-700 border border-emerald-300"
+                    color="bg-emerald-100 hover:bg-emerald-200 text-emerald-700 border border-emerald-300 dark:bg-emerald-900/30 dark:hover:bg-emerald-900/50 dark:text-emerald-400 dark:border-emerald-800"
                     busy={busyId === u.id + "-unban"}
                     onClick={() => act(u, "unban")}
                     testId={`button-unban-user-${u.id}`}
@@ -469,14 +469,14 @@ function QuickModerationTab({ toast }) {
               <div className="flex-1 min-w-[140px]">
                 <p className="font-extrabold text-[13.5px] text-foreground truncate flex items-center gap-2">
                   {l.title}
-                  {l.is_flagged && <span className="text-[10px] font-bold bg-red-100 text-red-600 px-1.5 py-0.5 rounded-full">დაფლაგირებული</span>}
-                  {l.status === "pending" && <span className="text-[10px] font-bold bg-blue-100 text-blue-600 px-1.5 py-0.5 rounded-full">ახალი</span>}
+                  {l.is_flagged && <span className="text-[10px] font-bold bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400 px-1.5 py-0.5 rounded-full">დაფლაგირებული</span>}
+                  {l.status === "pending" && <span className="text-[10px] font-bold bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400 px-1.5 py-0.5 rounded-full">ახალი</span>}
                 </p>
                 <p className="text-[11.5px] text-muted-foreground font-medium mt-0.5">@{l.seller_username} · {formatDate(l.created_at)}</p>
               </div>
               <div className="flex items-center gap-2 shrink-0">
                 <ActionBtn icon={<CheckCircle2 size={14} />} label="დამტკიცება" color="bg-emerald-500 hover:bg-emerald-600 text-white" busy={busyId === l.id + "-approve"} onClick={() => approve(l)} testId={`button-quick-approve-${l.id}`} />
-                <ActionBtn icon={<AlertTriangle size={14} />} label="გაფრთხილება" color="bg-amber-100 hover:bg-amber-200 text-amber-700 border border-amber-300" busy={busyId === l.id + "-warn"} onClick={() => warnSeller(l)} testId={`button-quick-warn-${l.id}`} />
+                <ActionBtn icon={<AlertTriangle size={14} />} label="გაფრთხილება" color="bg-amber-100 hover:bg-amber-200 text-amber-700 border border-amber-300 dark:bg-amber-900/30 dark:hover:bg-amber-900/50 dark:text-amber-400 dark:border-amber-800" busy={busyId === l.id + "-warn"} onClick={() => warnSeller(l)} testId={`button-quick-warn-${l.id}`} />
                 <ActionBtn icon={<Trash2 size={14} />} label="წაშლა" color="bg-red-500 hover:bg-red-600 text-white" busy={busyId === l.id + "-delete"} onClick={() => remove(l)} testId={`button-quick-delete-${l.id}`} />
               </div>
             </div>
@@ -535,7 +535,7 @@ function ReportCard({ report, onUpdate }) {
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
             <span className="font-extrabold text-[14px] text-foreground">@{report.reported_username}</span>
-            {report.reported_is_banned && <span className="text-[10px] font-bold bg-red-100 text-red-600 border border-red-200 px-2 py-0.5 rounded-full">დაბლოკილი</span>}
+            {report.reported_is_banned && <span className="text-[10px] font-bold bg-red-100 text-red-600 border border-red-200 dark:bg-red-900/30 dark:text-red-400 dark:border-red-800 px-2 py-0.5 rounded-full">დაბლოკილი</span>}
             <span className={`text-[11px] font-bold border px-2 py-0.5 rounded-full ${statusCfg.color}`}>{statusCfg.label}</span>
           </div>
           <p className="text-[12.5px] text-muted-foreground mt-0.5 font-medium">
@@ -555,7 +555,7 @@ function ReportCard({ report, onUpdate }) {
                 <div className="flex gap-2 flex-wrap">
                   {report.listing_id && (
                     <Link href={`/item/${report.listing_id}`}>
-                      <span className="flex items-center gap-1.5 text-[12px] font-bold bg-blue-50 border border-blue-200 text-blue-600 px-3 py-1.5 rounded-xl hover:bg-blue-100 transition-colors cursor-pointer">
+                      <span className="flex items-center gap-1.5 text-[12px] font-bold bg-blue-50 border border-blue-200 text-blue-600 hover:bg-blue-100 dark:bg-blue-900/20 dark:border-blue-800 dark:text-blue-400 dark:hover:bg-blue-900/40 px-3 py-1.5 rounded-xl transition-colors cursor-pointer">
                         <Package size={13} />{report.listing_title ? report.listing_title.slice(0, 30) : `განცხადება #${report.listing_id}`}<ExternalLink size={11} />
                       </span>
                     </Link>
@@ -573,9 +573,9 @@ function ReportCard({ report, onUpdate }) {
                 {isPending && (
                   <div className="flex gap-2 flex-wrap">
                     <ActionBtn icon={<CheckCircle2 size={14} />} label="დამტკიცება" color="bg-emerald-500 hover:bg-emerald-600 text-white" busy={busy === "resolve"} onClick={() => act("resolve")} testId={`button-resolve-${report.id}`} />
-                    <ActionBtn icon={<Trash2 size={14} />} label="წაშლა" color="bg-red-100 hover:bg-red-200 text-red-700 border border-red-300" busy={busy === "ban"} onClick={() => act("ban")} testId={`button-report-delete-${report.id}`} />
-                    <ActionBtn icon={<AlertTriangle size={14} />} label="გაფრთხილება" color="bg-amber-100 hover:bg-amber-200 text-amber-700 border border-amber-300" busy={busy === "warn"} onClick={() => act("warn")} testId={`button-report-warn-${report.id}`} />
-                    <ActionBtn icon={<XCircle size={14} />} label="იგნორი" color="bg-slate-100 hover:bg-slate-200 text-slate-600" busy={busy === "ignore"} onClick={() => act("ignore")} testId={`button-ignore-${report.id}`} />
+                    <ActionBtn icon={<Trash2 size={14} />} label="წაშლა" color="bg-red-100 hover:bg-red-200 text-red-700 border border-red-300 dark:bg-red-900/30 dark:hover:bg-red-900/50 dark:text-red-400 dark:border-red-800" busy={busy === "ban"} onClick={() => act("ban")} testId={`button-report-delete-${report.id}`} />
+                    <ActionBtn icon={<AlertTriangle size={14} />} label="გაფრთხილება" color="bg-amber-100 hover:bg-amber-200 text-amber-700 border border-amber-300 dark:bg-amber-900/30 dark:hover:bg-amber-900/50 dark:text-amber-400 dark:border-amber-800" busy={busy === "warn"} onClick={() => act("warn")} testId={`button-report-warn-${report.id}`} />
+                    <ActionBtn icon={<XCircle size={14} />} label="იგნორი" color="bg-slate-100 hover:bg-slate-200 text-slate-600 dark:bg-slate-800 dark:hover:bg-slate-700 dark:text-slate-400" busy={busy === "ignore"} onClick={() => act("ignore")} testId={`button-ignore-${report.id}`} />
                   </div>
                 )}
               </div>
@@ -715,7 +715,7 @@ function WaitlistTab() {
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <div className="flex items-center gap-2 rounded-2xl bg-[#FFFDF9] border border-violet-200 px-4 py-2.5 shadow-sm">
+          <div className="flex items-center gap-2 rounded-2xl bg-card border border-violet-200 dark:border-violet-900/60 px-4 py-2.5 shadow-sm">
             <span className="text-[11px] font-bold text-violet-500 uppercase tracking-wide">Total Subscribers</span>
             <span className="text-[22px] font-black text-violet-600 leading-none tabular-nums">
               {loading ? "—" : rows.length}
@@ -724,7 +724,7 @@ function WaitlistTab() {
           <button
             onClick={fetchWaitlist}
             disabled={loading}
-            className="h-10 w-10 rounded-xl border border-border bg-[#FFFDF9] flex items-center justify-center text-muted-foreground hover:text-foreground hover:border-violet-300 transition-all disabled:opacity-50 active:scale-95"
+            className="h-10 w-10 rounded-xl border border-border bg-card flex items-center justify-center text-muted-foreground hover:text-foreground hover:border-violet-300 transition-all disabled:opacity-50 active:scale-95"
           >
             <RefreshCw size={15} className={loading ? "animate-spin" : ""} />
           </button>
@@ -732,7 +732,7 @@ function WaitlistTab() {
       </div>
 
       {/* Table card */}
-      <div className="rounded-2xl border border-border bg-[#FFFDF9] overflow-hidden shadow-sm">
+      <div className="rounded-2xl border border-border bg-card overflow-hidden shadow-sm">
         {loading ? (
           <div className="flex items-center justify-center py-20 text-muted-foreground text-[13px] font-medium gap-2">
             <span className="h-4 w-4 rounded-full border-2 border-violet-400 border-t-transparent animate-spin" />
@@ -750,7 +750,7 @@ function WaitlistTab() {
         ) : (
           <>
             {/* Table header */}
-            <div className="grid grid-cols-[1fr_auto_auto] gap-4 px-5 py-3 border-b border-border bg-white/60">
+            <div className="grid grid-cols-[1fr_auto_auto] gap-4 px-5 py-3 border-b border-border bg-muted/40">
               <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider">Email</span>
               <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider text-right">Signed up</span>
               <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider text-right">Actions</span>
@@ -768,7 +768,7 @@ function WaitlistTab() {
                     initial={{ opacity: 0, x: -6 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ duration: 0.15, delay: Math.min(i * 0.02, 0.3) }}
-                    className="grid grid-cols-[1fr_auto_auto] gap-4 items-center px-5 py-3 hover:bg-violet-50/40 transition-colors"
+                    className="grid grid-cols-[1fr_auto_auto] gap-4 items-center px-5 py-3 hover:bg-violet-50/40 dark:hover:bg-violet-900/10 transition-colors"
                   >
                     {/* Email */}
                     <div className="flex items-center gap-3 min-w-0">
@@ -790,14 +790,14 @@ function WaitlistTab() {
                       {/* Send Link — hidden once VIP-invited */}
                       {!row.vip_invited && (
                         row.link_sent ? (
-                          <span className="text-[11px] font-semibold text-slate-400 bg-slate-100 border border-slate-200 rounded-lg px-2.5 py-1 whitespace-nowrap">
+                          <span className="text-[11px] font-semibold text-slate-400 bg-slate-100 border border-slate-200 dark:bg-slate-800 dark:text-slate-500 dark:border-slate-700 rounded-lg px-2.5 py-1 whitespace-nowrap">
                             Sent ✓
                           </span>
                         ) : (
                           <button
                             onClick={() => handleSendLink(row)}
                             disabled={!!busy}
-                            className="flex items-center gap-1 text-[11.5px] font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 border border-slate-200 rounded-lg px-2.5 py-1 transition-all disabled:opacity-50 active:scale-95 whitespace-nowrap"
+                            className="flex items-center gap-1 text-[11.5px] font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 border border-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700 dark:border-slate-700 rounded-lg px-2.5 py-1 transition-all disabled:opacity-50 active:scale-95 whitespace-nowrap"
                           >
                             {linkBusy
                               ? <span className="h-3 w-3 rounded-full border-2 border-slate-400 border-t-transparent animate-spin" />
@@ -812,7 +812,7 @@ function WaitlistTab() {
                       {row.vip_invited ? (
                         <span
                           title={fmtDate(row.vip_invited_at) ?? ""}
-                          className="text-[11px] font-semibold text-violet-400 bg-violet-50 border border-violet-200 rounded-lg px-2.5 py-1 whitespace-nowrap cursor-default"
+                          className="text-[11px] font-semibold text-violet-400 bg-violet-50 border border-violet-200 dark:bg-violet-900/30 dark:border-violet-800 rounded-lg px-2.5 py-1 whitespace-nowrap cursor-default"
                         >
                           VIP ✓
                         </span>
