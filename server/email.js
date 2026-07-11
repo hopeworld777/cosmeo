@@ -91,19 +91,20 @@ export async function sendWaitlistConfirmation(to) {
 }
 
 export async function sendWaitlistLinkEmail(to) {
+  const siteUrl = "https://cosmeo.shop/";
   await sendEmail({
     to,
-    subject: "cosmeo is almost live — you're on the list! 🚀",
-    text: `Hey there!\n\nWe just wanted to drop in and let you know — cosmeo is almost ready.\n\nWe're putting the final touches on Georgia's first cosplay marketplace and you'll be among the first to know when the doors open.\n\nNo action needed. We'll send you your access link the moment we go live!\n\n— The cosmeo team`,
+    subject: "cosmeo is live — come explore! 🎉",
+    text: `Welcome to cosmeo — Georgia's Cosplay Marketplace is now live!\n\nThe wait is over. You can start browsing, buying, and selling cosplay right now.\n\nVisit the site: ${siteUrl}\n\nSee you there!\n\n— The cosmeo team`,
     html: `
       <div style="font-family:sans-serif;max-width:480px;margin:0 auto;background:#faf9ff;border-radius:24px;padding:32px;">
         <h1 style="color:#8b72c8;font-size:28px;margin-bottom:4px;">✨ cosmeo</h1>
         <p style="color:#6b7280;margin-top:0;">Georgia's cosplay marketplace</p>
         <hr style="border:none;border-top:1px solid #e5e7eb;margin:24px 0;">
-        <h2 style="color:#111827;font-size:20px;">You're almost in! 🚀</h2>
-        <p style="color:#374151;line-height:1.6;">We just wanted to drop in and let you know — <strong>cosmeo is almost ready.</strong></p>
-        <p style="color:#374151;line-height:1.6;">We're putting the final touches on Georgia's first cosplay marketplace and you'll be among the first to know when the doors open.</p>
-        <p style="color:#374151;line-height:1.6;background:#f3f0ff;border-radius:12px;padding:14px 18px;">No action needed — we'll send your access link the moment we go live!</p>
+        <h2 style="color:#111827;font-size:22px;">We're live! 🎉</h2>
+        <p style="color:#374151;line-height:1.6;font-size:16px;"><strong>Welcome to cosmeo — Georgia's Cosplay Marketplace is now live!</strong></p>
+        <p style="color:#374151;line-height:1.6;">The wait is over. You can start browsing, buying, and selling cosplay right now.</p>
+        <a href="${siteUrl}" style="display:inline-block;margin:24px 0;padding:16px 36px;background:#8b72c8;color:#fff;font-weight:700;font-size:16px;border-radius:16px;text-decoration:none;">Visit cosmeo →</a>
         <p style="color:#9ca3af;font-size:13px;margin-top:24px;">You're receiving this because you joined the cosmeo waitlist.</p>
         <p style="color:#d1d5db;font-size:12px;margin-top:8px;">© cosmeo • Where cosplay culture shops</p>
       </div>`,
