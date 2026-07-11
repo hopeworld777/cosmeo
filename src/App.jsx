@@ -35,13 +35,17 @@ const AUTH_ROUTES = ["/login", "/register", "/forgot-password", "/reset-password
 // During pre-launch, ONLY these paths are reachable without an admin account.
 // Every other route — /browse, /home, /item/:id, etc. — is intercepted and the
 // visitor is sent back to the waitlist landing page at "/".
+// Secret admin-only login path — not listed anywhere public.
+// Share only with trusted testers/admins. Visiting /login or /register
+// now redirects unauthenticated users back to the waitlist landing page.
+export const ADMIN_LOGIN_PATH = "/cosmeo-admin-jk9";
+
 const WAITLIST_PUBLIC = [
   "/",
-  "/login",
-  "/register",
-  "/forgot-password",
-  "/reset-password",
-  "/verify-email",
+  ADMIN_LOGIN_PATH,       // secret admin login
+  "/forgot-password",     // needed so admins can recover their password
+  "/reset-password",      // needed to complete a password reset
+  "/verify-email",        // needed to verify email after registration
   "/terms",
 ];
 
@@ -75,7 +79,9 @@ function ProtectedRoute({ component: Component, ...rest }) {
   const [, setLocation] = useLocation();
 
   useEffect(() => {
-    if (!loading && !user) setLocation("/login");
+    // Send unauthenticated visitors back to the waitlist landing, not /login
+    // (the public login route no longer exists — only the secret admin path does).
+    if (!loading && !user) setLocation("/");
   }, [loading, user]);
 
   if (loading) return null;
@@ -89,7 +95,7 @@ function AdminRoute({ component: Component, ...rest }) {
 
   useEffect(() => {
     if (loading) return;
-    if (!user) setLocation("/login");
+    if (!user) setLocation("/");
     else if (!user.is_admin) setLocation("/");
   }, [loading, user]);
 
@@ -287,8 +293,10 @@ function AppShell() {
             <Route path="/home" component={Home} />
             <Route path="/browse" component={Browse} />
             <Route path="/item/:id" component={ItemDetail} />
-            <Route path="/login" component={Login} />
-            <Route path="/register" component={Register} />
+            {/* Secret admin login — path not linked anywhere public */}
+            <Route path={ADMIN_LOGIN_PATH} component={Login} />
+            {/* Registration disabled during closed-waitlist period */}
+            {/* <Route path="/register" component={Register} /> */}
             <Route path="/onboarding" component={Onboarding} />
             <Route path="/forgot-password" component={ForgotPassword} />
             <Route path="/reset-password" component={ResetPassword} />

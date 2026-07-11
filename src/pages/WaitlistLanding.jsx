@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Link } from "wouter";
 import { useTranslation } from "react-i18next";
 import { api } from "@/lib/api";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
@@ -116,19 +115,12 @@ export default function WaitlistLanding() {
         />
       ))}
 
-      {/* Top bar: Language switcher + Sign in link */}
+      {/* Top bar: Language switcher only — no public login link */}
       <div className="relative z-10 flex items-center justify-between px-6 pt-6">
         <div className="text-white/30 text-xs font-bold tracking-widest uppercase select-none">
           kosmeo
         </div>
-        <div className="flex items-center gap-4">
-          <LanguageSwitcher />
-          <Link href="/login">
-            <span className="text-sm font-semibold text-white/50 hover:text-white/80 transition-colors cursor-pointer">
-              {t("waitlistSignIn")} <span className="text-purple-400">{t("signIn")}</span>
-            </span>
-          </Link>
-        </div>
+        <LanguageSwitcher />
       </div>
 
       {/* Main centered content */}
