@@ -41,7 +41,7 @@ export default function BottomNav() {
   }, [location]);
 
   const navItems = [
-    { href: "/",         icon: Home,          labelKey: "home",     testId: "nav-home"     },
+    { href: "/home",     icon: Home,          labelKey: "home",     testId: "nav-home"     },
     { href: "/browse",   icon: Compass,       labelKey: "browse",   testId: "nav-browse"   },
     { href: "/sell",     icon: PlusCircle,    labelKey: "sell",     testId: "nav-sell",    highlight: true },
     { href: "/messages", icon: MessageCircle, labelKey: "messages", testId: "nav-messages", badge: unreadCount },

@@ -1,4 +1,12 @@
 {
+  "waitlistHeadline": "The First Georgian Cosplay Marketplace",
+  "waitlistSubtitle": "We're gearing up for launch. Join our exclusive waitlist and be the first to know when the doors open!",
+  "waitlistCta": "Join the Waitlist",
+  "waitlistEmailPlaceholder": "Enter your email address",
+  "waitlistSuccess": "You've been added to the list! ✨",
+  "waitlistDuplicate": "This email is already registered!",
+  "waitlistSubmitting": "Joining...",
+  "waitlistSignIn": "Already have an account?",
   "home": "Home",
   "browse": "Browse",
   "sell": "Sell",

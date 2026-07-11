@@ -24,6 +24,20 @@ async function request(path, options = {}) {
 }
 
 export const api = {
+  waitlist: {
+    // Returns { ok, duplicate, error } — does NOT throw so the caller can
+    // distinguish a 409 duplicate from a real server error without the
+    // request() helper swallowing the structured payload.
+    join: async (email) => {
+      const res = await fetch(`${BASE}/waitlist`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+      const data = await res.json().catch(() => ({}));
+      return { ok: res.ok, status: res.status, ...data };
+    },
+  },
   auth: {
     register: (body) =>
       request("/auth/register", { method: "POST", body: JSON.stringify(body) }),

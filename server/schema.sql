@@ -135,6 +135,14 @@ CREATE TABLE IF NOT EXISTS notifications (
 
 -- Idempotent migration guards for the reviews/buyer-rating feature, in case
 -- this schema file is re-run against a database created before it existed.
+-- Waitlist table for pre-launch email capture
+CREATE TABLE IF NOT EXISTS waitlist (
+  id         SERIAL PRIMARY KEY,
+  email      VARCHAR(255) NOT NULL UNIQUE,
+  status     VARCHAR(50)  NOT NULL DEFAULT 'pending',
+  created_at TIMESTAMPTZ  DEFAULT NOW()
+);
+
 ALTER TABLE users ADD COLUMN IF NOT EXISTS buyer_rating NUMERIC(3,2);
 ALTER TABLE users ADD COLUMN IF NOT EXISTS buyer_review_count INTEGER DEFAULT 0;
 ALTER TABLE reviews ADD COLUMN IF NOT EXISTS buyer_id INTEGER REFERENCES users(id) ON DELETE CASCADE;

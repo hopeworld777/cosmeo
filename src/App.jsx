@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 import { Toaster } from "@/components/ui/toaster";
 import BottomNav from "@/components/BottomNav";
 import Home from "@/pages/Home";
+import WaitlistLanding from "@/pages/WaitlistLanding";
 import Browse from "@/pages/Browse";
 import ItemDetail from "@/pages/ItemDetail";
 import Sell from "@/pages/Sell";
@@ -35,12 +36,14 @@ const AUTH_ROUTES = ["/login", "/register", "/forgot-password", "/reset-password
 const ONBOARDING_ROUTES = ["/onboarding"];
 
 // Routes that additionally hide the bottom tab bar (but NOT the desktop nav)
-const HIDE_BOTTOM_NAV_EXTRA = ["/chat/", "/terms", "/item/", "/admin"];
+// "/" is the waitlist landing — it's a standalone pre-auth page, no bottom nav.
+const HIDE_BOTTOM_NAV_EXTRA = ["/chat/", "/terms", "/item/", "/admin", "/"];
 
 // Routes where the page renders its own LanguageSwitcher — suppress the
 // floating mobile one to avoid duplication.  Prefix-matched for /settings/*.
 // /chat is also listed here so the floating switcher is never shown inside chat.
-const OWN_LANG_ROUTES = ["/", "/sell", "/browse", "/messages", "/profile", "/wishlist", "/settings", "/terms", "/item", "/chat", "/admin"];
+// "/home" owns a lang switcher the same way "/" did before the waitlist split.
+const OWN_LANG_ROUTES = ["/", "/home", "/sell", "/browse", "/messages", "/profile", "/wishlist", "/settings", "/terms", "/item", "/chat", "/admin"];
 
 // Routes that render a fully standalone page (own header/chrome) — the
 // global desktop nav and phone-frame shell must not wrap these.
@@ -82,18 +85,23 @@ function AdminRoute({ component: Component, ...rest }) {
 }
 
 function OnboardingGuard() {
-  const [location, setLocation] = useLocation();
+  // OnboardingGuard no longer redirects from "/" — that route now shows the
+  // waitlist landing page for unauthenticated visitors. Onboarding is still
+  // reachable directly at "/onboarding" (e.g. from the Register flow).
+  return null;
+}
+
+// "/" — shows the waitlist landing for guests; sends logged-in users to /home.
+function RootRoute() {
   const { user, loading } = useAuth();
+  const [, setLocation] = useLocation();
 
   useEffect(() => {
-    if (loading) return;
-    const onboarded = localStorage.getItem("kosmeo_onboarded");
-    if (!user && !onboarded && location === "/") {
-      setLocation("/onboarding");
-    }
-  }, [loading, user, location]);
+    if (!loading && user) setLocation("/home");
+  }, [loading, user]);
 
-  return null;
+  if (loading || user) return null;
+  return <WaitlistLanding />;
 }
 
 // ── Desktop top navigation bar ────────────────────────────────────────────────
@@ -104,7 +112,7 @@ function DesktopNav() {
   const { t } = useTranslation();
 
   const links = [
-    { href: "/",         labelKey: "home"     },
+    { href: "/home",     labelKey: "home"     },
     { href: "/browse",   labelKey: "browse"   },
     { href: "/sell",     labelKey: "sell"     },
     { href: "/messages", labelKey: "messages" },
@@ -115,7 +123,7 @@ function DesktopNav() {
     <header className="hidden md:flex fixed top-0 left-0 right-0 z-[80] h-16 items-center gap-8 px-8 bg-white/95 backdrop-blur-xl border-b border-border/20"
       style={{ boxShadow: "0 2px 16px rgba(124,58,237,0.07)" }}
     >
-      <Link href="/" className="font-black text-xl shrink-0 bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+      <Link href="/home" className="font-black text-xl shrink-0 bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
         Cosmeo
       </Link>
 
@@ -165,6 +173,10 @@ function AppShell() {
   // Auth routes hide everything (desktop nav, bottom nav, floating lang switcher).
   const isAuthRoute = AUTH_ROUTES.some(r => location.startsWith(r));
   const isOnboardingRoute = ONBOARDING_ROUTES.some(r => location.startsWith(r));
+  // "/" is the waitlist landing — a full-screen standalone page for guests.
+  // Authenticated users are redirected to /home immediately, so "/" always
+  // means "unauthenticated" in practice; suppress the app chrome completely.
+  const isWaitlist = location === "/";
 
   // Some non-auth routes also hide the bottom nav (chat, terms).
   const hideBottomNav = isAuthRoute || isOnboardingRoute || HIDE_BOTTOM_NAV_EXTRA.some(r => location.startsWith(r));
@@ -189,16 +201,18 @@ function AppShell() {
 
   return (
     <div className="flex justify-center bg-background min-h-[100dvh] w-full">
-      {/* Desktop nav only for logged-in app pages */}
-      {!isAuthRoute && !isOnboardingRoute && !isStandaloneRoute && <DesktopNav />}
+      {/* Desktop nav — hidden on auth/onboarding/standalone/waitlist routes */}
+      {!isAuthRoute && !isOnboardingRoute && !isStandaloneRoute && !isWaitlist && <DesktopNav />}
 
       <div className={[
         "flex flex-col w-full relative bg-background",
-        !isStandaloneRoute && "max-w-[430px] h-[100dvh] overflow-hidden border-x border-border/30 shadow-2xl",
+        !isStandaloneRoute && !isWaitlist && "max-w-[430px] h-[100dvh] overflow-hidden border-x border-border/30 shadow-2xl",
         // Non-auth app pages: expand + add top padding for the fixed DesktopNav
-        !isAuthRoute && !isOnboardingRoute && !isStandaloneRoute && "md:max-w-none md:h-auto md:min-h-[100dvh] md:overflow-visible md:border-x-0 md:shadow-none md:pt-16",
+        !isAuthRoute && !isOnboardingRoute && !isStandaloneRoute && !isWaitlist && "md:max-w-none md:h-auto md:min-h-[100dvh] md:overflow-visible md:border-x-0 md:shadow-none md:pt-16",
         // Auth + onboarding pages: expand but no top padding (they own their layout)
         (isAuthRoute || isOnboardingRoute) && !isStandaloneRoute && "md:max-w-none md:h-auto md:min-h-[100dvh] md:overflow-visible md:border-x-0 md:shadow-none",
+        // Waitlist landing: full-bleed, no phone frame, no chrome
+        isWaitlist && "w-full h-[100dvh] overflow-hidden md:max-w-none md:border-x-0 md:shadow-none",
         // Standalone pages (own full-bleed layout/header) — no phone frame, no padding at any size
         isStandaloneRoute && "w-full h-auto min-h-[100dvh] overflow-visible",
       ].filter(Boolean).join(" ")}>
@@ -223,7 +237,8 @@ function AppShell() {
           ].filter(Boolean).join(" ")}
         >
           <Switch>
-            <Route path="/" component={Home} />
+            <Route path="/" component={RootRoute} />
+            <Route path="/home" component={Home} />
             <Route path="/browse" component={Browse} />
             <Route path="/item/:id" component={ItemDetail} />
             <Route path="/login" component={Login} />
