@@ -101,9 +101,10 @@ app.use("/api/notifications", notificationsRoutes);
 // Health check
 app.get("/api/health", (req, res) => res.json({ ok: true, ts: new Date().toISOString() }));
 
-// In production, serve the built Vite frontend and handle client-side routing
-if (process.env.NODE_ENV === "production") {
-  const distPath = path.join(__dirname, "../dist");
+// Serve the built Vite frontend whenever dist/ exists (production deployments).
+// Checking for the file is more reliable than NODE_ENV which can be unset.
+const distPath = path.join(__dirname, "../dist");
+if (fs.existsSync(path.join(distPath, "index.html"))) {
   app.use(express.static(distPath));
   app.get("/{*path}", (req, res) => {
     res.sendFile(path.join(distPath, "index.html"));

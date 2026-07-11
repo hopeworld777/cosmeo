@@ -95,6 +95,62 @@ router.post("/register", async (req, res) => {
   }
 });
 
+// POST /api/auth/vip-register — bypasses waitlist for pre-launch testers.
+// Protected by VIP_CODE env var (set it in Replit Secrets).
+// Creates an account with email_verified = true so they can log in immediately.
+router.post("/vip-register", async (req, res) => {
+  const VIP_CODE = process.env.VIP_CODE?.trim();
+  if (!VIP_CODE) {
+    return res.status(503).json({ error: "VIP registration is not currently active." });
+  }
+  const { vipCode, username, email, password, bio } = req.body;
+  if (!vipCode || vipCode.trim() !== VIP_CODE) {
+    return res.status(401).json({ error: "Invalid VIP code." });
+  }
+  if (!username || !email || !password) {
+    return res.status(400).json({ error: "Username, email and password are required." });
+  }
+  if (password.length < 6) {
+    return res.status(400).json({ error: "Password must be at least 6 characters." });
+  }
+  try {
+    const emailCheck = await pool.query(
+      "SELECT id FROM users WHERE email = $1",
+      [email.toLowerCase()]
+    );
+    if (emailCheck.rows.length > 0) {
+      return res.status(409).json({ error: "email_taken" });
+    }
+    const usernameCheck = await pool.query(
+      "SELECT id FROM users WHERE username = $1",
+      [username]
+    );
+    if (usernameCheck.rows.length > 0) {
+      return res.status(409).json({ error: "username_taken" });
+    }
+    const hashedPassword = await bcrypt.hash(password, 12);
+    const result = await pool.query(
+      `INSERT INTO users (username, email, password_hash, bio, email_verified)
+       VALUES ($1, $2, $3, $4, true)
+       RETURNING id, username, email, bio, avatar_url, rating, review_count, sales_count, email_verified, created_at`,
+      [username, email.toLowerCase(), hashedPassword, bio || ""]
+    );
+    const user = result.rows[0];
+    const jwtToken = generateToken(user.id);
+    console.log(`[VIP] New tester account created: ${username} (${email})`);
+    res.status(201).json({ user, token: jwtToken });
+  } catch (err) {
+    if (err.code === "23505" && err.constraint?.includes("email")) {
+      return res.status(409).json({ error: "email_taken" });
+    }
+    if (err.code === "23505" && err.constraint?.includes("username")) {
+      return res.status(409).json({ error: "username_taken" });
+    }
+    console.error("VIP register error:", err);
+    res.status(500).json({ error: "Registration failed." });
+  }
+});
+
 // POST /api/auth/login
 router.post("/login", async (req, res) => {
   const { email, password } = req.body;

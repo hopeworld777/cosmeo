@@ -58,6 +58,25 @@ export async function sendVerificationEmail(to, token) {
   return link;
 }
 
+export async function sendWaitlistConfirmation(to) {
+  await sendEmail({
+    to,
+    subject: "You're on the list for cosmeo! 🌟",
+    text: `You're on the list for cosmeo! 🌟\n\nThanks for signing up! We are currently hand-vetting our first wave of local creators to ensure the marketplace launches with the highest quality gear. We'll send your exclusive access link as soon as a spot opens up!\n\n— The cosmeo team`,
+    html: `
+      <div style="font-family:sans-serif;max-width:480px;margin:0 auto;background:#faf9ff;border-radius:24px;padding:32px;">
+        <h1 style="color:#8b72c8;font-size:28px;margin-bottom:4px;">✨ cosmeo</h1>
+        <p style="color:#6b7280;margin-top:0;">Georgia's cosplay marketplace</p>
+        <hr style="border:none;border-top:1px solid #e5e7eb;margin:24px 0;">
+        <h2 style="color:#111827;font-size:20px;">You're on the list! 🌟</h2>
+        <p style="color:#374151;line-height:1.6;">Thanks for signing up! We are currently hand-vetting our first wave of local creators to ensure the marketplace launches with the highest quality gear.</p>
+        <p style="color:#374151;line-height:1.6;">We'll send your exclusive access link as soon as a spot opens up!</p>
+        <p style="color:#9ca3af;font-size:13px;margin-top:24px;">You're receiving this because you joined the cosmeo waitlist. No spam — ever.</p>
+        <p style="color:#d1d5db;font-size:12px;margin-top:8px;">© cosmeo • Where cosplay culture shops</p>
+      </div>`,
+  });
+}
+
 export async function sendPasswordResetEmail(to, token) {
   const link = `${APP_URL}/reset-password?token=${token}`;
   await sendEmail({

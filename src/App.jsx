@@ -22,6 +22,7 @@ import Chat from "@/pages/Chat";
 import TermsAndSafety from "@/pages/TermsAndSafety";
 import AdminDashboard from "@/pages/AdminDashboard";
 import NewDashboard from "@/pages/NewDashboard";
+import VipRegister from "@/pages/VipRegister";
 import { AuthProvider } from "@/context/AuthContext";
 import { useAuth } from "@/hooks/useAuth";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
@@ -30,7 +31,7 @@ import RestrictedScreen from "@/components/RestrictedScreen";
 import ThemeToggle from "@/components/ThemeToggle";
 
 // Routes that hide everything (login / register / etc.)
-const AUTH_ROUTES = ["/login", "/register", "/forgot-password", "/reset-password", "/verify-email"];
+const AUTH_ROUTES = ["/login", "/register", "/forgot-password", "/reset-password", "/verify-email", "/vip-signup"];
 
 // ── Waitlist gate ─────────────────────────────────────────────────────────────
 // During pre-launch, ONLY these paths are reachable without an admin account.
@@ -48,6 +49,7 @@ const WAITLIST_PUBLIC = [
   "/reset-password",      // needed to complete a password reset
   "/verify-email",        // needed to verify email after registration
   "/terms",
+  "/vip-signup",          // secret tester registration — not linked anywhere public
 ];
 
 // Onboarding gets its own full-screen desktop layout — no DesktopNav, but
@@ -309,6 +311,7 @@ function AppShell() {
             <Route path="/chat/:id"><ProtectedRoute component={Chat} /></Route>
             <Route path="/profile"><ProtectedRoute component={Profile} /></Route>
             <Route path="/wishlist"><ProtectedRoute component={Wishlist} /></Route>
+            <Route path="/vip-signup" component={VipRegister} />
             <Route path="/terms" component={TermsAndSafety} />
             <Route path="/admin"><AdminRoute component={AdminDashboard} /></Route>
             <Route path="/new-dashboard" component={NewDashboard} />

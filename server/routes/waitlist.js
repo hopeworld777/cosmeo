@@ -1,5 +1,6 @@
 import { Router } from "express";
 import pool from "../db.js";
+import { sendWaitlistConfirmation } from "../email.js";
 
 const router = Router();
 
@@ -16,6 +17,10 @@ router.post("/", async (req, res) => {
     await pool.query(
       "INSERT INTO waitlist (email) VALUES ($1)",
       [normalised]
+    );
+    // Fire-and-forget — don't let an email failure block the signup response
+    sendWaitlistConfirmation(normalised).catch(err =>
+      console.error("Waitlist confirmation email error (non-fatal):", err.message)
     );
     res.json({ success: true });
   } catch (err) {
