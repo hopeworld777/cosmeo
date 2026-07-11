@@ -19,9 +19,9 @@ router.post("/", async (req, res) => {
       [normalised]
     );
     // Fire-and-forget — don't let an email failure block the signup response
-    sendWaitlistConfirmation(normalised).catch(err =>
-      console.error("Waitlist confirmation email error (non-fatal):", err.message)
-    );
+    sendWaitlistConfirmation(normalised).catch(err => {
+      console.error("Waitlist confirmation email error (non-fatal):", err.message, err?.cause ?? err);
+    });
     res.json({ success: true });
   } catch (err) {
     // Unique-violation code 23505 means the address is already on the list
