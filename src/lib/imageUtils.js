@@ -13,23 +13,28 @@ const SUPPORTED_TYPES = new Set([
 
 const HEIC_TYPES = new Set(["image/heic", "image/heif"]);
 
-export const MAX_AVATAR_BYTES = 5 * 1024 * 1024; // 5 MB
+export const MAX_AVATAR_BYTES   = 5  * 1024 * 1024; // 5 MB  — for avatars
+export const MAX_LISTING_BYTES  = 10 * 1024 * 1024; // 10 MB — for listing photos
 
 export const FORMAT_ERROR =
-  "Unsupported image format. Please upload a JPG, PNG, WEBP, or GIF image.";
+  "Unsupported image format. Please upload a JPG, PNG, WEBP, AVIF, or GIF image.";
 
 /**
- * Validates and prepares an image file for avatar upload:
- *   - Enforces 5 MB size limit.
+ * Validates and prepares an image file for upload:
+ *   - Enforces the supplied size limit (default 5 MB for avatars).
  *   - Converts HEIC/HEIF (iPhone photos) to JPEG automatically.
  *   - Rejects unsupported formats with a user-friendly message.
  *
- * Returns a File ready to pass to api.upload.avatar(), or throws an Error
+ * Pass `maxBytes` to override the default limit, e.g. MAX_LISTING_BYTES for
+ * listing photos where the server allows up to 10 MB.
+ *
+ * Returns a File ready to pass to api.upload.*(), or throws an Error
  * with a message safe to show directly to the user.
  */
-export async function prepareImageFile(file) {
-  if (file.size > MAX_AVATAR_BYTES) {
-    throw new Error("Image must be smaller than 5 MB.");
+export async function prepareImageFile(file, { maxBytes = MAX_AVATAR_BYTES } = {}) {
+  if (file.size > maxBytes) {
+    const limitMB = Math.round(maxBytes / 1024 / 1024);
+    throw new Error(`Image must be smaller than ${limitMB} MB.`);
   }
 
   const isHeic =

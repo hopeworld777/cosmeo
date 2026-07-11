@@ -44,13 +44,16 @@ const upload = multer({
   storage,
   limits: { fileSize: 10 * 1024 * 1024 }, // 10 MB
   fileFilter: (_req, file, cb) => {
-    const allowed = /jpeg|jpg|png|gif|webp|heic|heif/;
+    const allowed = /jpeg|jpg|png|gif|webp|heic|heif|avif/;
     const extOk  = allowed.test(path.extname(file.originalname).toLowerCase());
-    const mimeOk = allowed.test(file.mimetype);
+    // AVIF files may arrive with mimetype "image/avif" or the legacy
+    // "application/octet-stream" when the OS doesn't know the type, so
+    // also accept octet-stream when the extension is recognised.
+    const mimeOk = allowed.test(file.mimetype) || file.mimetype === "application/octet-stream";
     if (extOk && mimeOk) {
       cb(null, true);
     } else {
-      const err = new Error("Only image files are allowed");
+      const err = new Error("Unsupported format. Please upload a JPG, PNG, WEBP, AVIF, or GIF.");
       err.statusCode = 400;
       cb(err);
     }

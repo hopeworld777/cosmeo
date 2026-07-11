@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { useLocation } from "wouter";
 import { api } from "@/lib/api";
-import { prepareImageFile } from "@/lib/imageUtils";
+import { prepareImageFile, MAX_LISTING_BYTES } from "@/lib/imageUtils";
 import { useAuth } from "@/hooks/useAuth";
 import { useTranslation } from "react-i18next";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
@@ -350,7 +350,9 @@ export default function Sell() {
       // Convert HEIC/HEIF (default iPhone photo format) to JPEG before
       // upload — browsers can't render HEIC in an <img> tag, so skipping
       // this step produces a "successful" upload with a broken thumbnail.
-      const prepared = await Promise.all(files.map(prepareImageFile));
+      const prepared = await Promise.all(
+        files.map((f) => prepareImageFile(f, { maxBytes: MAX_LISTING_BYTES }))
+      );
       const { urls } = await api.upload.multiple(prepared);
       setUploadedImages(prev => prev.map(img => {
         const idx = pending.findIndex(p => p.id === img.id);
@@ -549,7 +551,7 @@ export default function Sell() {
                       </span>
                     )}
                   </p>
-                  <input type="file" multiple accept="image/*" className="hidden" ref={fileInputRef} onChange={handleFileSelect} />
+                  <input type="file" multiple accept="image/jpeg,image/png,image/webp,image/avif,image/gif,image/heic,image/heif" className="hidden" ref={fileInputRef} onChange={handleFileSelect} />
                   <div className="flex gap-3 overflow-x-auto no-scrollbar pb-1">
                     <button
                       type="button"
