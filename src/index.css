@@ -97,3 +97,23 @@
 .pastel-gradient {
   background: linear-gradient(180deg, hsl(260 35% 88% / 0.35) 0%, hsl(60 20% 98% / 0.08) 100%);
 }
+
+/* ── Cosmic hero stars ──────────────────────────────────────────────── */
+@keyframes hero-twinkle {
+  0%, 100% { opacity: 0.12; transform: scale(1); }
+  50%       { opacity: 0.9;  transform: scale(1.5); }
+}
+
+.hero-star {
+  position: absolute;
+  border-radius: 9999px;
+  animation: hero-twinkle 3s ease-in-out infinite;
+}
+
+/* Light mode: very faint violet whisper dots */
+.hero-star-silver { background-color: rgb(139, 92, 246); }
+.hero-star-gold   { background-color: rgb(167, 139, 250); }
+
+/* Dark mode: bright silver + gold sparkles */
+.dark .hero-star-silver { background-color: rgb(203, 213, 225); }
+.dark .hero-star-gold   { background-color: rgb(253, 224, 71); }

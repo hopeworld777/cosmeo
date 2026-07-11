@@ -88,6 +88,62 @@ function SectionHeader({ title, count, onViewAll, t }) {
   );
 }
 
+// ── Cosmic hero background ────────────────────────────────────────────
+const HERO_STARS = [
+  { top: "8%",  left: "5%",   s: 1.5, d: 0.0,  gold: false },
+  { top: "18%", left: "12%",  s: 1.0, d: 1.2,  gold: true  },
+  { top: "6%",  left: "22%",  s: 2.0, d: 0.4,  gold: false },
+  { top: "30%", left: "3%",   s: 1.0, d: 2.1,  gold: false },
+  { top: "45%", left: "7%",   s: 1.5, d: 0.7,  gold: true  },
+  { top: "60%", left: "4%",   s: 1.0, d: 1.6,  gold: false },
+  { top: "75%", left: "14%",  s: 2.0, d: 0.2,  gold: false },
+  { top: "85%", left: "6%",   s: 1.5, d: 1.9,  gold: true  },
+  { top: "92%", left: "18%",  s: 1.0, d: 0.5,  gold: false },
+  { top: "10%", left: "88%",  s: 1.5, d: 0.6,  gold: false },
+  { top: "22%", left: "93%",  s: 1.0, d: 1.1,  gold: true  },
+  { top: "35%", left: "88%",  s: 2.0, d: 0.9,  gold: false },
+  { top: "50%", left: "95%",  s: 1.0, d: 2.3,  gold: false },
+  { top: "65%", left: "90%",  s: 1.5, d: 0.6,  gold: true  },
+  { top: "80%", left: "86%",  s: 1.0, d: 1.4,  gold: false },
+  { top: "90%", left: "92%",  s: 2.0, d: 0.3,  gold: false },
+  { top: "15%", left: "45%",  s: 1.0, d: 1.8,  gold: true  },
+  { top: "5%",  left: "60%",  s: 1.5, d: 0.1,  gold: false },
+  { top: "92%", left: "40%",  s: 1.0, d: 1.5,  gold: false },
+  { top: "88%", left: "55%",  s: 1.5, d: 2.0,  gold: true  },
+  { top: "70%", left: "75%",  s: 1.0, d: 0.8,  gold: false },
+  { top: "40%", left: "78%",  s: 1.5, d: 1.3,  gold: true  },
+  { top: "55%", left: "25%",  s: 1.0, d: 0.4,  gold: false },
+  { top: "20%", left: "72%",  s: 1.5, d: 2.4,  gold: false },
+  { top: "50%", left: "48%",  s: 1.0, d: 1.0,  gold: true  },
+];
+
+function CosmicStars() {
+  return (
+    <div className="absolute inset-0 pointer-events-none overflow-hidden" aria-hidden="true">
+      {/* Glow blobs */}
+      <div className="absolute top-[-30%] left-[-8%] w-[500px] h-[500px] rounded-full opacity-0 dark:opacity-25 bg-[radial-gradient(circle,_#4f46e5_0%,_transparent_70%)] blur-3xl transition-opacity duration-500" />
+      <div className="absolute bottom-[-30%] right-[-8%] w-[420px] h-[420px] rounded-full opacity-0 dark:opacity-20 bg-[radial-gradient(circle,_#7c3aed_0%,_transparent_70%)] blur-3xl transition-opacity duration-500" />
+      {/* Light mode whisper glow */}
+      <div className="absolute top-[5%] right-[15%] w-[280px] h-[280px] rounded-full opacity-40 dark:opacity-0 bg-[radial-gradient(circle,_#c4b5fd_0%,_transparent_70%)] blur-2xl transition-opacity duration-500" />
+      <div className="absolute bottom-[5%] left-[20%] w-[200px] h-[200px] rounded-full opacity-30 dark:opacity-0 bg-[radial-gradient(circle,_#ddd6fe_0%,_transparent_70%)] blur-2xl transition-opacity duration-500" />
+      {/* Stars */}
+      {HERO_STARS.map((star, i) => (
+        <div
+          key={i}
+          className={`hero-star ${star.gold ? "hero-star-gold" : "hero-star-silver"}`}
+          style={{
+            top: star.top,
+            left: star.left,
+            width:  star.s * 2 + "px",
+            height: star.s * 2 + "px",
+            animationDelay: star.d + "s",
+          }}
+        />
+      ))}
+    </div>
+  );
+}
+
 function CommissionComingSoon({ t }) {
   return (
     <motion.div
@@ -245,8 +301,9 @@ export default function Home() {
       </div>
 
       {/* ── Centered hero + search (desktop) ─────────────────────────── */}
-      <div className="hidden md:block bg-gradient-to-br from-violet-50 via-purple-50/60 to-fuchsia-50/40 border-b border-border/20">
-        <div className="px-8 py-14">
+      <div className="hidden md:block relative overflow-hidden border-b border-border/20 bg-gradient-to-br from-[#faf5ff] via-[#f0e6ff] to-[#e9e3fa] dark:from-[#060b1e] dark:via-[#100528] dark:to-[#060f24]">
+        <CosmicStars />
+        <div className="relative z-10 px-8 py-14">
           <div className="flex flex-col items-center justify-center text-center max-w-4xl mx-auto mb-8 w-full">
             <div className="flex items-center gap-2.5 mb-4">
               <div className="h-8 w-8 rounded-xl bg-primary/15 flex items-center justify-center">
@@ -282,7 +339,7 @@ export default function Home() {
                 placeholder={t("searchBrowsePlaceholder")}
                 value={query}
                 onChange={e => setQuery(e.target.value)}
-                className="w-full h-14 pl-12 pr-10 py-3.5 rounded-2xl bg-card card-shadow text-base font-medium placeholder:text-muted-foreground/60 border-none outline-none focus:ring-2 focus:ring-primary/25 transition-shadow"
+                className="w-full h-14 pl-12 pr-10 py-3.5 rounded-2xl text-base font-medium outline-none transition-shadow bg-white border border-border/60 shadow-sm text-foreground placeholder:text-muted-foreground/60 focus:ring-2 focus:ring-primary/25 dark:bg-slate-700/60 dark:backdrop-blur dark:border-slate-600/40 dark:text-white dark:placeholder:text-slate-400 dark:focus:ring-primary/30"
                 data-testid="input-home-search-desktop"
               />
               <AnimatePresence>

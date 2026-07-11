@@ -1,0 +1,20 @@
+Let's upgrade the hero/banner section on the home page ('src/pages/Home.jsx') and fix the Dark Mode inconsistencies for that entire block. Please implement these changes using Tailwind CSS:
+
+1. Transform the Banner Background (Hero Section):
+   - Replace the current plain background (or the old image) with a new, beautiful background that has strong "magical cosmos vibes."
+   - The design must be sleek and "minimalistic" to match our aesthetic—not overwhelming.
+   - For DARK MODE (the default): The background should be a deep, elegant blend of cosmic colors (like dark sapphire blue and rich royal purple) featuring very subtle, twinkling "minimalistic stars" and fine "gold and silver magical sparkles" scattered gently.
+   - For LIGHT MODE: The background must be soft, clean, and ethereal (like pastel cream or faint lavender) but still retain a whisper of those minimalistic cosmic elements so it feels magical in light mode, too.
+
+2. Fix the Dark Mode Banner Display:
+   - Crucially, when I switch to Dark Mode, this entire hero banner block must *NOT* turn solid white! It is currently broken and jarring.
+   - Ensure that the entire hero container respects the 'dark:' utility class and applies the correct, dark cosmos background design when the theme is toggled.
+
+3. Enhance the Search and Text Styling:
+   - Fix Text Visibility: Ensure all hero text ("Cosmeo," "Georgia's Cosplay Marketplace," etc.) is perfectly crisp and legible in both modes (e.g., bright white text on the dark cosmos background).
+   - Redesign the Search Bar:
+     - Keep the search bar UI minimalistic and very visible.
+     - DARK MODE Search: Let's style the search bar with a "lighter dark" color (like a semi-transparent slate grey or a subtle muted lavender) that contrasts cleanly against the main cosmic background.
+     - LIGHT MODE Search: Let's style the search bar as "crisp white" with a subtle border for clear definition.
+
+Please implement these visual and architectural fixes and let me know once the new magical cosmos banner is live and the Dark Mode styling issues are resolved!
