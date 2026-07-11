@@ -2,20 +2,38 @@ import { Router } from "express";
 import multer from "multer";
 import path from "path";
 import crypto from "crypto";
+import fs from "fs";
+import { fileURLToPath } from "url";
 import { requireAuth } from "../middleware/auth.js";
-import { uploadToR2, streamFromR2, r2 } from "../r2.js";
 
-const memStorage = multer.memoryStorage();
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
+// Absolute path to the uploads directory at the project root.
+// Express serves this directory statically at /uploads (see server/index.js),
+// and Vite proxies /uploads/* to the backend, so a URL like
+// "/uploads/filename.jpg" works in both dev (Vite proxy) and prod (Express static).
+const UPLOADS_DIR = path.resolve(__dirname, "../../uploads");
+fs.mkdirSync(UPLOADS_DIR, { recursive: true });
+
+// Write files directly to disk — flat filenames, no subdirectory nesting.
+const diskStorage = multer.diskStorage({
+  destination: (_req, _file, cb) => cb(null, UPLOADS_DIR),
+  filename:    (_req, file, cb) => {
+    const ext  = path.extname(file.originalname).toLowerCase() || ".jpg";
+    const rand = crypto.randomBytes(12).toString("hex");
+    cb(null, `${Date.now()}-${rand}${ext}`);
+  },
+});
 
 const upload = multer({
-  storage: memStorage,
+  storage: diskStorage,
   limits: { fileSize: 10 * 1024 * 1024 }, // 10 MB
   fileFilter: (_req, file, cb) => {
-    // Includes heic/heif since that's the default photo format on iPhones —
-    // rejecting it here used to throw synchronously and produce an HTML
-    // error page instead of JSON, which silently broke uploads client-side.
+    // Allow common image formats including HEIC/HEIF (default iPhone format).
     const allowed = /jpeg|jpg|png|gif|webp|heic|heif/;
-    if (allowed.test(path.extname(file.originalname).toLowerCase()) && allowed.test(file.mimetype)) {
+    const extOk   = allowed.test(path.extname(file.originalname).toLowerCase());
+    const mimeOk  = allowed.test(file.mimetype);
+    if (extOk && mimeOk) {
       cb(null, true);
     } else {
       const err = new Error("Only image files are allowed");
@@ -25,10 +43,7 @@ const upload = multer({
   },
 });
 
-// Wraps a multer middleware so file-filter/size errors thrown during parsing
-// (which multer surfaces via next(err), not a normal throw) return JSON
-// instead of falling through to Express's default HTML error page — the
-// frontend always expects `res.json()` to succeed.
+// Wraps multer so file-filter/size errors return JSON instead of an HTML page.
 function handleUpload(middleware) {
   return (req, res, next) => {
     middleware(req, res, (err) => {
@@ -41,41 +56,20 @@ function handleUpload(middleware) {
   };
 }
 
-function makeKey(file) {
-  const ext  = path.extname(file.originalname).toLowerCase() || ".jpg";
-  const rand = crypto.randomBytes(12).toString("hex");
-  return `uploads/${Date.now()}-${rand}${ext}`;
-}
-
 const router = Router();
 
-// POST /api/upload  — single image
-router.post("/", requireAuth, handleUpload(upload.single("image")), async (req, res) => {
+// POST /api/upload — single image
+router.post("/", requireAuth, handleUpload(upload.single("image")), (req, res) => {
   if (!req.file) return res.status(400).json({ error: "No file uploaded" });
-  try {
-    const key = makeKey(req.file);
-    const url = await uploadToR2(req.file.buffer, key, req.file.mimetype);
-    res.json({ url });
-  } catch (err) {
-    console.error("Upload error:", err.message);
-    res.status(500).json({ error: "Upload failed" });
-  }
+  res.json({ url: `/uploads/${req.file.filename}` });
 });
 
-// POST /api/upload/multiple  — up to 5 images
-router.post("/multiple", requireAuth, handleUpload(upload.array("images", 5)), async (req, res) => {
+// POST /api/upload/multiple — up to 5 images
+router.post("/multiple", requireAuth, handleUpload(upload.array("images", 5)), (req, res) => {
   if (!req.files || req.files.length === 0) {
     return res.status(400).json({ error: "No files uploaded" });
   }
-  try {
-    const urls = await Promise.all(
-      req.files.map(f => uploadToR2(f.buffer, makeKey(f), f.mimetype))
-    );
-    res.json({ urls });
-  } catch (err) {
-    console.error("Upload error:", err.message);
-    res.status(500).json({ error: "Upload failed" });
-  }
+  res.json({ urls: req.files.map(f => `/uploads/${f.filename}`) });
 });
 
 export default router;
