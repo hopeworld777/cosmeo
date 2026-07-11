@@ -264,7 +264,7 @@
   "makeAChange": "Make a change above to enable saving",
   "usernameMin": "Must be at least 2 characters",
   "usernameMax": "Must be 30 characters or fewer",
-  "usernamePattern": "Letters, numbers and underscores only",
+  "usernamePattern": "Letters, numbers, underscores, and dots only",
   "bioMax": "Keep it under 200 characters",
   "profileUpdated": "Profile updated!",
   "changesSavedDesc": "Your changes have been saved successfully.",

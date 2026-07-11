@@ -59,7 +59,7 @@ export default function Settings() {
       .string()
       .min(2, t("usernameMin"))
       .max(30, t("usernameMax"))
-      .regex(/^[a-zA-Z0-9_]+$/, t("usernamePattern")),
+      .regex(/^[a-zA-Z0-9_.]+$/, t("usernamePattern")),
     bio: z.string().max(200, t("bioMax")),
     location: z.string(),
   });

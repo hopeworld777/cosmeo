@@ -283,8 +283,8 @@ router.patch("/me", requireAuth, async (req, res) => {
       if (trimmed.length > 30) {
         return res.status(400).json({ error: "Username must be 30 characters or fewer" });
       }
-      if (!/^[a-zA-Z0-9_]+$/.test(trimmed)) {
-        return res.status(400).json({ error: "Username may only contain letters, numbers and underscores" });
+      if (!/^[a-zA-Z0-9_.]+$/.test(trimmed)) {
+        return res.status(400).json({ error: "Username may only contain letters, numbers, underscores, and dots" });
       }
       const conflict = await pool.query(
         "SELECT id FROM users WHERE username = $1 AND id != $2",
