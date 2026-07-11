@@ -114,7 +114,7 @@ export default function Onboarding() {
   return (
     <>
       {/* ── MOBILE layout ── hidden on md+ ── */}
-      <div className={`md:hidden flex flex-col h-full bg-gradient-to-br ${slide.gradient} transition-all duration-700`}>
+      <div className={`md:hidden flex flex-col h-full bg-gradient-to-br ${slide.gradient} dark:bg-background dark:[background-image:none] transition-all duration-700`}>
         <div className="flex items-center justify-between px-6 pt-12">
           <button
             onClick={skip}
@@ -136,7 +136,7 @@ export default function Onboarding() {
               className="flex flex-col items-center text-center"
             >
               <div
-                className={`w-32 h-32 rounded-[2.5rem] ${slide.iconBg} flex items-center justify-center mb-8 shadow-xl`}
+                className={`w-32 h-32 rounded-[2.5rem] ${slide.iconBg} dark:bg-muted flex items-center justify-center mb-8 shadow-xl`}
                 style={{ boxShadow: `0 16px 48px ${slide.accent}22` }}
               >
                 <Icon className={`h-16 w-16 ${slide.iconColor}`} strokeWidth={1.5} />
@@ -289,7 +289,7 @@ export default function Onboarding() {
         </div>
 
         {/* ── RIGHT: clean CTA panel ── */}
-        <div className="relative flex flex-col items-center justify-center bg-white px-10 py-12 border-l border-gray-100">
+        <div className="relative flex flex-col items-center justify-center bg-background px-10 py-12 border-l border-border">
           {/* Language switcher */}
           <div className="absolute top-8 right-8">
             <LanguageSwitcher />
@@ -318,7 +318,7 @@ export default function Onboarding() {
                   style={{
                     background: i === page
                       ? `linear-gradient(90deg, ${slide.desktopFrom}, ${slide.desktopTo})`
-                      : "#e5e7eb",
+                      : "hsl(var(--border))",
                   }}
                   aria-label={t(s.titleKey)}
                 />
