@@ -166,7 +166,7 @@ function DesktopNav() {
       style={{ boxShadow: "0 2px 16px rgba(124,58,237,0.07)" }}
     >
       <Link href="/home" className="flex items-center gap-2 shrink-0">
-        <img src="/logo.png" alt="" className="h-9 w-9 object-contain shrink-0" />
+        <img src="/logo.png" alt="" className="h-11 w-11 object-contain shrink-0" />
         <span className="font-black text-xl bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
           cosmeo
         </span>
