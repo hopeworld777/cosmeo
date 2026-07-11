@@ -2,3 +2,4 @@
 - [Database schema](kosmeo-schema.md) — Schema was missing entirely; created server/schema.sql with all 9 tables; must run it manually against the DB if reset
 - [SQL template literal placeholders](kosmeo-sql-placeholders.md) — dynamic LIMIT/OFFSET/ILIKE placeholders in template-literal queries can silently lose their leading `$`; grep for `${idx}` vs `$${idx}` after editing paginated queries
 - [R2 credential/SDK gotchas](kosmeo-r2-uploads.md) — env secrets can carry stray whitespace breaking SigV4 signing; newer aws-sdk client-s3 also needs checksum opts disabled for R2 compatibility
+- [Dark/light theme system](kosmeo-dark-theme.md) — CSS-var `.dark` class architecture, toggle mounted in 3 headers, WaitlistLanding intentionally hardcoded dark and exempt from toggle

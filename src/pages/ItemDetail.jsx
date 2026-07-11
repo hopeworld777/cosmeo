@@ -53,7 +53,7 @@ function SellerReviewModal({ listing, onClose, onSubmitted }) {
       <motion.div key="sr-sheet"
         initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }}
         transition={{ type: "spring", damping: 30, stiffness: 300 }}
-        className="fixed bottom-0 left-0 right-0 max-w-[430px] mx-auto z-50 bg-white rounded-t-[2rem] shadow-2xl"
+        className="fixed bottom-0 left-0 right-0 max-w-[430px] mx-auto z-50 bg-card rounded-t-[2rem] shadow-2xl"
       >
         <div className="flex justify-center pt-3 pb-1">
           <div className="w-10 h-1.5 rounded-full bg-muted-foreground/20" />
@@ -341,7 +341,7 @@ export default function ItemDetail() {
         {/* Back */}
         <div
           onClick={() => window.history.back()}
-          className="flex h-11 w-11 shrink-0 cursor-pointer items-center justify-center rounded-full bg-white card-shadow text-foreground hover:scale-105 transition-transform"
+          className="flex h-11 w-11 shrink-0 cursor-pointer items-center justify-center rounded-full bg-card card-shadow text-foreground hover:scale-105 transition-transform"
         >
           <ChevronLeft className="h-6 w-6" />
         </div>
@@ -349,12 +349,12 @@ export default function ItemDetail() {
         {/* Right-side controls — lang switcher then listing actions, all in one row */}
         <div className="flex items-center gap-2">
           <LanguageSwitcher />
-          <div onClick={handleShare} className="flex h-11 w-11 shrink-0 cursor-pointer items-center justify-center rounded-full bg-white card-shadow text-foreground hover:scale-105 transition-transform">
+          <div onClick={handleShare} className="flex h-11 w-11 shrink-0 cursor-pointer items-center justify-center rounded-full bg-card card-shadow text-foreground hover:scale-105 transition-transform">
             <Share2 className="h-5 w-5" />
           </div>
           <div
             onClick={handleLikeToggle}
-            className="flex h-11 w-11 shrink-0 cursor-pointer items-center justify-center rounded-full bg-white card-shadow text-muted-foreground hover:scale-105 transition-transform"
+            className="flex h-11 w-11 shrink-0 cursor-pointer items-center justify-center rounded-full bg-card card-shadow text-muted-foreground hover:scale-105 transition-transform"
           >
             <Heart className={`h-6 w-6 transition-colors ${isLiked ? "fill-secondary text-secondary" : ""}`} />
           </div>
@@ -374,7 +374,7 @@ export default function ItemDetail() {
       </div>
 
       {/* Content Card */}
-      <div className="relative -mt-12 rounded-t-[2.5rem] bg-white p-6 pb-8 shadow-[0_-8px_30px_rgba(0,0,0,0.06)] flex-1">
+      <div className="relative -mt-12 rounded-t-[2.5rem] bg-card p-6 pb-8 shadow-[0_-8px_30px_rgba(0,0,0,0.06)] flex-1">
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
 
           {/* Badges */}
@@ -537,7 +537,7 @@ export default function ItemDetail() {
       </div>
 
       {/* Bottom Sticky Action Bar */}
-      <div className="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-xl shadow-[0_-8px_30px_rgba(0,0,0,0.06)] z-40 flex gap-3 max-w-[430px] md:max-w-3xl mx-auto rounded-t-3xl px-4 pt-4" style={{ paddingBottom: "max(1rem, env(safe-area-inset-bottom))" }}>
+      <div className="fixed bottom-0 left-0 right-0 bg-card/95 backdrop-blur-xl shadow-[0_-8px_30px_rgba(0,0,0,0.06)] z-40 flex gap-3 max-w-[430px] md:max-w-3xl mx-auto rounded-t-3xl px-4 pt-4" style={{ paddingBottom: "max(1rem, env(safe-area-inset-bottom))" }}>
         {isOwner ? (
           /* ── Owner actions ── */
           <>
@@ -614,7 +614,7 @@ export default function ItemDetail() {
               animate={{ y: 0 }}
               exit={{ y: "100%" }}
               transition={{ type: "spring", damping: 30, stiffness: 300 }}
-              className="fixed bottom-0 left-0 right-0 max-w-[430px] mx-auto z-50 bg-white rounded-t-[2rem] shadow-2xl flex flex-col"
+              className="fixed bottom-0 left-0 right-0 max-w-[430px] mx-auto z-50 bg-card rounded-t-[2rem] shadow-2xl flex flex-col"
               style={{ maxHeight: "75vh" }}
             >
               <div className="flex justify-center pt-3 pb-1">

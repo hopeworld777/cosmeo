@@ -160,7 +160,7 @@ export default function Register() {
           <p className="text-muted-foreground text-sm mb-1 font-medium">{t("verificationSentTo")}</p>
           <p className="text-primary font-bold text-sm mb-8">{email}</p>
 
-          <div className="bg-white rounded-3xl p-6 card-shadow md:bg-muted/30 space-y-4 text-left mb-6">
+          <div className="bg-card rounded-3xl p-6 card-shadow md:bg-muted/30 space-y-4 text-left mb-6">
             <div className="flex items-start gap-3">
               <CheckCircle2 className="h-5 w-5 text-green-500 shrink-0 mt-0.5" />
               <p className="text-sm text-muted-foreground font-medium">{t("verifyClickLink")}</p>
@@ -221,7 +221,7 @@ export default function Register() {
         </div>
 
         {/* Form card */}
-        <div className="bg-white rounded-3xl p-6 card-shadow md:bg-transparent md:p-0 md:shadow-none md:rounded-none space-y-4">
+        <div className="bg-card rounded-3xl p-6 card-shadow md:bg-transparent md:p-0 md:shadow-none md:rounded-none space-y-4">
           <form onSubmit={handleSubmit} noValidate className="space-y-4">
 
             {/* ── Profile photo ─────────────────────────────────────── */}

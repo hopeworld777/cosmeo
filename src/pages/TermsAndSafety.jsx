@@ -75,7 +75,7 @@ function Rule({ n, children }) {
 
 function Tip({ icon: Icon, children }) {
   return (
-    <div className="flex items-start gap-2 bg-white/70 rounded-xl px-3 py-2.5 border border-border/60">
+    <div className="flex items-start gap-2 bg-card/70 rounded-xl px-3 py-2.5 border border-border/60">
       <Icon size={14} className="shrink-0 mt-0.5 text-primary/70" />
       <p className="text-[13px] leading-snug text-foreground/80">{children}</p>
     </div>
@@ -84,7 +84,7 @@ function Tip({ icon: Icon, children }) {
 
 function Hub({ city, place }) {
   return (
-    <div className="flex items-center gap-2 rounded-xl bg-white/70 border border-border/60 px-3 py-2">
+    <div className="flex items-center gap-2 rounded-xl bg-card/70 border border-border/60 px-3 py-2">
       <MapPin size={13} className="text-primary shrink-0" />
       <div>
         <p className="text-[12px] font-bold text-foreground/90">{city}</p>

@@ -109,7 +109,7 @@ export default function Sell() {
     return (
       <div className="flex flex-col h-full bg-background">
         {/* Header */}
-        <div className="sticky top-0 z-30 bg-white/95 backdrop-blur-xl pt-11 pb-4 px-5 border-b border-border/20">
+        <div className="sticky top-0 z-30 bg-card/95 backdrop-blur-xl pt-11 pb-4 px-5 border-b border-border/20">
           <div className="flex items-center gap-3">
             <button
               onClick={() => { window.history.length > 1 ? window.history.back() : setLocation("/"); }}
@@ -213,7 +213,7 @@ export default function Sell() {
     return (
       <div className="flex flex-col h-full bg-background">
         {/* Header */}
-        <div className="sticky top-0 z-30 bg-white/95 backdrop-blur-xl pt-11 pb-4 px-5 border-b border-border/20">
+        <div className="sticky top-0 z-30 bg-card/95 backdrop-blur-xl pt-11 pb-4 px-5 border-b border-border/20">
           <div className="flex items-center gap-3">
             <button
               onClick={() => { window.history.length > 1 ? window.history.back() : setLocation("/"); }}
@@ -438,7 +438,7 @@ export default function Sell() {
           initial={{ scale: 0.7, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           transition={{ type: "spring", stiffness: 200, damping: 18 }}
-          className="flex flex-col items-center bg-white p-10 rounded-[3rem] card-shadow w-full max-w-[340px]"
+          className="flex flex-col items-center bg-card p-10 rounded-[3rem] card-shadow w-full max-w-[340px]"
         >
           <div className="relative">
             <div className="rounded-full bg-green-100 p-6 mb-5">
@@ -467,7 +467,7 @@ export default function Sell() {
     <div className="flex flex-col h-full bg-background">
 
       {/* ── Sticky header ──────────────────────────────────────────────── */}
-      <div className="sticky top-0 z-30 bg-white/95 backdrop-blur-xl pt-11 pb-4 px-5 border-b border-border/20">
+      <div className="sticky top-0 z-30 bg-card/95 backdrop-blur-xl pt-11 pb-4 px-5 border-b border-border/20">
         <div className="md:max-w-2xl md:mx-auto">
         <div className="flex items-center gap-3 mb-4">
           <button
@@ -524,7 +524,7 @@ export default function Sell() {
                         whileTap={{ scale: 0.95 }}
                         onClick={() => setCategory(cat.id)}
                         className={`flex flex-col items-center justify-center gap-2 p-5 rounded-3xl border-2 transition-all duration-150 ${
-                          active ? `${cat.activeBg} ${cat.border} shadow-md` : "bg-white border-border/40 hover:border-border"
+                          active ? `${cat.activeBg} ${cat.border} shadow-md` : "bg-card border-border/40 hover:border-border"
                         } ${cat.id === "crafting" ? "col-span-2" : ""}`}
                       >
                         <cat.icon className="h-7 w-7" />
@@ -603,7 +603,7 @@ export default function Sell() {
                   </p>
                 </div>
 
-                <div className="bg-white rounded-3xl card-shadow p-5 flex flex-col gap-5">
+                <div className="bg-card rounded-3xl card-shadow p-5 flex flex-col gap-5">
                   {/* Title */}
                   <div className="flex flex-col gap-1.5">
                     <label className="text-sm font-bold text-foreground">{t("titleLabel")} <span className="text-red-400">*</span></label>
@@ -679,7 +679,7 @@ export default function Sell() {
                 </div>
 
                 {/* For Sale */}
-                <div className={`bg-white rounded-3xl card-shadow p-5 flex flex-col gap-4 transition-all ${isForSale ? "ring-2 ring-primary/30" : ""}`}>
+                <div className={`bg-card rounded-3xl card-shadow p-5 flex flex-col gap-4 transition-all ${isForSale ? "ring-2 ring-primary/30" : ""}`}>
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="font-extrabold text-foreground">{t("forSale")}</p>
@@ -702,7 +702,7 @@ export default function Sell() {
                 </div>
 
                 {/* For Rent */}
-                <div className={`bg-white rounded-3xl card-shadow p-5 flex flex-col gap-4 transition-all ${isForRent ? "ring-2 ring-secondary/30" : ""}`}>
+                <div className={`bg-card rounded-3xl card-shadow p-5 flex flex-col gap-4 transition-all ${isForRent ? "ring-2 ring-secondary/30" : ""}`}>
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="font-extrabold text-foreground">{t("forRent")}</p>
@@ -727,7 +727,7 @@ export default function Sell() {
 
                 {/* Preview card */}
                 {(getValues("title") || category) && (
-                  <div className="bg-white rounded-3xl card-shadow p-4">
+                  <div className="bg-card rounded-3xl card-shadow p-4">
                     <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-3">{t("preview")}</p>
                     <div className="flex items-center gap-3">
                       <div className="h-14 w-14 rounded-2xl overflow-hidden bg-muted shrink-0">

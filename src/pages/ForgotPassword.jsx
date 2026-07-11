@@ -89,7 +89,7 @@ export default function ForgotPassword() {
         </div>
 
         {/* Form card */}
-        <div className="bg-white rounded-3xl p-6 card-shadow md:bg-transparent md:p-0 md:shadow-none md:rounded-none">
+        <div className="bg-card rounded-3xl p-6 card-shadow md:bg-transparent md:p-0 md:shadow-none md:rounded-none">
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="forgot-email" className="font-bold">{t("email")}</Label>

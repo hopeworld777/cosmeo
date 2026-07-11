@@ -5,6 +5,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useTranslation } from "react-i18next";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
 import NotificationBell from "@/components/NotificationBell";
+import ThemeToggle from "@/components/ThemeToggle";
 
 /**
  * Shared right-side header group: language pill + avatar/settings button.
@@ -21,6 +22,7 @@ export default function HeaderControls({ variant = "avatar" }) {
   return (
     <div className="md:hidden flex items-center gap-2 shrink-0">
       <LanguageSwitcher />
+      <ThemeToggle />
       <NotificationBell />
 
       {variant === "settings" ? (

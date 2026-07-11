@@ -5,6 +5,7 @@ import { useState, useEffect, useLayoutEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import { ChevronLeft, MapPin, Check, Camera } from "lucide-react";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
+import ThemeToggle from "@/components/ThemeToggle";
 import { useLocation, Link } from "wouter";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
@@ -171,7 +172,7 @@ export default function Settings() {
     <div className="flex flex-col min-h-full bg-background pb-28">
 
       {/* ── Sticky header ─────────────────────────────────────────── */}
-      <div className="sticky top-0 z-30 bg-white/95 backdrop-blur-xl pt-12 pb-4 px-5 border-b border-border/20">
+      <div className="sticky top-0 z-30 bg-card/95 backdrop-blur-xl pt-12 pb-4 px-5 border-b border-border/20">
         <div className="flex items-center gap-3 md:max-w-2xl md:mx-auto">
           <button
             type="button"
@@ -182,6 +183,7 @@ export default function Settings() {
           </button>
           <h1 className="text-2xl font-black text-foreground flex-1">{t("editProfile")}</h1>
           <LanguageSwitcher />
+          <ThemeToggle />
         </div>
       </div>
 
@@ -230,7 +232,7 @@ export default function Settings() {
         </div>
 
         {/* ── Profile info card ─────────────────────────────────────── */}
-        <div className="bg-white rounded-3xl card-shadow p-5 flex flex-col gap-5">
+        <div className="bg-card rounded-3xl card-shadow p-5 flex flex-col gap-5">
           <h2 className="text-sm font-extrabold text-muted-foreground uppercase tracking-wider">
             {t("profileInfo")}
           </h2>
@@ -313,7 +315,7 @@ export default function Settings() {
         </div>
 
         {/* ── Account info card (read-only) ─────────────────────────── */}
-        <div className="bg-white rounded-3xl card-shadow p-5 flex flex-col gap-1">
+        <div className="bg-card rounded-3xl card-shadow p-5 flex flex-col gap-1">
           <h2 className="text-sm font-extrabold text-muted-foreground uppercase tracking-wider mb-3">
             {t("accountSection")}
           </h2>
@@ -339,7 +341,7 @@ export default function Settings() {
         </div>
 
         {/* ── Stats card (read-only) ────────────────────────────────── */}
-        <div className="bg-white rounded-3xl card-shadow p-5">
+        <div className="bg-card rounded-3xl card-shadow p-5">
           <h2 className="text-sm font-extrabold text-muted-foreground uppercase tracking-wider mb-4">
             {t("statsSection")}
           </h2>

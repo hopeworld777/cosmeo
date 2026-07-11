@@ -33,7 +33,7 @@ export default function Wishlist() {
     <div className="flex flex-col h-full bg-background">
 
       {/* Sticky Header */}
-      <div className="sticky top-0 z-30 bg-white/95 backdrop-blur-xl pt-12 pb-4 px-4 rounded-b-3xl shadow-sm">
+      <div className="sticky top-0 z-30 bg-card/95 backdrop-blur-xl pt-12 pb-4 px-4 rounded-b-3xl shadow-sm">
         <div className="flex items-center gap-3 mb-4">
           <button
             type="button"

@@ -27,6 +27,7 @@ import { useAuth } from "@/hooks/useAuth";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
 import NotificationBell from "@/components/NotificationBell";
 import RestrictedScreen from "@/components/RestrictedScreen";
+import ThemeToggle from "@/components/ThemeToggle";
 
 // Routes that hide everything (login / register / etc.)
 const AUTH_ROUTES = ["/login", "/register", "/forgot-password", "/reset-password", "/verify-email"];
@@ -171,7 +172,7 @@ function DesktopNav() {
   ];
 
   return (
-    <header className="hidden md:flex fixed top-0 left-0 right-0 z-[80] h-16 items-center gap-8 px-8 bg-white/95 backdrop-blur-xl border-b border-border/20"
+    <header className="hidden md:flex fixed top-0 left-0 right-0 z-[80] h-16 items-center gap-8 px-8 bg-card/95 backdrop-blur-xl border-b border-border/20"
       style={{ boxShadow: "0 2px 16px rgba(124,58,237,0.07)" }}
     >
       <Link href="/home" className="font-black text-xl shrink-0 bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
@@ -198,6 +199,7 @@ function DesktopNav() {
 
       <div className="flex items-center gap-4 shrink-0">
         <LanguageSwitcher />
+        <ThemeToggle />
         {user && <NotificationBell />}
         {user ? (
           <Link href="/profile">

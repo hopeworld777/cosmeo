@@ -12,6 +12,19 @@
     <meta name="theme-color" content="#8b5cf6" />
     <title>Cosmeo — Cosplay Marketplace</title>
     <meta name="description" content="Buy and rent cosplay costumes, props, and accessories from the community." />
+    <script>
+      // Applied before first paint so there's no flash of the wrong theme.
+      // Default is "dark" (Dark Cosmos) — matches src/context/ThemeContext.jsx.
+      (function () {
+        try {
+          var stored = localStorage.getItem("kosmeo_theme");
+          var isDark = stored ? stored === "dark" : true;
+          document.documentElement.classList.toggle("dark", isDark);
+        } catch (e) {
+          document.documentElement.classList.add("dark");
+        }
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

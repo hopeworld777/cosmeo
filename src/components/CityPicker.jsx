@@ -64,7 +64,7 @@ export default function CityPicker({ value, onChange, showAny = false }) {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -6, scale: 0.98 }}
             transition={{ duration: 0.15, ease: "easeOut" }}
-            className="absolute left-0 right-0 top-[calc(100%+6px)] z-50 bg-white rounded-2xl shadow-[0_8px_32px_rgba(0,0,0,0.12)] border border-border/30 overflow-hidden"
+            className="absolute left-0 right-0 top-[calc(100%+6px)] z-50 bg-card rounded-2xl shadow-[0_8px_32px_rgba(0,0,0,0.12)] border border-border/30 overflow-hidden"
           >
             <div className="px-3 pt-3 pb-2">
               <div className="relative">

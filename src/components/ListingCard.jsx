@@ -56,7 +56,7 @@ export default function ListingCard({ listing, index = 0 }) {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.22, delay: index * 0.035 }}
-      className="group relative flex flex-col overflow-hidden rounded-3xl bg-white card-shadow cursor-pointer hover:-translate-y-1 hover:shadow-xl transition-all duration-200"
+      className="group relative flex flex-col overflow-hidden rounded-3xl bg-card card-shadow cursor-pointer hover:-translate-y-1 hover:shadow-xl transition-all duration-200"
       data-testid={`listing-card-${listing.id}`}
     >
       <Link href={`/item/${listing.id}`}>
@@ -80,7 +80,7 @@ export default function ListingCard({ listing, index = 0 }) {
             <button
               data-testid={`btn-like-${listing.id}`}
               onClick={toggleLike}
-              className="absolute right-2.5 top-2.5 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-white/90 backdrop-blur-sm shadow-md text-muted-foreground transition-all hover:scale-110 active:scale-95"
+              className="absolute right-2.5 top-2.5 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-card/90 backdrop-blur-sm shadow-md text-muted-foreground transition-all hover:scale-110 active:scale-95"
             >
               <Heart className={cn("h-4 w-4 transition-colors", isLiked ? "fill-secondary text-secondary" : "")} />
             </button>

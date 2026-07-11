@@ -69,7 +69,7 @@ function WithdrawModal({ balance, onClose, onSuccess }) {
         animate={{ y: 0 }}
         exit={{ y: "100%" }}
         transition={{ type: "spring", damping: 30, stiffness: 300 }}
-        className="fixed bottom-0 left-0 right-0 max-w-[430px] mx-auto z-50 bg-white rounded-t-[2rem] shadow-2xl"
+        className="fixed bottom-0 left-0 right-0 max-w-[430px] mx-auto z-50 bg-card rounded-t-[2rem] shadow-2xl"
       >
         <div className="flex justify-center pt-3 pb-1">
           <div className="w-10 h-1.5 rounded-full bg-muted-foreground/20" />
@@ -249,9 +249,9 @@ function BuyerReviewModal({ listing, onClose, onSubmitted }) {
       <motion.div key="rv-sheet"
         initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }}
         transition={{ type: "spring", damping: 30, stiffness: 300 }}
-        className="fixed bottom-0 left-0 right-0 max-w-[430px] mx-auto z-50 bg-white rounded-t-[2rem] shadow-2xl max-h-[90vh] overflow-y-auto"
+        className="fixed bottom-0 left-0 right-0 max-w-[430px] mx-auto z-50 bg-card rounded-t-[2rem] shadow-2xl max-h-[90vh] overflow-y-auto"
       >
-        <div className="flex justify-center pt-3 pb-1 sticky top-0 bg-white z-10">
+        <div className="flex justify-center pt-3 pb-1 sticky top-0 bg-card z-10">
           <div className="w-10 h-1.5 rounded-full bg-muted-foreground/20" />
         </div>
         <div className="px-6 pt-2 pb-10">
@@ -554,7 +554,7 @@ function MyListings({ onSold }) {
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, x: -30 }}
                     transition={{ delay: i * 0.04 }}
-                    className="flex items-center gap-3 bg-white rounded-3xl card-shadow p-3 cursor-pointer hover:shadow-md transition-shadow"
+                    className="flex items-center gap-3 bg-card rounded-3xl card-shadow p-3 cursor-pointer hover:shadow-md transition-shadow"
                     onClick={() => setLocation(`/item/${l.id}`)}
                   >
                     <div className="h-18 w-16 shrink-0 rounded-2xl overflow-hidden bg-muted">
@@ -624,7 +624,7 @@ function MyListings({ onSold }) {
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, x: -30 }}
                     transition={{ delay: i * 0.04 }}
-                    className="flex items-center gap-3 bg-white rounded-3xl card-shadow p-3 cursor-pointer hover:shadow-md transition-shadow active:scale-[0.98]"
+                    className="flex items-center gap-3 bg-card rounded-3xl card-shadow p-3 cursor-pointer hover:shadow-md transition-shadow active:scale-[0.98]"
                     onClick={() => setLocation(`/item/${l.id}`)}
                   >
                     <div className="h-18 w-16 shrink-0 rounded-2xl overflow-hidden bg-muted relative">
@@ -747,7 +747,7 @@ export default function Profile() {
     <div className="flex flex-col min-h-full bg-background pb-28">
 
       {/* Header */}
-      <div className="sticky top-0 z-30 bg-white/95 backdrop-blur-xl pt-14 pb-4 px-5 flex justify-between items-center border-b border-border/20">
+      <div className="sticky top-0 z-30 bg-card/95 backdrop-blur-xl pt-14 pb-4 px-5 flex justify-between items-center border-b border-border/20">
         <h1 className="text-3xl font-black text-foreground">{t("profile")}</h1>
         <HeaderControls variant="settings" />
       </div>
@@ -758,7 +758,7 @@ export default function Profile() {
         <motion.div
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-white rounded-[2.5rem] overflow-hidden card-shadow"
+          className="bg-card rounded-[2.5rem] overflow-hidden card-shadow"
         >
           <div className="h-28 pastel-gradient" />
           <div className="flex flex-col items-center -mt-14 pb-6 px-6">
@@ -879,7 +879,7 @@ export default function Profile() {
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.12 }}
-          className="bg-white rounded-[2rem] card-shadow overflow-hidden"
+          className="bg-card rounded-[2rem] card-shadow overflow-hidden"
         >
           <button
             onClick={() => setListingsOpen((v) => !v)}
@@ -932,7 +932,7 @@ export default function Profile() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.14 + idx * 0.05 }}
                 onClick={() => item.href && setLocation(item.href)}
-                className={`flex items-center justify-between p-5 bg-white rounded-3xl card-shadow transition-all ${
+                className={`flex items-center justify-between p-5 bg-card rounded-3xl card-shadow transition-all ${
                   item.href ? "cursor-pointer hover:-translate-y-0.5 active:scale-[0.98]" : "opacity-60 cursor-default"
                 }`}
               >
@@ -970,7 +970,7 @@ export default function Profile() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.24 + idx * 0.05 }}
                 onClick={() => setLocation(item.href)}
-                className="flex items-center justify-between p-5 bg-white rounded-3xl card-shadow cursor-pointer hover:-translate-y-0.5 active:scale-[0.98] transition-all"
+                className="flex items-center justify-between p-5 bg-card rounded-3xl card-shadow cursor-pointer hover:-translate-y-0.5 active:scale-[0.98] transition-all"
               >
                 <div className="flex items-center gap-4">
                   <div className={`h-12 w-12 rounded-2xl flex items-center justify-center ${item.color}`}>
@@ -999,7 +999,7 @@ export default function Profile() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.34 + idx * 0.05 }}
                 onClick={() => setLocation(item.href)}
-                className="flex items-center justify-between p-5 bg-white rounded-3xl card-shadow cursor-pointer hover:-translate-y-0.5 active:scale-[0.98] transition-all"
+                className="flex items-center justify-between p-5 bg-card rounded-3xl card-shadow cursor-pointer hover:-translate-y-0.5 active:scale-[0.98] transition-all"
               >
                 <div className="flex items-center gap-4">
                   <div className={`h-12 w-12 rounded-2xl flex items-center justify-center ${item.color}`}>

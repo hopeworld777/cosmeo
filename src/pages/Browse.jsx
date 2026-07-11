@@ -96,7 +96,7 @@ export default function Browse() {
     <div className="flex flex-col min-h-full bg-background">
 
       {/* ── Sticky header ──────────────────────────────────────────── */}
-      <div className="sticky top-0 z-30 bg-white/95 backdrop-blur-xl pb-4 pt-12 md:pt-6 px-4 rounded-b-3xl" style={{ boxShadow: "0 4px 20px rgba(139,92,246,0.05)" }}>
+      <div className="sticky top-0 z-30 bg-card/95 backdrop-blur-xl pb-4 pt-12 md:pt-6 px-4 rounded-b-3xl" style={{ boxShadow: "0 4px 20px rgba(139,92,246,0.05)" }}>
         <div className="md:max-w-6xl md:mx-auto">
         <div className="flex items-center justify-between mb-5">
           <h1 className="text-3xl font-black text-foreground">{t("discover")}</h1>
@@ -110,13 +110,13 @@ export default function Browse() {
               placeholder={t("searchBrowsePlaceholder")}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="pl-12 bg-white card-shadow border-none h-14 rounded-2xl text-base font-medium placeholder:text-muted-foreground/70"
+              className="pl-12 bg-card card-shadow border-none h-14 rounded-2xl text-base font-medium placeholder:text-muted-foreground/70"
               data-testid="input-browse-search"
             />
           </div>
           <button
             onClick={() => setFilterOpen(true)}
-            className={`relative h-14 w-14 rounded-2xl shrink-0 bg-white card-shadow border-none flex items-center justify-center transition-colors ${
+            className={`relative h-14 w-14 rounded-2xl shrink-0 bg-card card-shadow border-none flex items-center justify-center transition-colors ${
               hasActiveAdvFilters ? "text-white bg-primary shadow-[0_4px_14px_rgba(124,58,237,0.35)]" : "text-primary"
             }`}
             data-testid="btn-filters"
@@ -139,7 +139,7 @@ export default function Browse() {
               className={`cursor-pointer px-5 py-2.5 text-sm font-bold whitespace-nowrap rounded-full transition-all ${
                 activeFilter === f.id
                   ? "bg-primary text-white shadow-md border-none"
-                  : "bg-white card-shadow border-none text-foreground hover:bg-muted"
+                  : "bg-card card-shadow border-none text-foreground hover:bg-muted"
               }`}
               onClick={() => setActiveFilter(f.id)}
               data-testid={`filter-${f.id}`}
@@ -192,7 +192,7 @@ export default function Browse() {
               animate={{ y: 0 }}
               exit={{ y: "100%" }}
               transition={{ type: "spring", damping: 30, stiffness: 300 }}
-              className="fixed bottom-0 left-0 right-0 max-w-[430px] md:max-w-lg mx-auto z-50 bg-white rounded-t-[2rem] shadow-2xl"
+              className="fixed bottom-0 left-0 right-0 max-w-[430px] md:max-w-lg mx-auto z-50 bg-card rounded-t-[2rem] shadow-2xl"
             >
               {/* Handle */}
               <div className="flex justify-center pt-3 pb-1">

@@ -17,7 +17,7 @@ export default function LanguageSwitcher() {
   }
 
   return (
-    <div className="relative flex items-center bg-white/80 backdrop-blur-md rounded-full p-[3px] shadow-[0_1px_8px_rgba(124,58,237,0.12)] border border-border/30 shrink-0">
+    <div className="relative flex items-center bg-card/80 backdrop-blur-md rounded-full p-[3px] shadow-[0_1px_8px_rgba(124,58,237,0.12)] border border-border/30 shrink-0">
       <motion.div
         className="absolute inset-y-[3px] rounded-full bg-gradient-to-r from-primary to-secondary pointer-events-none z-0"
         animate={

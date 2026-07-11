@@ -354,7 +354,7 @@ export default function Chat() {
     <div className="flex flex-col h-full bg-background md:max-w-3xl md:mx-auto md:w-full">
 
       {/* Header */}
-      <div className="sticky top-0 z-30 bg-white/95 backdrop-blur-xl border-b border-border/20 px-4 pt-12 pb-4">
+      <div className="sticky top-0 z-30 bg-card/95 backdrop-blur-xl border-b border-border/20 px-4 pt-12 pb-4">
         <div className="flex items-center gap-3">
           <button
             onClick={() => setLocation("/messages")}
@@ -464,7 +464,7 @@ export default function Chat() {
       <SafetyBanner warnKey={activeWarn} onDismiss={dismissWarn} />
 
       {/* Input Bar */}
-      <div className="sticky bottom-0 bg-white/95 backdrop-blur-xl border-t border-border/20 px-4 pb-8 pt-3">
+      <div className="sticky bottom-0 bg-card/95 backdrop-blur-xl border-t border-border/20 px-4 pb-8 pt-3">
         <div className="flex items-center gap-2 bg-muted rounded-2xl px-4 py-2.5">
           <input
             ref={inputRef}

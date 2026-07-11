@@ -59,7 +59,7 @@ function SkeletonGrid({ count = 8 }) {
   return (
     <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
       {Array.from({ length: count }).map((_, i) => (
-        <div key={i} className="rounded-3xl overflow-hidden bg-white card-shadow">
+        <div key={i} className="rounded-3xl overflow-hidden bg-card card-shadow">
           <div className="aspect-[3/4] bg-muted animate-pulse" />
           <div className="p-3.5 space-y-2.5">
             <div className="h-3.5 bg-muted rounded-full animate-pulse w-2/5" />
@@ -203,7 +203,7 @@ export default function Home() {
     <div className="flex flex-col min-h-full bg-background">
 
       {/* ── Sticky header ────────────────────────────────────────────── */}
-      <div className="sticky top-0 z-40 bg-white/97 backdrop-blur-xl border-b border-border/20">
+      <div className="sticky top-0 z-40 bg-card/97 backdrop-blur-xl border-b border-border/20">
 
         {/* Brand row — mobile only */}
         <div className="md:hidden flex items-center justify-between px-5 pt-11 pb-3">
@@ -268,7 +268,7 @@ export default function Home() {
               </Link>
               <button
                 onClick={scrollToListings}
-                className="h-11 px-7 rounded-2xl bg-white border border-border text-sm font-bold text-foreground hover:bg-muted/50 transition-all"
+                className="h-11 px-7 rounded-2xl bg-card border border-border text-sm font-bold text-foreground hover:bg-muted/50 transition-all"
               >
                 {t("heroExplore", "Explore listings")}
               </button>
@@ -282,7 +282,7 @@ export default function Home() {
                 placeholder={t("searchBrowsePlaceholder")}
                 value={query}
                 onChange={e => setQuery(e.target.value)}
-                className="w-full h-14 pl-12 pr-10 py-3.5 rounded-2xl bg-white card-shadow text-base font-medium placeholder:text-muted-foreground/60 border-none outline-none focus:ring-2 focus:ring-primary/25 transition-shadow"
+                className="w-full h-14 pl-12 pr-10 py-3.5 rounded-2xl bg-card card-shadow text-base font-medium placeholder:text-muted-foreground/60 border-none outline-none focus:ring-2 focus:ring-primary/25 transition-shadow"
                 data-testid="input-home-search-desktop"
               />
               <AnimatePresence>
@@ -333,7 +333,7 @@ export default function Home() {
               );
             })}
           </div>
-          <div className="hidden md:flex md:flex-col gap-2 md:bg-white md:card-shadow md:rounded-2xl md:p-3">
+          <div className="hidden md:flex md:flex-col gap-2 md:bg-card md:card-shadow md:rounded-2xl md:p-3">
             <span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest px-2 pb-1">
               {t("browseLabel", "Browse")}
             </span>
@@ -379,7 +379,7 @@ export default function Home() {
               );
             })}
           </div>
-          <div className="hidden md:flex md:flex-col gap-2 md:bg-white md:card-shadow md:rounded-2xl md:p-3">
+          <div className="hidden md:flex md:flex-col gap-2 md:bg-card md:card-shadow md:rounded-2xl md:p-3">
             <span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest px-2 pb-1">
               {t("categories")}
             </span>

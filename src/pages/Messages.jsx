@@ -51,7 +51,7 @@ export default function Messages() {
     <div className="flex flex-col h-full bg-background">
 
       {/* Sticky Header */}
-      <div className="sticky top-0 z-30 bg-white/95 backdrop-blur-xl pt-12 pb-5 px-4 rounded-b-3xl shadow-sm">
+      <div className="sticky top-0 z-30 bg-card/95 backdrop-blur-xl pt-12 pb-5 px-4 rounded-b-3xl shadow-sm">
         <div className="md:max-w-4xl md:mx-auto">
           <div className="flex items-center justify-between mb-5">
             <h1 className="text-3xl font-black text-foreground">Inbox</h1>
@@ -109,7 +109,7 @@ export default function Messages() {
                 transition={{ delay: i * 0.04 }}
               >
                 <Link href={`/chat/${chat.id}`}>
-                  <div className="flex items-center gap-4 p-4 bg-white rounded-3xl card-shadow hover:-translate-y-0.5 transition-transform cursor-pointer group active:scale-[0.98]">
+                  <div className="flex items-center gap-4 p-4 bg-card rounded-3xl card-shadow hover:-translate-y-0.5 transition-transform cursor-pointer group active:scale-[0.98]">
 
                     {/* Avatar with unread dot */}
                     <div className="relative shrink-0">
