@@ -36,13 +36,27 @@ const AUTH_ROUTES = ["/login", "/register", "/forgot-password", "/reset-password
 // Secret admin login path — not linked anywhere public.
 export const ADMIN_LOGIN_PATH = "/secret-admin-gate";
 
+// Routes that unauthenticated visitors may access without being bounced to the
+// waitlist landing. Authenticated users (any role) bypass this list entirely.
+const WAITLIST_PUBLIC = [
+  "/",
+  ADMIN_LOGIN_PATH,
+  "/forgot-password",
+  "/reset-password",
+  "/verify-email",
+  "/terms",
+  "/vip-signup",   // invite link — lets new users register with VIP code
+  "/login",
+  "/register",
+];
+
 // Onboarding gets its own full-screen desktop layout — no DesktopNav, but
 // the shell should expand to full width on desktop (not stay phone-framed).
 const ONBOARDING_ROUTES = ["/onboarding"];
 
 // Routes that additionally hide the bottom tab bar (but NOT the desktop nav)
 // "/" is the waitlist landing — it's a standalone pre-auth page, no bottom nav.
-const HIDE_BOTTOM_NAV_EXTRA = ["/chat/", "/terms", "/item/", "/admin"];
+const HIDE_BOTTOM_NAV_EXTRA = ["/chat/", "/terms", "/item/", "/admin", "/"];
 
 // Routes where the page renders its own LanguageSwitcher — suppress the
 // floating mobile one to avoid duplication.  Prefix-matched for /settings/*.
@@ -66,7 +80,8 @@ function ProtectedRoute({ component: Component, ...rest }) {
   const [, setLocation] = useLocation();
 
   useEffect(() => {
-    if (!loading && !user) setLocation("/login");
+    // Unauthenticated → back to waitlist landing, not /login
+    if (!loading && !user) setLocation("/");
   }, [loading, user]);
 
   if (loading) return null;
@@ -96,18 +111,39 @@ function OnboardingGuard() {
   return null;
 }
 
-// "/" — redirect logged-in users to /home; send guests to /browse.
+// Gate: redirect unauthenticated visitors away from private routes.
+// Authenticated users (any role, including VIP registrants) pass through freely.
+// Only the secret admin path is used for admin login — /login and /register
+// are also whitelisted so invite-link recipients can sign up.
+function WaitlistGate() {
+  const { user, loading } = useAuth();
+  const [location, setLocation] = useLocation();
+
+  useEffect(() => {
+    if (loading || user) return; // logged-in users always pass through
+    const isPublic = WAITLIST_PUBLIC.some(r =>
+      r === "/" ? location === "/" : location === r || location.startsWith(r + "/")
+    );
+    if (!isPublic) setLocation("/");
+  }, [loading, user, location]);
+
+  return null;
+}
+
+// "/" — show WaitlistLanding immediately (prevents blank-screen flash).
+// If auth resolves to a logged-in user, redirect them to /home right away.
 function RootRoute() {
   const { user, loading } = useAuth();
   const [, setLocation] = useLocation();
 
   useEffect(() => {
-    if (loading) return;
-    setLocation(user ? "/home" : "/browse");
+    if (!loading && user) setLocation("/home");
   }, [loading, user]);
 
-  // Show nothing while redirect resolves — avoids a flash of wrong content.
-  return null;
+  // Render the landing page straight away — it's the correct default for guests.
+  // The effect above will redirect if a session is found, with no visible flash.
+  if (user) return null;
+  return <WaitlistLanding />;
 }
 
 // ── Desktop top navigation bar ────────────────────────────────────────────────
@@ -180,7 +216,8 @@ function AppShell() {
   // Auth routes hide everything (desktop nav, bottom nav, floating lang switcher).
   const isAuthRoute = AUTH_ROUTES.some(r => location.startsWith(r));
   const isOnboardingRoute = ONBOARDING_ROUTES.some(r => location.startsWith(r));
-  const isWaitlist = false; // waitlist pre-launch mode disabled — site is live
+  // "/" is the waitlist landing — full-bleed standalone page, suppress all chrome.
+  const isWaitlist = location === "/";
 
   // Some non-auth routes also hide the bottom nav (chat, terms).
   const hideBottomNav = isAuthRoute || isOnboardingRoute || HIDE_BOTTOM_NAV_EXTRA.some(r => location.startsWith(r));
@@ -221,6 +258,7 @@ function AppShell() {
         isStandaloneRoute && "w-full h-auto min-h-[100dvh] overflow-visible",
       ].filter(Boolean).join(" ")}>
         <OnboardingGuard />
+        <WaitlistGate />
 
         {showMobileFloatLang && (
           <div className="md:hidden absolute top-3 right-3 z-[60] min-h-[44px] flex items-center">
