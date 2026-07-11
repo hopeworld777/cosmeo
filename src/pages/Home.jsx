@@ -2,7 +2,7 @@ import { useState, useMemo, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Search, X, ShieldCheck, Sparkles,
-  LayoutGrid, Shirt, Wand2, Footprints, Shield, Scissors, Gem, Archive,
+  LayoutGrid, Shirt, Waves, Footprints, Shield, Scissors, Gem, Archive,
   ShoppingCart, CalendarDays, Paintbrush, ChevronRight,
 } from "lucide-react";
 import { Link, useLocation } from "wouter";
@@ -51,7 +51,7 @@ const MARKETPLACE_TYPES = [
 const CATEGORIES = [
   { id: "all",          icon: LayoutGrid, tKey: "all",          text: "text-violet-700",   activeBg: "bg-primary/10 text-primary ring-1 ring-primary/30" },
   { id: "outfit",       icon: Shirt,      tKey: "outfits",      text: "text-pink-700",     activeBg: "bg-pink-50 text-pink-700 ring-1 ring-pink-200" },
-  { id: "wig",          icon: Wand2,      tKey: "wigs",         text: "text-purple-700",   activeBg: "bg-purple-50 text-purple-700 ring-1 ring-purple-200" },
+  { id: "wig",          icon: Waves,      tKey: "wigs",         text: "text-purple-700",   activeBg: "bg-purple-50 text-purple-700 ring-1 ring-purple-200" },
   { id: "shoes",        icon: Footprints, tKey: "shoes",        text: "text-sky-700",      activeBg: "bg-sky-50 text-sky-700 ring-1 ring-sky-200" },
   { id: "prop",         icon: Shield,     tKey: "props",        text: "text-emerald-700",  activeBg: "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200" },
   { id: "accessories",  icon: Gem,        tKey: "accessories",  text: "text-fuchsia-700",  activeBg: "bg-fuchsia-50 text-fuchsia-700 ring-1 ring-fuchsia-200" },

@@ -3,7 +3,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { motion, AnimatePresence } from "framer-motion";
-import { Camera, CheckCircle2, ChevronLeft, ArrowRight, X, Sparkles, MailCheck, RefreshCw, Shirt, Wand2, Footprints, Shield, Scissors, MapPin, AlertTriangle } from "lucide-react";
+import { Camera, CheckCircle2, ChevronLeft, ArrowRight, X, Sparkles, MailCheck, RefreshCw, Shirt, Waves, Footprints, Shield, Scissors, MapPin, AlertTriangle } from "lucide-react";
 import CityPicker from "@/components/CityPicker";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -17,7 +17,7 @@ import LanguageSwitcher from "@/components/LanguageSwitcher";
 
 const CATEGORIES = [
   { id: "outfit",   icon: Shirt,      labelKey: "cat_outfit",   bg: "bg-pink-50",   border: "border-pink-300",   text: "text-pink-600",   activeBg: "bg-pink-100"   },
-  { id: "wig",      icon: Wand2,      labelKey: "cat_wig",      bg: "bg-violet-50", border: "border-violet-200", text: "text-violet-500", activeBg: "bg-violet-100" },
+  { id: "wig",      icon: Waves,      labelKey: "cat_wig",      bg: "bg-violet-50", border: "border-violet-200", text: "text-violet-500", activeBg: "bg-violet-100" },
   { id: "shoes",    icon: Footprints, labelKey: "cat_shoes",    bg: "bg-amber-50",  border: "border-amber-300",  text: "text-amber-600",  activeBg: "bg-amber-100"  },
   { id: "prop",     icon: Shield,     labelKey: "cat_prop",     bg: "bg-blue-50",   border: "border-blue-300",   text: "text-blue-600",   activeBg: "bg-blue-100"   },
   { id: "crafting", icon: Scissors,   labelKey: "cat_crafting", bg: "bg-green-50",  border: "border-green-300",  text: "text-green-600",  activeBg: "bg-green-100"  },
