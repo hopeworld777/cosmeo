@@ -22,25 +22,28 @@ const MARKETPLACE_TYPES = [
     id: "buy",
     icon: ShoppingCart,
     tKey: "typeBuy",
-    activeClass: "bg-primary text-white shadow-[0_4px_14px_rgba(124,58,237,0.3)]",
-    desktopActiveClass: "bg-primary text-white shadow-md shadow-primary/20",
-    iconBg: "bg-violet-50 text-violet-600",
+    // Soft lavender pastel — deep violet text for contrast
+    activeClass: "bg-[#EDE8FF] text-[#3B1F8C] shadow-[0_4px_14px_rgba(59,31,140,0.12)]",
+    desktopActiveClass: "bg-[#EDE8FF] text-[#3B1F8C] shadow-sm",
+    iconBg: "bg-[#E2DAF8] text-[#3B1F8C]",
   },
   {
     id: "rent",
     icon: CalendarDays,
     tKey: "typeRent",
-    activeClass: "bg-sky-500 text-white shadow-[0_4px_14px_rgba(14,165,233,0.3)]",
-    desktopActiveClass: "bg-sky-500 text-white shadow-md shadow-sky-500/20",
-    iconBg: "bg-sky-50 text-sky-600",
+    // Matcha mint pastel — dark sage text (#2E4F32) for contrast
+    activeClass: "bg-[#E8F5E9] text-[#2E4F32] shadow-[0_4px_14px_rgba(46,79,50,0.12)]",
+    desktopActiveClass: "bg-[#E8F5E9] text-[#2E4F32] shadow-sm",
+    iconBg: "bg-[#D6EDD8] text-[#2E4F32]",
   },
   {
     id: "commission",
     icon: Paintbrush,
     tKey: "typeCommission",
-    activeClass: "bg-amber-500 text-white shadow-[0_4px_14px_rgba(245,158,11,0.3)]",
-    desktopActiveClass: "bg-amber-500 text-white shadow-md shadow-amber-500/20",
-    iconBg: "bg-amber-50 text-amber-600",
+    // Apricot cream pastel — burnt terracotta text (#6E4A3C) for contrast
+    activeClass: "bg-[#FFF2E6] text-[#6E4A3C] shadow-[0_4px_14px_rgba(110,74,60,0.12)]",
+    desktopActiveClass: "bg-[#FFF2E6] text-[#6E4A3C] shadow-sm",
+    iconBg: "bg-[#FFE4CC] text-[#6E4A3C]",
   },
 ];
 
