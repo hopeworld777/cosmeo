@@ -327,7 +327,16 @@ export default function Sell() {
     // Show an instant local preview (URL.createObjectURL) for each picked
     // file before the network upload even starts, so the UI never looks
     // unresponsive while the upload is in flight or if it's slow.
+    //
+    // Each pending item gets a stable `id` (via crypto.randomUUID) so that
+    // the success/error handlers can match items by identity rather than by
+    // object-reference. Reference-based matching (indexOf/includes) breaks
+    // when React's reconciliation produces a new `prev` array whose items are
+    // no longer the exact same references as those in `pending`, causing every
+    // match to return -1 and leaving thumbnails with a revoked blob URL and
+    // no real URL — i.e. a blank image that disappears after upload.
     const pending = files.map(file => ({
+      id: crypto.randomUUID(),
       previewUrl: URL.createObjectURL(file),
       url: null,
       status: "uploading",
@@ -339,15 +348,15 @@ export default function Sell() {
     try {
       const { urls } = await api.upload.multiple(files);
       setUploadedImages(prev => prev.map(img => {
-        const i = pending.indexOf(img);
-        if (i === -1) return img;
+        const idx = pending.findIndex(p => p.id === img.id);
+        if (idx === -1) return img;
         URL.revokeObjectURL(img.previewUrl);
-        return { ...img, url: urls[i], status: "done" };
+        return { ...img, url: urls[idx], status: "done" };
       }));
     } catch (err) {
       // Drop the failed placeholders and free their object URLs so a failed
       // upload doesn't leave a permanently-spinning/broken thumbnail behind.
-      setUploadedImages(prev => prev.filter(img => !pending.includes(img)));
+      setUploadedImages(prev => prev.filter(img => !pending.some(p => p.id === img.id)));
       pending.forEach(p => URL.revokeObjectURL(p.previewUrl));
       toast({ title: t("uploadFailed"), description: err.message, variant: "destructive" });
     } finally {
@@ -554,7 +563,7 @@ export default function Sell() {
                       )}
                     </button>
                     {uploadedImages.map((img, i) => (
-                      <div key={i} className="relative h-28 w-28 shrink-0 rounded-2xl overflow-hidden bg-muted">
+                      <div key={img.id ?? i} className="relative h-28 w-28 shrink-0 rounded-2xl overflow-hidden bg-muted">
                         <img src={img.url || img.previewUrl} alt="" className="w-full h-full object-cover" />
                         {img.status === "uploading" && (
                           <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
