@@ -29,6 +29,7 @@ import LanguageSwitcher from "@/components/LanguageSwitcher";
 import NotificationBell from "@/components/NotificationBell";
 import RestrictedScreen from "@/components/RestrictedScreen";
 import ThemeToggle from "@/components/ThemeToggle";
+import BrandMark from "@/components/BrandMark";
 
 // Routes that hide everything (login / register / etc.)
 const AUTH_ROUTES = ["/login", "/register", "/forgot-password", "/reset-password", "/verify-email", "/vip-signup"];
@@ -166,7 +167,7 @@ function DesktopNav() {
       style={{ boxShadow: "0 2px 16px rgba(124,58,237,0.07)" }}
     >
       <Link href="/home" className="flex items-center gap-2 shrink-0">
-        <img src="/logo-v2.png" alt="" className="h-11 w-11 object-contain shrink-0" />
+        <BrandMark className="h-12 w-12 shrink-0" />
         <span className="font-black text-xl bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
           cosmeo
         </span>
