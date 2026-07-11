@@ -11,6 +11,7 @@ import { api } from "@/lib/api";
 import { useAuth } from "@/hooks/useAuth";
 import { useTranslation } from "react-i18next";
 import HeaderControls from "@/components/HeaderControls";
+import BrandMark from "@/components/BrandMark";
 
 const CAT_MAP = {
   costume: "outfit", armor: "prop", wig: "wig",
@@ -267,7 +268,7 @@ export default function Home() {
         {/* Brand row — mobile only */}
         <div className="md:hidden flex items-center justify-between px-5 pt-11 pb-3">
           <div className="flex items-center gap-2">
-            <img src="/logo-v2.png" alt="" className="h-12 w-12 object-contain shrink-0" />
+            <BrandMark className="h-14 w-14 shrink-0" />
             <div>
               <h1 className="text-3xl font-black tracking-tight text-foreground leading-none">cosmeo</h1>
               <p className="text-[11px] font-semibold text-muted-foreground mt-0.5 tracking-wide">ქოსფლეი + მეორადი</p>
@@ -312,7 +313,7 @@ export default function Home() {
         <div className="relative z-10 px-8 py-14">
           <div className="flex flex-col items-center justify-center text-center max-w-4xl mx-auto mb-8 w-full">
             <div className="flex items-center gap-2.5 mb-4">
-              <img src="/logo-v2.png" alt="" className="h-9 w-9 object-contain shrink-0" />
+              <BrandMark className="h-10 w-10 shrink-0" />
               <span className="text-sm font-bold text-primary/80 tracking-wide uppercase">cosmeo</span>
             </div>
             <h1 className="text-5xl font-black text-foreground tracking-tight leading-[1.1] mb-4">

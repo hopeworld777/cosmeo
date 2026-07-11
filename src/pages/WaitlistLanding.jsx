@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useTranslation } from "react-i18next";
 import { api } from "@/lib/api";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
+import BrandMark from "@/components/BrandMark";
 
 // ── Particle dots — pure CSS, no JS animation cost ───────────────────────────
 const PARTICLES = [
@@ -86,16 +87,17 @@ export default function WaitlistLanding() {
           initial={{ opacity: 0, y: 28 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-          className="w-full max-w-sm flex flex-col items-center text-center"
+          className="w-full max-w-sm flex flex-col items-center text-center relative isolate"
         >
-          {/* Logo */}
+          {/* Brand watermark — large, translucent, sits behind the hero copy */}
           <motion.div
-            initial={{ scale: 0.8, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            transition={{ delay: 0.1, duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-            className="mb-6"
+            initial={{ scale: 0.94, opacity: 0 }}
+            animate={{ scale: 1, opacity: 0.15 }}
+            transition={{ delay: 0.1, duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+            className="pointer-events-none absolute inset-0 z-[-1] flex items-center justify-center"
+            aria-hidden="true"
           >
-            <img src="/waitlist-logo-v2.png" alt="Cosmeo" className="h-[144px] w-[144px] object-contain" />
+            <BrandMark className="h-auto w-[160%] max-w-none sm:w-[130%]" />
           </motion.div>
 
           {/* Badge pill */}
