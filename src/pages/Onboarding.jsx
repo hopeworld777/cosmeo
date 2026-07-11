@@ -216,7 +216,7 @@ export default function Onboarding() {
 
           {/* Brand wordmark */}
           <div className="relative z-10 px-12 pt-10">
-            <span className="text-white font-black text-2xl tracking-tight drop-shadow-sm">Cosmeo</span>
+            <span className="text-white font-black text-2xl tracking-tight drop-shadow-sm">cosmeo</span>
           </div>
 
           {/* Slide content — centered */}

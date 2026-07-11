@@ -267,7 +267,7 @@ export default function Home() {
         {/* Brand row — mobile only */}
         <div className="md:hidden flex items-center justify-between px-5 pt-11 pb-3">
           <div>
-            <h1 className="text-3xl font-black tracking-tight text-foreground leading-none">Cosmeo</h1>
+            <h1 className="text-3xl font-black tracking-tight text-foreground leading-none">cosmeo</h1>
             <p className="text-[11px] font-semibold text-muted-foreground mt-0.5 tracking-wide">ქოსფლეი + მეორადი</p>
           </div>
           <HeaderControls />
@@ -312,7 +312,7 @@ export default function Home() {
               <div className="h-8 w-8 rounded-xl bg-primary/15 flex items-center justify-center">
                 <Sparkles className="h-4 w-4 text-primary" />
               </div>
-              <span className="text-sm font-bold text-primary/80 tracking-wide uppercase">Cosmeo</span>
+              <span className="text-sm font-bold text-primary/80 tracking-wide uppercase">cosmeo</span>
             </div>
             <h1 className="text-5xl font-black text-foreground tracking-tight leading-[1.1] mb-4">
               {t("heroHeadline")}

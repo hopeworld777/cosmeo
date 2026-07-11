@@ -210,7 +210,7 @@ export default function Register() {
         <div className="md:hidden text-center mb-10">
           <div className="flex items-center justify-center gap-2 mb-3">
             <Sparkles className="h-7 w-7 text-primary" />
-            <h1 className="text-3xl font-black text-foreground">Cosmeo</h1>
+            <h1 className="text-3xl font-black text-foreground">cosmeo</h1>
           </div>
           <p className="text-muted-foreground text-sm font-medium">{t("authTitle")}</p>
         </div>
