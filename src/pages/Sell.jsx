@@ -354,10 +354,17 @@ export default function Sell() {
         files.map((f) => prepareImageFile(f, { maxBytes: MAX_LISTING_BYTES }))
       );
       const { urls } = await api.upload.multiple(prepared);
+      // Important: do NOT call URL.revokeObjectURL inside a state updater.
+      // React Strict Mode invokes state updaters twice — the first invocation
+      // revokes the blob URL, then React discards that result and runs the
+      // updater a second time with the original state. If React commits a
+      // render between those two invocations (possible in concurrent mode),
+      // the <img> src would briefly point at a revoked blob, producing a
+      // broken image. Keep the blob alive here; the onLoad handler on each
+      // <img> revokes it once the server URL has confirmed it loaded.
       setUploadedImages(prev => prev.map(img => {
         const idx = pending.findIndex(p => p.id === img.id);
         if (idx === -1) return img;
-        URL.revokeObjectURL(img.previewUrl);
         return { ...img, url: urls[idx], status: "done" };
       }));
     } catch (err) {
@@ -371,13 +378,24 @@ export default function Sell() {
     }
   };
 
-  const removeImage = (idx) => setUploadedImages(prev => {
-    const removed = prev[idx];
-    if (removed?.previewUrl) URL.revokeObjectURL(removed.previewUrl);
-    const next = prev.filter((_, i) => i !== idx);
-    if (next.length === 0) setImageError(true);
-    return next;
-  });
+  const removeImage = (idx) => {
+    // Pull the item out first so we can revoke its blob URL outside the
+    // state updater (revoking inside updaters is unsafe: Strict Mode calls
+    // them twice, which means the blob gets revoked on the first invocation
+    // and the component may briefly render a broken src before the second
+    // invocation produces the final committed state).
+    setUploadedImages(prev => {
+      const removed = prev[idx];
+      // Schedule revocation after this synchronous block; by then React has
+      // committed the state and the element is unmounted / src has changed.
+      if (removed?.previewUrl) {
+        setTimeout(() => URL.revokeObjectURL(removed.previewUrl), 0);
+      }
+      const next = prev.filter((_, i) => i !== idx);
+      if (next.length === 0) setImageError(true);
+      return next;
+    });
+  };
 
   const onPublish = async () => {
     // Guard: images are required — this should normally be caught on step 0,
@@ -575,7 +593,25 @@ export default function Sell() {
                           src={img.url || img.previewUrl}
                           alt=""
                           className="w-full h-full object-cover"
-                          onError={(e) => console.log("Image failed to load:", e.target.src)}
+                          onLoad={(e) => {
+                            // Server URL loaded successfully — safe to release the blob now.
+                            // Only revoke after the server URL has confirmed it loaded
+                            // (not when the initial blob preview fires onLoad).
+                            if (img.previewUrl && !e.target.src.startsWith("blob:")) {
+                              URL.revokeObjectURL(img.previewUrl);
+                            }
+                          }}
+                          onError={(e) => {
+                            // Server URL failed (e.g. autoscale where the file is on a
+                            // different instance, or ephemeral disk). Fall back to the
+                            // local blob preview which is still alive in this session.
+                            if (img.previewUrl && e.target.src !== img.previewUrl) {
+                              console.warn("[sell] server URL failed, falling back to blob preview:", e.target.src);
+                              e.target.src = img.previewUrl;
+                            } else {
+                              console.error("[sell] image failed to load:", e.target.src);
+                            }
+                          }}
                         />
                         {img.status === "uploading" && (
                           <div className="absolute inset-0 bg-black/30 flex items-center justify-center">

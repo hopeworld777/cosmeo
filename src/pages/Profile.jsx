@@ -559,12 +559,19 @@ function MyListings({ onSold }) {
                   >
                     <div className="h-18 w-16 shrink-0 rounded-2xl overflow-hidden bg-muted">
                       {img ? (
-                        <img src={img} alt={l.title} className="h-full w-full object-cover" />
-                      ) : (
-                        <div className="h-full w-full bg-gradient-to-br from-primary/10 to-secondary/10 flex items-center justify-center">
-                          <Tag className="h-5 w-5 text-primary/40" />
-                        </div>
-                      )}
+                        <img
+                          src={img}
+                          alt={l.title}
+                          className="h-full w-full object-cover"
+                          onError={(e) => { e.target.style.display = "none"; const ph = e.target.nextElementSibling; if (ph) ph.style.display = "flex"; }}
+                        />
+                      ) : null}
+                      <div
+                        className="h-full w-full bg-gradient-to-br from-primary/10 to-secondary/10 items-center justify-center"
+                        style={{ display: img ? "none" : "flex" }}
+                      >
+                        <Tag className="h-5 w-5 text-primary/40" />
+                      </div>
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="font-extrabold text-sm text-foreground line-clamp-1 leading-tight">{l.title}</p>
@@ -629,12 +636,19 @@ function MyListings({ onSold }) {
                   >
                     <div className="h-18 w-16 shrink-0 rounded-2xl overflow-hidden bg-muted relative">
                       {img ? (
-                        <img src={img} alt={l.title} className="h-full w-full object-cover opacity-80" />
-                      ) : (
-                        <div className="h-full w-full bg-gradient-to-br from-amber-50 to-orange-50 flex items-center justify-center">
-                          <Tag className="h-5 w-5 text-amber-400/60" />
-                        </div>
-                      )}
+                        <img
+                          src={img}
+                          alt={l.title}
+                          className="h-full w-full object-cover opacity-80"
+                          onError={(e) => { e.target.style.display = "none"; const ph = e.target.nextElementSibling; if (ph) ph.style.display = "flex"; }}
+                        />
+                      ) : null}
+                      <div
+                        className="h-full w-full bg-gradient-to-br from-amber-50 to-orange-50 items-center justify-center"
+                        style={{ display: img ? "none" : "flex" }}
+                      >
+                        <Tag className="h-5 w-5 text-amber-400/60" />
+                      </div>
                       <div className="absolute inset-0 bg-black/20 flex items-center justify-center">
                         <span className="text-[9px] font-black text-white bg-black/50 px-1.5 py-0.5 rounded-full tracking-wider">SOLD</span>
                       </div>

@@ -69,12 +69,20 @@ export default function ListingCard({ listing, index = 0 }) {
                 src={imageSrc}
                 alt={listing.title}
                 className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                onError={(e) => {
+                  // Hide the broken img element and show the fallback placeholder instead
+                  e.target.style.display = "none";
+                  const placeholder = e.target.nextElementSibling;
+                  if (placeholder) placeholder.style.display = "flex";
+                }}
               />
-            ) : (
-              <div className="h-full w-full bg-gradient-to-br from-primary/10 to-secondary/10 flex items-center justify-center">
-                <Package className="h-10 w-10 text-primary/20" />
-              </div>
-            )}
+            ) : null}
+            <div
+              className="h-full w-full bg-gradient-to-br from-primary/10 to-secondary/10 items-center justify-center"
+              style={{ display: imageSrc ? "none" : "flex" }}
+            >
+              <Package className="h-10 w-10 text-primary/20" />
+            </div>
 
             {/* Heart */}
             <button

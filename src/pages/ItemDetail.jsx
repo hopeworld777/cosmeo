@@ -364,12 +364,23 @@ export default function ItemDetail() {
       {/* Hero Image */}
       <div className="relative w-full aspect-[3/4] bg-muted">
         {imageSrc ? (
-          <img src={imageSrc} alt={listing.title} className="w-full h-full object-cover" />
-        ) : (
-          <div className="w-full h-full bg-gradient-to-br from-primary/10 to-secondary/10 flex items-center justify-center">
-            <Package className="h-16 w-16 text-muted-foreground/20" />
-          </div>
-        )}
+          <img
+            src={imageSrc}
+            alt={listing.title}
+            className="w-full h-full object-cover"
+            onError={(e) => {
+              e.target.style.display = "none";
+              const placeholder = e.target.nextElementSibling;
+              if (placeholder) placeholder.style.display = "flex";
+            }}
+          />
+        ) : null}
+        <div
+          className="w-full h-full bg-gradient-to-br from-primary/10 to-secondary/10 items-center justify-center"
+          style={{ display: imageSrc ? "none" : "flex" }}
+        >
+          <Package className="h-16 w-16 text-muted-foreground/20" />
+        </div>
         <div className="absolute inset-0 bg-gradient-to-t from-background/50 to-transparent pointer-events-none" />
       </div>
 
