@@ -319,13 +319,36 @@ export default function Sell() {
 
   const handleFileSelect = async (e) => {
     const files = Array.from(e.target.files || []);
+    // Reset the input value so selecting the exact same file again still
+    // fires onChange (the browser won't re-fire change on an unchanged value).
+    e.target.value = "";
     if (!files.length) return;
+
+    // Show an instant local preview (URL.createObjectURL) for each picked
+    // file before the network upload even starts, so the UI never looks
+    // unresponsive while the upload is in flight or if it's slow.
+    const pending = files.map(file => ({
+      previewUrl: URL.createObjectURL(file),
+      url: null,
+      status: "uploading",
+    }));
+    setUploadedImages(prev => [...prev, ...pending]);
+    setImageError(false);
     setUploading(true);
+
     try {
       const { urls } = await api.upload.multiple(files);
-      setUploadedImages(prev => [...prev, ...urls]);
-      setImageError(false);
+      setUploadedImages(prev => prev.map(img => {
+        const i = pending.indexOf(img);
+        if (i === -1) return img;
+        URL.revokeObjectURL(img.previewUrl);
+        return { ...img, url: urls[i], status: "done" };
+      }));
     } catch (err) {
+      // Drop the failed placeholders and free their object URLs so a failed
+      // upload doesn't leave a permanently-spinning/broken thumbnail behind.
+      setUploadedImages(prev => prev.filter(img => !pending.includes(img)));
+      pending.forEach(p => URL.revokeObjectURL(p.previewUrl));
       toast({ title: t("uploadFailed"), description: err.message, variant: "destructive" });
     } finally {
       setUploading(false);
@@ -333,6 +356,8 @@ export default function Sell() {
   };
 
   const removeImage = (idx) => setUploadedImages(prev => {
+    const removed = prev[idx];
+    if (removed?.previewUrl) URL.revokeObjectURL(removed.previewUrl);
     const next = prev.filter((_, i) => i !== idx);
     if (next.length === 0) setImageError(true);
     return next;
@@ -359,8 +384,13 @@ export default function Sell() {
       return;
     }
 
+    if (uploadedImages.some(img => img.status === "uploading")) {
+      toast({ title: "Please wait for photos to finish uploading.", variant: "destructive" });
+      return;
+    }
+
     const { title, description, fandom } = getValues();
-    const images = uploadedImages;
+    const images = uploadedImages.filter(img => img.status === "done").map(img => img.url);
 
     setSubmitting(true);
     try {
@@ -523,9 +553,14 @@ export default function Sell() {
                         <><Camera className="h-6 w-6" /><span className="text-xs font-bold">{t("addPhoto")}</span></>
                       )}
                     </button>
-                    {uploadedImages.map((url, i) => (
+                    {uploadedImages.map((img, i) => (
                       <div key={i} className="relative h-28 w-28 shrink-0 rounded-2xl overflow-hidden bg-muted">
-                        <img src={url} alt="" className="w-full h-full object-cover" />
+                        <img src={img.url || img.previewUrl} alt="" className="w-full h-full object-cover" />
+                        {img.status === "uploading" && (
+                          <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
+                            <span className="h-5 w-5 rounded-full border-2 border-white/40 border-t-white animate-spin" />
+                          </div>
+                        )}
                         <button type="button" onClick={() => removeImage(i)} className="absolute top-1.5 right-1.5 h-6 w-6 rounded-full bg-black/50 flex items-center justify-center">
                           <X className="h-3 w-3 text-white" />
                         </button>
@@ -682,7 +717,7 @@ export default function Sell() {
                     <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-3">{t("preview")}</p>
                     <div className="flex items-center gap-3">
                       <div className="h-14 w-14 rounded-2xl overflow-hidden bg-muted shrink-0">
-                        <img src={uploadedImages[0] || PLACEHOLDER[category]} alt="" className="h-full w-full object-cover" />
+                        <img src={uploadedImages[0]?.url || uploadedImages[0]?.previewUrl || PLACEHOLDER[category]} alt="" className="h-full w-full object-cover" />
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="font-bold text-foreground text-sm line-clamp-1">{getValues("title") || t("yourListingTitle")}</p>
