@@ -12,17 +12,6 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const UPLOADS_DIR = path.resolve(__dirname, "../../uploads");
 
 // ── Storage strategy ────────────────────────────────────────────────────────
-// Decided once at startup based on whether R2 credentials are present.
-//
-//   R2 configured  → memoryStorage (bytes handed to R2 PutObject)
-//                    URLs returned: /api/media/<key>   (served by Express proxy)
-//
-//   R2 absent      → diskStorage   (written flat to project-root uploads/)
-//                    URLs returned: /uploads/<filename> (served by Express static)
-//
-// This means local dev keeps working without any credentials, and production
-// automatically switches to R2 with no code changes needed.
-
 const useR2 = Boolean(r2);
 
 let storage;
@@ -40,16 +29,23 @@ if (useR2) {
   });
 }
 
+// ── Diagnostic: confirm which regex is active at startup ─────────────────────
+const ALLOWED_RE = /jpeg|jpg|png|gif|webp|heic|heif|avif/;
+console.log("[upload] module loaded — fileFilter regex:", ALLOWED_RE.toString(), "| useR2:", useR2);
+
 const upload = multer({
   storage,
   limits: { fileSize: 10 * 1024 * 1024 }, // 10 MB
   fileFilter: (_req, file, cb) => {
-    const allowed = /jpeg|jpg|png|gif|webp|heic|heif|avif/;
-    const extOk  = allowed.test(path.extname(file.originalname).toLowerCase());
-    // AVIF files may arrive with mimetype "image/avif" or the legacy
-    // "application/octet-stream" when the OS doesn't know the type, so
-    // also accept octet-stream when the extension is recognised.
-    const mimeOk = allowed.test(file.mimetype) || file.mimetype === "application/octet-stream";
+    const ext    = path.extname(file.originalname).toLowerCase();
+    const extOk  = ALLOWED_RE.test(ext);
+    // AVIF files may arrive as "image/avif" or "application/octet-stream"
+    // when the OS/browser doesn't recognise the extension, so allow
+    // octet-stream when the extension is already cleared.
+    const mimeOk = ALLOWED_RE.test(file.mimetype) || file.mimetype === "application/octet-stream";
+
+    console.log(`[upload] fileFilter — name:"${file.originalname}" ext:"${ext}" mime:"${file.mimetype}" extOk:${extOk} mimeOk:${mimeOk}`);
+
     if (extOk && mimeOk) {
       cb(null, true);
     } else {
@@ -65,7 +61,9 @@ function handleUpload(middleware) {
   return (req, res, next) =>
     middleware(req, res, (err) => {
       if (err) {
-        console.error("Upload middleware error:", err.message);
+        // Log the multer error code alongside the message so we can
+        // distinguish LIMIT_FILE_SIZE / LIMIT_UNEXPECTED_FILE / fileFilter errors.
+        console.error("[upload] multer error — code:", err.code, "| message:", err.message);
         return res.status(err.statusCode || 400).json({ error: err.message || "Upload failed" });
       }
       next();
@@ -82,8 +80,6 @@ async function saveToR2(file) {
     Body:        file.buffer,
     ContentType: file.mimetype,
   }));
-  // /api/media/<key> is handled by the Express proxy route in server/index.js
-  // which streams the bytes from R2 back to the client.
   return `/api/media/${key}`;
 }
 
@@ -91,6 +87,9 @@ const router = Router();
 
 // POST /api/upload — single image
 router.post("/", requireAuth, handleUpload(upload.single("image")), async (req, res) => {
+  console.log("[upload] POST / — req.file:", req.file
+    ? `name="${req.file.originalname}" mime="${req.file.mimetype}" size=${req.file.size}`
+    : "MISSING");
   if (!req.file) return res.status(400).json({ error: "No file uploaded" });
   try {
     const url = useR2
@@ -98,13 +97,15 @@ router.post("/", requireAuth, handleUpload(upload.single("image")), async (req, 
       : `/uploads/${req.file.filename}`;
     res.json({ url });
   } catch (err) {
-    console.error("Upload error:", err.message);
+    console.error("[upload] R2/disk save error:", err.message);
     res.status(500).json({ error: "Upload failed" });
   }
 });
 
 // POST /api/upload/multiple — up to 5 images
 router.post("/multiple", requireAuth, handleUpload(upload.array("images", 5)), async (req, res) => {
+  console.log("[upload] POST /multiple — req.files:", req.files?.length ?? "MISSING",
+    req.files?.map(f => `"${f.originalname}"(${f.mimetype})`).join(", ") ?? "");
   if (!req.files?.length) return res.status(400).json({ error: "No files uploaded" });
   try {
     const urls = useR2
@@ -112,7 +113,7 @@ router.post("/multiple", requireAuth, handleUpload(upload.array("images", 5)), a
       : req.files.map(f => `/uploads/${f.filename}`);
     res.json({ urls });
   } catch (err) {
-    console.error("Upload error:", err.message);
+    console.error("[upload] R2/disk save error:", err.message);
     res.status(500).json({ error: "Upload failed" });
   }
 });
