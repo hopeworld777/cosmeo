@@ -160,31 +160,44 @@ router.post("/login", async (req, res) => {
     return res.status(400).json({ error: "Email and password are required" });
   }
   try {
+    const t0 = Date.now();
+
     const result = await pool.query(
       "SELECT * FROM users WHERE email = $1",
       [email.toLowerCase()]
     );
+    console.log(`[login] DB query: ${Date.now() - t0}ms`);
+
     const user = result.rows[0];
     if (!user) {
       return res.status(401).json({ error: "Invalid email or password" });
     }
+
+    const rounds = bcrypt.getRounds(user.password_hash);
+    console.log(`[login] bcrypt rounds in stored hash: ${rounds}`);
+    const t1 = Date.now();
+
     const valid = await bcrypt.compare(password, user.password_hash);
+    console.log(`[login] bcrypt.compare: ${Date.now() - t1}ms | valid: ${valid}`);
+
     if (!valid) {
       return res.status(401).json({ error: "Invalid email or password" });
     }
     const token = generateToken(user.id);
     const { password_hash, ...safeUser } = user;
     res.json({ user: safeUser, token });
+    console.log(`[login] total: ${Date.now() - t0}ms`);
 
     // Fire-and-forget: upgrade hashes stored at a higher cost factor so
     // subsequent logins are fast without blocking this response.
-    const currentRounds = bcrypt.getRounds(user.password_hash);
-    if (currentRounds > BCRYPT_ROUNDS) {
+    if (rounds > BCRYPT_ROUNDS) {
+      console.log(`[login] upgrading hash from rounds ${rounds} → ${BCRYPT_ROUNDS}`);
       bcrypt.hash(password, BCRYPT_ROUNDS)
         .then(newHash => pool.query(
           "UPDATE users SET password_hash = $1 WHERE id = $2",
           [newHash, user.id]
         ))
+        .then(() => console.log(`[login] hash upgraded for user ${user.id}`))
         .catch(err => console.error("Hash upgrade error:", err.message));
     }
   } catch (err) {
