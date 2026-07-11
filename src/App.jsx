@@ -3,6 +3,7 @@ import { useEffect, useLayoutEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { Toaster } from "@/components/ui/toaster";
 import BottomNav from "@/components/BottomNav";
+import BrandMark from "@/components/BrandMark";
 import Home from "@/pages/Home";
 import WaitlistLanding from "@/pages/WaitlistLanding";
 import Browse from "@/pages/Browse";
@@ -165,8 +166,11 @@ function DesktopNav() {
     <header className="hidden md:flex fixed top-0 left-0 right-0 z-[80] h-16 items-center gap-8 px-8 bg-card/95 backdrop-blur-xl border-b border-border/20"
       style={{ boxShadow: "0 2px 16px rgba(124,58,237,0.07)" }}
     >
-      <Link href="/home" className="font-black text-xl shrink-0 bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-        cosmeo
+      <Link href="/home" className="flex items-center gap-2 shrink-0">
+        <BrandMark size={24} />
+        <span className="font-black text-xl bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+          cosmeo
+        </span>
       </Link>
 
       <nav className="flex items-center gap-6 flex-1">
