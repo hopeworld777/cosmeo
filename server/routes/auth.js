@@ -63,7 +63,7 @@ router.post("/register", async (req, res) => {
     if (usernameCheck.rows.length > 0) {
       return res.status(409).json({ error: "username_taken" });
     }
-    const hashedPassword = await bcrypt.hash(password, 12);
+    const hashedPassword = await bcrypt.hash(password, BCRYPT_ROUNDS);
     const result = await pool.query(
       `INSERT INTO users (username, email, password_hash, bio, email_verified)
        VALUES ($1, $2, $3, $4, false)
@@ -128,7 +128,7 @@ router.post("/vip-register", async (req, res) => {
     if (usernameCheck.rows.length > 0) {
       return res.status(409).json({ error: "username_taken" });
     }
-    const hashedPassword = await bcrypt.hash(password, 12);
+    const hashedPassword = await bcrypt.hash(password, BCRYPT_ROUNDS);
     const result = await pool.query(
       `INSERT INTO users (username, email, password_hash, bio, email_verified)
        VALUES ($1, $2, $3, $4, true)
@@ -150,6 +150,8 @@ router.post("/vip-register", async (req, res) => {
     res.status(500).json({ error: "Registration failed." });
   }
 });
+
+const BCRYPT_ROUNDS = 10; // cost 10 ≈ 100 ms; cost 12 (old default) ≈ 400–2000 ms on shared CPU
 
 // POST /api/auth/login
 router.post("/login", async (req, res) => {
@@ -173,6 +175,18 @@ router.post("/login", async (req, res) => {
     const token = generateToken(user.id);
     const { password_hash, ...safeUser } = user;
     res.json({ user: safeUser, token });
+
+    // Fire-and-forget: upgrade hashes stored at a higher cost factor so
+    // subsequent logins are fast without blocking this response.
+    const currentRounds = bcrypt.getRounds(user.password_hash);
+    if (currentRounds > BCRYPT_ROUNDS) {
+      bcrypt.hash(password, BCRYPT_ROUNDS)
+        .then(newHash => pool.query(
+          "UPDATE users SET password_hash = $1 WHERE id = $2",
+          [newHash, user.id]
+        ))
+        .catch(err => console.error("Hash upgrade error:", err.message));
+    }
   } catch (err) {
     console.error("Login error:", err);
     res.status(500).json({ error: "Login failed" });
@@ -387,7 +401,7 @@ router.post("/reset-password", async (req, res) => {
     const row = result.rows[0];
     if (!row) return res.status(400).json({ error: "Invalid or expired reset link" });
 
-    const hashedPassword = await bcrypt.hash(password, 12);
+    const hashedPassword = await bcrypt.hash(password, BCRYPT_ROUNDS);
     await pool.query("UPDATE users SET password_hash = $1 WHERE id = $2", [hashedPassword, row.user_id]);
     await pool.query("UPDATE auth_tokens SET used_at = NOW() WHERE id = $1", [row.id]);
 
