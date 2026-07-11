@@ -1,0 +1,25 @@
+The root cause is on the server logs: relation "users" does not exist — the database schema was never applied to the newly connected PostgreSQL instance. The auth code itself is correct on both client and server. There's also a trust proxy misconfiguration causing the rate-limiter to throw on every request.
+
+Two fixes needed: apply the schema, patch trust proxy. Let me do both simultaneously.
+
+
+3 actions
+Two distinct bugs, both diagnosed. Fixing in parallel:
+
+Apply the schema — users table (and all 9 tables) don't exist yet in the connected DB
+Fix trust proxy — Express needs it set so the rate-limiter can identify clients behind Replit's proxy
+
+6 actions
+All tables exist — the server process just needs a restart to pick up the DATABASE_URL secret that was added after it originally started.
+
+
+4 actions
+Clean startup — no database errors, all credentials loaded. Here's the complete diagnosis and what was fixed:
+
+Root cause 1 — Database: relation "users" does not exist (500 on every login attempt) The DATABASE_URL secret was added to the environment after the server process had already started, so the Express process launched without it and the pg pool had no valid connection string. All SQL queries failed immediately. Fix: restarted the workflow so the server process inherits the live secret. All 11 tables confirmed present via \dt.
+
+Root cause 2 — Rate-limiter: ERR_ERL_UNEXPECTED_X_FORWARDED_FOR Replit routes traffic through a reverse proxy that injects X-Forwarded-For, but Express's trust proxy was false (default). The express-rate-limit middleware treats this mismatch as a misconfiguration and throws a ValidationError on every request — which was also contaminating the login route. Fix: added app.set("trust proxy", 1) to server/index.js.
+
+Auth code itself was never broken — AdminLogin.jsx sends { email, password }, AuthContext.login() forwards it to POST /api/auth/login, and the server handler reads the same field names. The AuthProvider correctly wraps the entire app including the admin gate route. No code changes were needed to the auth flow.
+
+The server is now running cleanly. Login should work — try it at
