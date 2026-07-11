@@ -3,19 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useTranslation } from "react-i18next";
 import { api } from "@/lib/api";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
-
-// ── Logo mark — new moon & star brand image, works on dark ────────────────────
-function KosmeoLogo({ size = 72 }) {
-  return (
-    <img
-      src="/waitlist-logo.png"
-      alt="Cosmeo"
-      width={size}
-      height={size}
-      style={{ width: size, height: size, objectFit: "contain" }}
-    />
-  );
-}
+import BrandMark from "@/components/BrandMark";
 
 // ── Particle dots — pure CSS, no JS animation cost ───────────────────────────
 const PARTICLES = [
@@ -108,7 +96,7 @@ export default function WaitlistLanding() {
             transition={{ delay: 0.1, duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
             className="mb-6"
           >
-            <KosmeoLogo size={76} />
+            <BrandMark size={76} strokeWidth={1.25} className="drop-shadow-[0_0_24px_rgba(192,132,252,0.35)]" />
           </motion.div>
 
           {/* Badge pill */}
