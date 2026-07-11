@@ -569,7 +569,12 @@ export default function Sell() {
                     </button>
                     {uploadedImages.map((img, i) => (
                       <div key={img.id ?? i} className="relative h-28 w-28 shrink-0 rounded-2xl overflow-hidden bg-muted">
-                        <img src={img.url || img.previewUrl} alt="" className="w-full h-full object-cover" />
+                        <img
+                          src={img.url || img.previewUrl}
+                          alt=""
+                          className="w-full h-full object-cover"
+                          onError={(e) => console.log("Image failed to load:", e.target.src)}
+                        />
                         {img.status === "uploading" && (
                           <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
                             <span className="h-5 w-5 rounded-full border-2 border-white/40 border-t-white animate-spin" />
@@ -731,7 +736,12 @@ export default function Sell() {
                     <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-3">{t("preview")}</p>
                     <div className="flex items-center gap-3">
                       <div className="h-14 w-14 rounded-2xl overflow-hidden bg-muted shrink-0">
-                        <img src={uploadedImages[0]?.url || uploadedImages[0]?.previewUrl || PLACEHOLDER[category]} alt="" className="h-full w-full object-cover" />
+                        <img
+                          src={uploadedImages[0]?.url || uploadedImages[0]?.previewUrl || PLACEHOLDER[category]}
+                          alt=""
+                          className="h-full w-full object-cover"
+                          onError={(e) => console.log("Image failed to load:", e.target.src)}
+                        />
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="font-bold text-foreground text-sm line-clamp-1">{getValues("title") || t("yourListingTitle")}</p>

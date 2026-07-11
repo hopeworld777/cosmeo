@@ -18,7 +18,19 @@ const createListingSchema = z.object({
   brand:       z.string().max(255, "Brand must be 255 characters or fewer").optional().default(""),
   size:        z.string().optional().default(""),
   condition:   z.string().optional().default(""),
-  images:      z.array(z.string().url()).min(1, "At least one image is required"),
+  // Upload URLs are intentionally *relative* (e.g. "/api/media/uploads/xxx.jpg"
+  // or "/uploads/xxx.jpg") — the frontend proxy (Vite) and the Express static/
+  // media routes only work same-origin, so an absolute URL would actually be
+  // wrong here. z.string().url() rejects relative paths, which made every
+  // listing submission fail validation despite uploads succeeding. Accept
+  // either a relative path starting with "/" or a full absolute URL (in case
+  // R2 is ever served from its own public domain).
+  images: z.array(
+    z.string().refine(
+      (v) => v.startsWith("/") || /^https?:\/\//.test(v),
+      { message: "Invalid image URL" }
+    )
+  ).min(1, "At least one image is required"),
 })
   .refine(d => d.is_for_sale || d.is_for_rent, {
     message: "Must be listed for sale or for rent (or both)",
