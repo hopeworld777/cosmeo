@@ -3,5 +3,16 @@
   "outputDirectory": "dist",
   "rewrites": [
     { "source": "/(.*)", "destination": "/index.html" }
+  ],
+  "headers": [
+    {
+      "source": "/(.*).avif",
+      "headers": [
+        {
+          "key": "Content-Type",
+          "value": "image/avif"
+        }
+      ]
+    }
   ]
 }
