@@ -4,8 +4,6 @@ import { z } from "zod";
 import { useState, useEffect, useLayoutEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import { ChevronLeft, MapPin, Check, Camera } from "lucide-react";
-import LanguageSwitcher from "@/components/LanguageSwitcher";
-import ThemeToggle from "@/components/ThemeToggle";
 import { useLocation, Link } from "wouter";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
@@ -182,8 +180,6 @@ export default function Settings() {
             <ChevronLeft className="h-5 w-5 text-foreground" />
           </button>
           <h1 className="text-2xl font-black text-foreground flex-1">{t("editProfile")}</h1>
-          <LanguageSwitcher />
-          <ThemeToggle />
         </div>
       </div>
 
