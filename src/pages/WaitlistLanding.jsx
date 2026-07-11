@@ -288,7 +288,7 @@ export default function WaitlistLanding() {
       {/* Bottom wordmark */}
       <div className="relative z-10 pb-8 text-center">
         <p className="text-[11px] tracking-widest font-bold text-white/15 uppercase">
-          Kosmeo &mdash; Georgia's Cosplay Marketplace
+          cosmeo &mdash; Georgia's Cosplay Marketplace
         </p>
       </div>
 
