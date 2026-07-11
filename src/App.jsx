@@ -31,6 +31,20 @@ import RestrictedScreen from "@/components/RestrictedScreen";
 // Routes that hide everything (login / register / etc.)
 const AUTH_ROUTES = ["/login", "/register", "/forgot-password", "/reset-password", "/verify-email"];
 
+// ── Waitlist gate ─────────────────────────────────────────────────────────────
+// During pre-launch, ONLY these paths are reachable without an admin account.
+// Every other route — /browse, /home, /item/:id, etc. — is intercepted and the
+// visitor is sent back to the waitlist landing page at "/".
+const WAITLIST_PUBLIC = [
+  "/",
+  "/login",
+  "/register",
+  "/forgot-password",
+  "/reset-password",
+  "/verify-email",
+  "/terms",
+];
+
 // Onboarding gets its own full-screen desktop layout — no DesktopNav, but
 // the shell should expand to full width on desktop (not stay phone-framed).
 const ONBOARDING_ROUTES = ["/onboarding"];
@@ -88,6 +102,37 @@ function OnboardingGuard() {
   // OnboardingGuard no longer redirects from "/" — that route now shows the
   // waitlist landing page for unauthenticated visitors. Onboarding is still
   // reachable directly at "/onboarding" (e.g. from the Register flow).
+  return null;
+}
+
+// Renders nothing — exists purely for its redirect side-effect.
+// Pre-launch gate: any route not on WAITLIST_PUBLIC is accessible only to
+// logged-in admins. Non-admin authenticated users are logged out and bounced
+// to "/"; unauthenticated visitors are sent straight to "/".
+function WaitlistGate() {
+  const { user, loading, logout } = useAuth();
+  const [location, setLocation] = useLocation();
+
+  useEffect(() => {
+    if (loading) return;
+
+    const isPublic = WAITLIST_PUBLIC.some(r =>
+      r === "/" ? location === "/" : location === r || location.startsWith(r + "/")
+    );
+    if (isPublic) return;
+
+    if (!user) {
+      // Unauthenticated visitor typed a private URL directly → waitlist landing
+      setLocation("/");
+      return;
+    }
+    if (!user.is_admin) {
+      // Logged-in but not an admin → clear session and send back to landing
+      logout();
+      setLocation("/");
+    }
+  }, [loading, user, location]);
+
   return null;
 }
 
@@ -217,6 +262,7 @@ function AppShell() {
         isStandaloneRoute && "w-full h-auto min-h-[100dvh] overflow-visible",
       ].filter(Boolean).join(" ")}>
         <OnboardingGuard />
+        <WaitlistGate />
 
         {showMobileFloatLang && (
           <div className="md:hidden absolute top-3 right-3 z-[60] min-h-[44px] flex items-center">

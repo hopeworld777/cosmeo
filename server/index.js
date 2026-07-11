@@ -5,6 +5,7 @@ import { fileURLToPath } from "url";
 import "dotenv/config";
 
 import authRoutes from "./routes/auth.js";
+import { requireAuth } from "./middleware/auth.js";
 import listingsRoutes from "./routes/listings.js";
 import favoritesRoutes from "./routes/favorites.js";
 import messagesRoutes from "./routes/messages.js";
@@ -39,6 +40,21 @@ app.get("/api/media/{*key}", async (req, res) => {
     console.error("R2 read error:", err.message);
     res.status(404).json({ error: "Image not found" });
   }
+});
+
+// ── Waitlist gate ─────────────────────────────────────────────────────────────
+// Pre-launch: every API route except auth, waitlist, health, and the media
+// proxy requires a valid JWT. Unauthenticated requests to any other endpoint
+// receive 403 immediately, so even direct curl/fetch calls can't bypass the
+// frontend gate and pull real data.
+// /api/media/* is registered above this block and never reaches this middleware.
+const WAITLIST_GATE_PUBLIC = ["/auth", "/waitlist", "/health", "/media"];
+app.use("/api", (req, res, next) => {
+  const isPublic = WAITLIST_GATE_PUBLIC.some(
+    p => req.path === p || req.path.startsWith(p + "/")
+  );
+  if (isPublic) return next();
+  return requireAuth(req, res, next);
 });
 
 // Routes
