@@ -176,6 +176,7 @@ export const api = {
   notifications: {
     list: () => request("/notifications"),
     markRead: (id) => request(`/notifications/${id}/read`, { method: "PUT" }),
+    dismiss: (id) => request(`/notifications/${id}`, { method: "DELETE" }),
   },
 
   upload: {

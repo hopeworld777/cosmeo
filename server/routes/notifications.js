@@ -44,4 +44,22 @@ router.put("/:id/read", async (req, res) => {
   }
 });
 
+// ── DELETE /api/notifications/:id ───────────────────────────────────────────
+router.delete("/:id", async (req, res) => {
+  if (!/^\d+$/.test(req.params.id)) {
+    return res.status(400).json({ error: "Invalid id" });
+  }
+  try {
+    const result = await pool.query(
+      `DELETE FROM notifications WHERE id = $1 AND user_id = $2 RETURNING id`,
+      [req.params.id, req.userId]
+    );
+    if (!result.rows[0]) return res.status(404).json({ error: "Notification not found" });
+    res.json({ ok: true });
+  } catch (err) {
+    console.error("Dismiss notification error:", err);
+    res.status(500).json({ error: "Failed to dismiss notification" });
+  }
+});
+
 export default router;
