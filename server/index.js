@@ -76,7 +76,7 @@ app.get("/api/media/{*key}", async (req, res) => {
 // receive 403 immediately, so even direct curl/fetch calls can't bypass the
 // frontend gate and pull real data.
 // /api/media/* is registered above this block and never reaches this middleware.
-const WAITLIST_GATE_PUBLIC = ["/auth", "/waitlist", "/health", "/media"];
+const WAITLIST_GATE_PUBLIC = ["/auth", "/waitlist", "/health", "/media", "/admin/waitlist"];
 app.use("/api", (req, res, next) => {
   const isPublic = WAITLIST_GATE_PUBLIC.some(
     p => req.path === p || req.path.startsWith(p + "/")

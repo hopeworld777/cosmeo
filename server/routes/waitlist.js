@@ -20,7 +20,11 @@ router.post("/", async (req, res) => {
     );
     // Fire-and-forget — don't let an email failure block the signup response
     sendWaitlistConfirmation(normalised).catch(err => {
-      console.error("Waitlist confirmation email error (non-fatal):", err.message, err?.cause ?? err);
+      console.error("Waitlist confirmation email error (non-fatal):", err.message);
+      // Log the full Resend rejection payload so we can diagnose delivery issues
+      if (err?.cause) console.error("  cause:", JSON.stringify(err.cause, null, 2));
+      if (err?.response) console.error("  response:", JSON.stringify(err.response, null, 2));
+      console.error("  full error:", JSON.stringify(err, Object.getOwnPropertyNames(err), 2));
     });
     res.json({ success: true });
   } catch (err) {
