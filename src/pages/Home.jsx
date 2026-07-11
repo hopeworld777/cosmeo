@@ -154,15 +154,15 @@ function CommissionComingSoon({ t }) {
       animate={{ opacity: 1, y: 0 }}
       className="flex flex-col items-center justify-center py-20 text-center px-6"
     >
-      <div className="h-20 w-20 rounded-full bg-amber-50 flex items-center justify-center mb-5">
-        <Paintbrush className="h-9 w-9 text-amber-400" />
+      <div className="h-20 w-20 rounded-full bg-[#FFF2E6] flex items-center justify-center mb-5">
+        <Paintbrush className="h-9 w-9 text-[#6E4A3C]" />
       </div>
       <h3 className="text-2xl font-black text-foreground mb-2">{t("commissionComingSoonTitle", "Commission Coming Soon")}</h3>
       <p className="text-sm text-muted-foreground font-medium leading-relaxed max-w-xs mb-6">
         {t("commissionComingSoonDesc", "Commission listings will let you hire skilled creators for custom cosplay, props, and handmade pieces. Stay tuned!")}
       </p>
       <Link href="/sell">
-        <button className="h-11 px-7 rounded-2xl bg-amber-500 text-white text-sm font-bold hover:bg-amber-600 transition-all shadow-md shadow-amber-500/20">
+        <button className="h-11 px-7 rounded-2xl bg-[#FFF2E6] text-[#6E4A3C] text-sm font-bold hover:bg-[#FFE4CC] transition-all shadow-md shadow-[rgba(110,74,60,0.12)]">
           {t("sellBtn")}
         </button>
       </Link>
