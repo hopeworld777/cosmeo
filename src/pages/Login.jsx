@@ -9,7 +9,6 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { useTranslation } from "react-i18next";
 import AuthLayout from "@/components/AuthLayout";
-import BrandMark from "@/components/BrandMark";
 
 export default function Login() {
   const { t } = useTranslation();
@@ -42,11 +41,6 @@ export default function Login() {
         animate={{ opacity: 1, y: 0 }}
         className="w-full"
       >
-        {/* BrandMark — centered above the form */}
-        <div className="flex justify-center mb-8">
-          <BrandMark className="h-14 w-14 md:h-16 md:w-16" />
-        </div>
-
         {/* Logo — mobile only */}
         <div className="md:hidden text-center mb-10">
           <div className="flex items-center justify-center gap-2 mb-3">
