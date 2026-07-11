@@ -12,6 +12,7 @@ import Messages from "@/pages/Messages";
 import Profile from "@/pages/Profile";
 import Wishlist from "@/pages/Wishlist";
 import Login from "@/pages/Login";
+import AdminLogin from "@/pages/AdminLogin";
 import Register from "@/pages/Register";
 import Onboarding from "@/pages/Onboarding";
 import ForgotPassword from "@/pages/ForgotPassword";
@@ -292,7 +293,7 @@ function AppShell() {
             <Route path="/login" component={Login} />
             <Route path="/register" component={Register} />
             {/* Secret admin login — not listed anywhere public */}
-            <Route path={ADMIN_LOGIN_PATH} component={Login} />
+            <Route path={ADMIN_LOGIN_PATH} component={AdminLogin} />
             <Route path="/onboarding" component={Onboarding} />
             <Route path="/forgot-password" component={ForgotPassword} />
             <Route path="/reset-password" component={ResetPassword} />
