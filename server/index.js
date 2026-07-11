@@ -1,5 +1,6 @@
 import express from "express";
 import cors from "cors";
+import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
 import "dotenv/config";
@@ -29,16 +30,43 @@ app.use(express.urlencoded({ extended: true }));
 // Serve legacy local uploads (keeps existing listing images working)
 app.use("/uploads", express.static(path.join(__dirname, "../uploads")));
 
-// Proxy R2 images  — GET /api/media/<key>
+// Serve uploaded images — GET /api/media/<key>
+// Priority: R2 bucket (when credentials are set) → local uploads/ fallback.
+// The local fallback keeps images working in dev workspaces without R2 and
+// recovers gracefully if R2 credentials are removed after images were uploaded.
 app.get("/api/media/{*key}", async (req, res) => {
-  if (!r2) return res.status(503).json({ error: "R2 not configured" });
   const raw = req.params.key;
   const key = Array.isArray(raw) ? raw.join("/") : raw;
+
+  // 1. Try R2 when configured
+  if (r2) {
+    try {
+      await streamFromR2(key, res);
+      return;
+    } catch (err) {
+      console.error("R2 read error:", err.message);
+      // Headers not yet sent — fall through to local disk
+      if (res.headersSent) return res.end();
+    }
+  }
+
+  // 2. Local disk fallback — resolve safely under the uploads directory
+  //    The key typically looks like "uploads/1234-abc.jpg", so the resolved
+  //    path becomes <project-root>/uploads/uploads/1234-abc.jpg which is
+  //    exactly where uploadToR2's local fallback writes the file.
+  const uploadsRoot = path.resolve(__dirname, "..", "uploads");
+  const localPath   = path.resolve(uploadsRoot, key);
+
+  // Guard against path-traversal attempts
+  if (!localPath.startsWith(uploadsRoot + path.sep) && localPath !== uploadsRoot) {
+    return res.status(400).json({ error: "Invalid path" });
+  }
+
   try {
-    await streamFromR2(key, res);
-  } catch (err) {
-    console.error("R2 read error:", err.message);
-    res.status(404).json({ error: "Image not found" });
+    await fs.promises.access(localPath, fs.constants.R_OK);
+    return res.sendFile(localPath);
+  } catch {
+    return res.status(404).json({ error: "Image not found" });
   }
 });
 
