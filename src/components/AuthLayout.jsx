@@ -1,8 +1,8 @@
-import { Sparkles } from "lucide-react";
 import { Link } from "wouter";
 import { ArrowLeft } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
+import BrandMark from "@/components/BrandMark";
 
 function BrandPanel() {
   const { i18n } = useTranslation();
@@ -15,7 +15,7 @@ function BrandPanel() {
 
       <div className="z-10 flex flex-col items-center text-center">
         <div className="w-24 h-24 rounded-[2.25rem] bg-white/20 backdrop-blur-sm flex items-center justify-center mb-8 shadow-xl">
-          <Sparkles className="h-12 w-12 text-white" strokeWidth={1.5} />
+          <BrandMark className="h-12 w-12" />
         </div>
         <h1 className="text-5xl font-black text-white mb-5">cosmeo</h1>
         <p className="text-white/75 text-base leading-relaxed max-w-xs">
