@@ -4,46 +4,16 @@ import { useTranslation } from "react-i18next";
 import { api } from "@/lib/api";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
 
-// ── Logo mark — inline SVG, crisp at any size, works on dark ──────────────────
+// ── Logo mark — new moon & star brand image, works on dark ────────────────────
 function KosmeoLogo({ size = 72 }) {
   return (
-    <svg width={size} height={size} viewBox="0 0 72 72" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <defs>
-        <radialGradient id="logoGlow" cx="50%" cy="50%" r="50%">
-          <stop offset="0%" stopColor="#c084fc" stopOpacity="0.25" />
-          <stop offset="100%" stopColor="#c084fc" stopOpacity="0" />
-        </radialGradient>
-        <linearGradient id="logoGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stopColor="#c084fc" />
-          <stop offset="100%" stopColor="#f472b6" />
-        </linearGradient>
-      </defs>
-      {/* Outer glow ring */}
-      <circle cx="36" cy="36" r="35" fill="url(#logoGlow)" />
-      {/* Hexagon frame */}
-      <path
-        d="M36 4 L63.7 20 L63.7 52 L36 68 L8.3 52 L8.3 20 Z"
-        stroke="url(#logoGrad)"
-        strokeWidth="1.5"
-        fill="none"
-        opacity="0.5"
-      />
-      {/* Stylised K */}
-      <text
-        x="36"
-        y="48"
-        textAnchor="middle"
-        fontSize="36"
-        fontWeight="900"
-        fontFamily="system-ui, -apple-system, sans-serif"
-        fill="url(#logoGrad)"
-        letterSpacing="-1"
-      >K</text>
-      {/* Sparkle dots */}
-      <circle cx="58" cy="14" r="2.5" fill="#f472b6" opacity="0.8" />
-      <circle cx="14" cy="58" r="1.8" fill="#c084fc" opacity="0.6" />
-      <circle cx="62" cy="52" r="1.4" fill="#c084fc" opacity="0.5" />
-    </svg>
+    <img
+      src="/waitlist-logo.png"
+      alt="Cosmeo"
+      width={size}
+      height={size}
+      style={{ width: size, height: size, objectFit: "contain" }}
+    />
   );
 }
 
@@ -150,7 +120,7 @@ export default function WaitlistLanding() {
           >
             <span className="h-1.5 w-1.5 rounded-full bg-purple-400 animate-pulse" />
             <span className="text-[11px] font-bold tracking-widest text-purple-300 uppercase">
-              Coming Soon
+              {t("waitlistComingSoon")}
             </span>
           </motion.div>
 
