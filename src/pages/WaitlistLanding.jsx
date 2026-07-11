@@ -214,11 +214,11 @@ export default function WaitlistLanding() {
                     autoComplete="email"
                     className={[
                       "w-full rounded-2xl px-5 py-4 text-[14px] font-semibold outline-none transition-all",
-                      "bg-white/8 text-white placeholder-purple-300/40",
+                      "bg-white/90 text-slate-800 placeholder-slate-400/70",
                       "border focus:ring-0",
                       isDuplicate
-                        ? "border-rose-500/60 focus:border-rose-400 bg-rose-500/5"
-                        : "border-white/12 focus:border-purple-500/60 hover:border-white/20",
+                        ? "border-rose-500/60 focus:border-rose-400"
+                        : "border-white/20 focus:border-purple-500/60 hover:border-white/30",
                     ].join(" ")}
                     style={{ backdropFilter: "blur(12px)" }}
                   />
