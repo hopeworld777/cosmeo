@@ -31,11 +31,13 @@ import RestrictedScreen from "@/components/RestrictedScreen";
 import ThemeToggle from "@/components/ThemeToggle";
 import BrandMark from "@/components/BrandMark";
 
-// Routes that hide everything (login / register / etc.)
-const AUTH_ROUTES = ["/login", "/register", "/forgot-password", "/reset-password", "/verify-email", "/vip-signup"];
-
 // Secret admin login path — not linked anywhere public.
 export const ADMIN_LOGIN_PATH = "/secret-admin-gate";
+
+// Routes that hide everything (login / register / etc.), including the
+// secret admin login gate — it reuses the same <Login> page and must get
+// the same chrome-free treatment (no DesktopNav/BottomNav/header).
+const AUTH_ROUTES = ["/login", "/register", "/forgot-password", "/reset-password", "/verify-email", "/vip-signup", ADMIN_LOGIN_PATH];
 
 // Routes that unauthenticated visitors may access without being bounced to the
 // waitlist landing. Authenticated users (any role) bypass this list entirely.
