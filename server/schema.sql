@@ -207,3 +207,24 @@ INSERT INTO invite_codes (code) VALUES ('COSMEOBETA') ON CONFLICT (code) DO NOTH
 -- link a user without ever creating a duplicate for the same email.
 ALTER TABLE users ALTER COLUMN password_hash DROP NOT NULL;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS google_id VARCHAR(255) UNIQUE;
+
+-- Cosplay rentals: rental-specific listing fields, plus a general listing
+-- `location` column. `location` was already collected on the Sell form
+-- (CityPicker → `city` state) but was never persisted — createListingSchema
+-- had no `location` key, so zod silently stripped it before insert. Fixing
+-- it here as part of wiring up rental pickup/shipping/location.
+-- All columns are nullable and only meaningfully populated when
+-- is_for_rent = true; sale/commission listings are unaffected.
+ALTER TABLE listings ADD COLUMN IF NOT EXISTS location VARCHAR(150);
+ALTER TABLE listings ADD COLUMN IF NOT EXISTS deposit_amount NUMERIC(10,2);
+ALTER TABLE listings ADD COLUMN IF NOT EXISTS rental_duration VARCHAR(20)
+  CHECK (rental_duration IS NULL OR rental_duration IN ('1_day', '3_days', '1_week', 'custom'));
+ALTER TABLE listings ADD COLUMN IF NOT EXISTS rental_duration_custom VARCHAR(100);
+ALTER TABLE listings ADD COLUMN IF NOT EXISTS height_range VARCHAR(100);
+ALTER TABLE listings ADD COLUMN IF NOT EXISTS measurements TEXT;
+ALTER TABLE listings ADD COLUMN IF NOT EXISTS shoe_size VARCHAR(20);
+ALTER TABLE listings ADD COLUMN IF NOT EXISTS included_items TEXT[] DEFAULT '{}';
+ALTER TABLE listings ADD COLUMN IF NOT EXISTS care_instructions TEXT;
+ALTER TABLE listings ADD COLUMN IF NOT EXISTS delivery_method VARCHAR(20)
+  CHECK (delivery_method IS NULL OR delivery_method IN ('pickup', 'shipping', 'both'));
+ALTER TABLE listings ADD COLUMN IF NOT EXISTS damage_policy TEXT;

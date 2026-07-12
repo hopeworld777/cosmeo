@@ -5,6 +5,10 @@ import { requireAuth, requireFullAccess, optionalAuth } from "../middleware/auth
 import { deleteFromStorage } from "../r2.js";
 
 // ── Zod schema for creating a listing ─────────────────────────────────────────
+const RENTAL_DURATIONS = ["1_day", "3_days", "1_week", "custom"];
+const DELIVERY_METHODS  = ["pickup", "shipping", "both"];
+const INCLUDED_ITEM_OPTIONS = ["costume", "wig", "shoes", "props", "armor", "accessories", "other"];
+
 const createListingSchema = z.object({
   title:       z.string().min(5,  "Title must be at least 5 characters"),
   description: z.string().min(10, "Description must be at least 10 characters"),
@@ -19,6 +23,7 @@ const createListingSchema = z.object({
   brand:       z.string().max(255, "Brand must be 255 characters or fewer").optional().default(""),
   size:        z.string().optional().default(""),
   condition:   z.string().optional().default(""),
+  location:    z.string().max(150, "Location must be 150 characters or fewer").optional().default(""),
   // Upload URLs are intentionally *relative* (e.g. "/api/media/uploads/xxx.jpg"
   // or "/uploads/xxx.jpg") — the frontend proxy (Vite) and the Express static/
   // media routes only work same-origin, so an absolute URL would actually be
@@ -33,6 +38,20 @@ const createListingSchema = z.object({
     )
   ).min(1, "At least one image is required")
    .max(5, "Maximum 5 images per listing"),
+
+  // ── Rental-specific fields ──────────────────────────────────────────────
+  // All optional at the type level; enforced conditionally on is_for_rent
+  // via the .refine() calls below so sale/commission listings are unaffected.
+  deposit_amount:         z.number().positive("Security deposit must be greater than 0").nullable().optional(),
+  rental_duration:        z.enum(RENTAL_DURATIONS).nullable().optional(),
+  rental_duration_custom: z.string().max(100).optional().default(""),
+  height_range:           z.string().max(100).optional().default(""),
+  measurements:           z.string().optional().default(""),
+  shoe_size:              z.string().max(20).optional().default(""),
+  included_items:         z.array(z.enum(INCLUDED_ITEM_OPTIONS)).optional().default([]),
+  care_instructions:      z.string().optional().default(""),
+  delivery_method:        z.enum(DELIVERY_METHODS).nullable().optional(),
+  damage_policy:          z.string().optional().default(""),
 })
   .refine(d => d.is_for_sale || d.is_for_rent, {
     message: "Must be listed for sale or for rent (or both)",
@@ -44,6 +63,22 @@ const createListingSchema = z.object({
   .refine(d => !d.is_for_rent || (d.rent_price != null && d.rent_price > 0), {
     message: "Daily rental price required when listing for rent",
     path: ["rent_price"],
+  })
+  .refine(d => !d.is_for_rent || (d.deposit_amount != null && d.deposit_amount > 0), {
+    message: "Refundable security deposit is required for rental listings",
+    path: ["deposit_amount"],
+  })
+  .refine(d => !d.is_for_rent || !!d.rental_duration, {
+    message: "Rental duration is required for rental listings",
+    path: ["rental_duration"],
+  })
+  .refine(d => !d.is_for_rent || d.rental_duration !== "custom" || d.rental_duration_custom.trim().length > 0, {
+    message: "Please specify the custom rental duration",
+    path: ["rental_duration_custom"],
+  })
+  .refine(d => !d.is_for_rent || !!d.delivery_method, {
+    message: "Please select a pickup/shipping option for rental listings",
+    path: ["delivery_method"],
   });
 
 const router = Router();
@@ -242,24 +277,45 @@ router.post("/", requireAuth, requireFullAccess, async (req, res) => {
 
   const {
     title, description, price, rent_price, is_for_rent, is_for_sale,
-    category, fandom, brand, size, condition, images,
+    category, fandom, brand, size, condition, images, location,
+    deposit_amount, rental_duration, rental_duration_custom,
+    height_range, measurements, shoe_size, included_items,
+    care_instructions, delivery_method, damage_policy,
   } = parsed.data;
 
   const client = await pool.connect();
   try {
     await client.query("BEGIN");
 
+    // Rental-only fields are only ever persisted when is_for_rent is true —
+    // sale/commission listings always get NULL/empty here regardless of what
+    // was in the request body, so toggling "for rent" off and back on later
+    // can't resurrect stale rental data from an earlier submission shape.
     const listingResult = await client.query(
       `INSERT INTO listings
          (seller_id, title, description, price, rent_price, is_for_rent, is_for_sale,
-          category, fandom, brand, size, condition)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)
+          category, fandom, brand, size, condition, location,
+          deposit_amount, rental_duration, rental_duration_custom,
+          height_range, measurements, shoe_size, included_items,
+          care_instructions, delivery_method, damage_policy)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,
+               $14,$15,$16,$17,$18,$19,$20,$21,$22,$23)
        RETURNING *`,
       [req.userId, title, description,
        is_for_sale ? price : null,
        is_for_rent ? rent_price : null,
        is_for_rent, is_for_sale,
-       category, fandom, brand, size, condition]
+       category, fandom, brand, size, condition, location,
+       is_for_rent ? deposit_amount : null,
+       is_for_rent ? rental_duration : null,
+       is_for_rent && rental_duration === "custom" ? rental_duration_custom : null,
+       is_for_rent ? (height_range || null) : null,
+       is_for_rent ? (measurements || null) : null,
+       is_for_rent ? (shoe_size || null) : null,
+       is_for_rent ? included_items : [],
+       is_for_rent ? (care_instructions || null) : null,
+       is_for_rent ? delivery_method : null,
+       is_for_rent ? (damage_policy || null) : null]
     );
     const listing = listingResult.rows[0];
 

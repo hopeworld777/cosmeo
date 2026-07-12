@@ -284,6 +284,62 @@ export default function Sell() {
   const [salePrice, setSalePrice] = useState("");
   const [rentPrice, setRentPrice] = useState("");
   const [brand, setBrand] = useState("");
+
+  // ── Rental-specific fields ──────────────────────────────────────────────
+  // Only ever shown/used when isForRent is true — see the conditional block
+  // in STEP 2 below. Sale/commission listings never read these.
+  const [depositAmount, setDepositAmount]   = useState("");
+  const [rentalDuration, setRentalDuration] = useState(""); // "1_day" | "3_days" | "1_week" | "custom"
+  const [rentalDurationCustom, setRentalDurationCustom] = useState("");
+  const [sizeOption, setSizeOption]   = useState(""); // "XS" | "S" | "M" | "L" | "XL" | "custom"
+  const [sizeCustom, setSizeCustom]   = useState("");
+  const [heightRange, setHeightRange] = useState("");
+  const [measurements, setMeasurements] = useState("");
+  const [shoeSize, setShoeSize]       = useState("");
+  const [includedItems, setIncludedItems] = useState([]); // array of INCLUDED_ITEM_OPTIONS ids
+  const [condition, setCondition]     = useState("");
+  const [careInstructions, setCareInstructions] = useState("");
+  const [deliveryMethod, setDeliveryMethod] = useState(""); // "pickup" | "shipping" | "both"
+  const [damagePolicy, setDamagePolicy] = useState("");
+
+  // Field-level rental errors, mirroring priceErrors/listingTypeError below —
+  // persistent inline messages + highlighting, not just a toast.
+  const [rentalErrors, setRentalErrors] = useState({});
+  const depositRef  = useRef(null);
+  const durationRef = useRef(null);
+  const deliveryRef = useRef(null);
+
+  const RENTAL_DURATION_OPTIONS = [
+    { id: "1_day",  label: "1 day" },
+    { id: "3_days", label: "3 days" },
+    { id: "1_week", label: "1 week" },
+    { id: "custom", label: "Custom" },
+  ];
+  const SIZE_OPTIONS = ["XS", "S", "M", "L", "XL", "custom"];
+  const INCLUDED_ITEM_OPTIONS = [
+    { id: "costume",     label: "Costume" },
+    { id: "wig",         label: "Wig" },
+    { id: "shoes",       label: "Shoes" },
+    { id: "props",       label: "Props" },
+    { id: "armor",       label: "Armor" },
+    { id: "accessories", label: "Accessories" },
+    { id: "other",       label: "Other" },
+  ];
+  const CONDITION_OPTIONS = [
+    { id: "new",       label: "New / Never worn" },
+    { id: "like_new",  label: "Like new" },
+    { id: "good",      label: "Good condition" },
+    { id: "minor_wear", label: "Minor wear" },
+  ];
+  const DELIVERY_OPTIONS = [
+    { id: "pickup",   label: "Pickup only" },
+    { id: "shipping", label: "Shipping available" },
+    { id: "both",     label: "Both" },
+  ];
+
+  const toggleIncludedItem = (id) => {
+    setIncludedItems(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
+  };
   // ── Image upload state ─────────────────────────────────────────────────
   // `uploadedImages` holds every selected image (id/previewUrl/url/status),
   // regardless of where it is in its lifecycle. `uploadingImages` and
@@ -504,6 +560,7 @@ export default function Sell() {
     // Reset stale field errors before revalidating this attempt.
     setListingTypeError(false);
     setPriceErrors({ sale: "", rent: "" });
+    setRentalErrors({});
 
     if (!isForSale && !isForRent) {
       setListingTypeError(true);
@@ -521,6 +578,32 @@ export default function Sell() {
       return;
     }
 
+    // Rental-only required fields. Sale/commission listings (isForRent ===
+    // false) never hit this branch, so their flow is completely unaffected.
+    if (isForRent) {
+      const rErrors = {};
+      const depositErr = validatePriceValue(depositAmount);
+      if (depositErr) {
+        rErrors.deposit = depositErr === "Please enter a price amount."
+          ? "Please enter a refundable security deposit amount."
+          : "Please enter a valid deposit amount.";
+      }
+      if (!rentalDuration) {
+        rErrors.duration = "Please select a rental duration.";
+      } else if (rentalDuration === "custom" && !rentalDurationCustom.trim()) {
+        rErrors.duration = "Please specify the custom rental duration.";
+      }
+      if (!deliveryMethod) {
+        rErrors.delivery = "Please select a pickup/shipping option.";
+      }
+      if (Object.keys(rErrors).length > 0) {
+        setRentalErrors(rErrors);
+        toast({ title: rErrors.deposit || rErrors.duration || rErrors.delivery, variant: "destructive" });
+        scrollToAndFocus(rErrors.deposit ? depositRef : rErrors.duration ? durationRef : deliveryRef);
+        return;
+      }
+    }
+
     if (!imagesReady) {
       toast({ title: "Please wait for photos to finish uploading.", variant: "destructive" });
       return;
@@ -528,6 +611,7 @@ export default function Sell() {
 
     const { title, description, fandom } = getValues();
     const images = uploadedImages.filter(img => img.status === "done").map(img => img.url);
+    const finalSize = isForRent ? (sizeOption === "custom" ? sizeCustom : sizeOption) : "";
 
     setSubmitting(true);
     try {
@@ -542,6 +626,20 @@ export default function Sell() {
         is_for_rent: isForRent,
         price:      isForSale ? Number(salePrice) : null,
         rent_price: isForRent ? Number(rentPrice) : null,
+        size:       finalSize,
+        condition:  isForRent ? condition : "",
+        // Rental-specific fields — the backend also ignores/nulls these when
+        // is_for_rent is false, this just avoids sending stale values.
+        deposit_amount:         isForRent ? Number(depositAmount) : null,
+        rental_duration:        isForRent ? rentalDuration : null,
+        rental_duration_custom: isForRent && rentalDuration === "custom" ? rentalDurationCustom : "",
+        height_range:           isForRent ? heightRange : "",
+        measurements:           isForRent ? measurements : "",
+        shoe_size:              isForRent ? shoeSize : "",
+        included_items:         isForRent ? includedItems : [],
+        care_instructions:      isForRent ? careInstructions : "",
+        delivery_method:        isForRent ? deliveryMethod : null,
+        damage_policy:          isForRent ? damagePolicy : "",
         images,
       });
       setSuccess(true);
@@ -954,6 +1052,282 @@ export default function Sell() {
                     )}
                   </AnimatePresence>
                 </div>
+
+                {/* ══ Rental-specific details ══════════════════════════════
+                    Only rendered when isForRent — sale/commission listings
+                    never see or submit any of these fields. ══════════════ */}
+                <AnimatePresence>
+                  {isForRent && (
+                    <motion.div
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: "auto", opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      transition={{ duration: 0.18 }}
+                      className="overflow-hidden"
+                    >
+                      <div className="flex flex-col gap-4">
+
+                        {/* Security deposit */}
+                        <div
+                          ref={depositRef}
+                          tabIndex={-1}
+                          className={`bg-card rounded-3xl card-shadow p-5 flex flex-col gap-2 outline-none ${
+                            rentalErrors.deposit ? "ring-2 ring-destructive" : ""
+                          }`}
+                        >
+                          <label className="text-sm font-bold text-foreground">
+                            Refundable Security Deposit <span className="text-red-400">*</span>
+                          </label>
+                          <p className="text-xs text-muted-foreground font-medium -mt-1">
+                            Protects you if the costume/props are damaged, lost, or returned in bad condition.
+                          </p>
+                          <div className="relative mt-1">
+                            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-lg font-black text-secondary">₾</span>
+                            <input
+                              type="number"
+                              min="0"
+                              step="1"
+                              value={depositAmount}
+                              onChange={e => { setDepositAmount(e.target.value); if (rentalErrors.deposit) setRentalErrors(p => ({ ...p, deposit: "" })); }}
+                              placeholder="e.g. 150"
+                              aria-invalid={!!rentalErrors.deposit}
+                              className={`w-full h-14 rounded-2xl bg-muted border-none pl-10 pr-4 text-2xl font-black text-foreground outline-none focus:ring-2 transition-shadow ${
+                                rentalErrors.deposit ? "ring-2 ring-destructive focus:ring-destructive" : "focus:ring-secondary/25"
+                              }`}
+                            />
+                          </div>
+                          {rentalErrors.deposit && (
+                            <p className="text-xs text-destructive font-semibold mt-1 flex items-center gap-1.5">
+                              <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
+                              {rentalErrors.deposit}
+                            </p>
+                          )}
+                        </div>
+
+                        {/* Rental duration */}
+                        <div
+                          ref={durationRef}
+                          tabIndex={-1}
+                          className={`bg-card rounded-3xl card-shadow p-5 flex flex-col gap-3 outline-none ${
+                            rentalErrors.duration ? "ring-2 ring-destructive" : ""
+                          }`}
+                        >
+                          <label className="text-sm font-bold text-foreground">
+                            Rental Duration <span className="text-red-400">*</span>
+                          </label>
+                          <div className="grid grid-cols-2 gap-2">
+                            {RENTAL_DURATION_OPTIONS.map(opt => (
+                              <button
+                                key={opt.id}
+                                type="button"
+                                onClick={() => { setRentalDuration(opt.id); if (rentalErrors.duration) setRentalErrors(p => ({ ...p, duration: "" })); }}
+                                className={`h-11 rounded-xl text-sm font-bold border-2 transition-colors ${
+                                  rentalDuration === opt.id
+                                    ? "bg-secondary/10 border-secondary text-secondary"
+                                    : "bg-muted border-transparent text-foreground hover:border-border"
+                                }`}
+                              >
+                                {opt.label}
+                              </button>
+                            ))}
+                          </div>
+                          {rentalDuration === "custom" && (
+                            <Input
+                              value={rentalDurationCustom}
+                              onChange={e => { setRentalDurationCustom(e.target.value); if (rentalErrors.duration) setRentalErrors(p => ({ ...p, duration: "" })); }}
+                              placeholder="e.g. 10 days, 2 weeks"
+                              className="bg-muted border-none h-12 rounded-xl text-sm font-medium focus-visible:ring-secondary/30"
+                            />
+                          )}
+                          {rentalErrors.duration && (
+                            <p className="text-xs text-destructive font-semibold flex items-center gap-1.5">
+                              <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
+                              {rentalErrors.duration}
+                            </p>
+                          )}
+                        </div>
+
+                        {/* Size information */}
+                        <div className="bg-card rounded-3xl card-shadow p-5 flex flex-col gap-4">
+                          <p className="text-sm font-bold text-foreground">Size Information</p>
+
+                          <div className="flex flex-col gap-1.5">
+                            <label className="text-xs font-bold text-muted-foreground uppercase tracking-wide">Size</label>
+                            <div className="flex flex-wrap gap-2">
+                              {SIZE_OPTIONS.map(opt => (
+                                <button
+                                  key={opt}
+                                  type="button"
+                                  onClick={() => setSizeOption(opt)}
+                                  className={`h-10 px-4 rounded-xl text-sm font-bold border-2 transition-colors ${
+                                    sizeOption === opt
+                                      ? "bg-secondary/10 border-secondary text-secondary"
+                                      : "bg-muted border-transparent text-foreground hover:border-border"
+                                  }`}
+                                >
+                                  {opt === "custom" ? "Custom" : opt}
+                                </button>
+                              ))}
+                            </div>
+                            {sizeOption === "custom" && (
+                              <Input
+                                value={sizeCustom}
+                                onChange={e => setSizeCustom(e.target.value)}
+                                placeholder="e.g. EU 38, Kids L"
+                                className="bg-muted border-none h-12 rounded-xl text-sm font-medium focus-visible:ring-secondary/30 mt-1"
+                              />
+                            )}
+                          </div>
+
+                          <div className="flex flex-col gap-1.5">
+                            <label className="text-xs font-bold text-muted-foreground uppercase tracking-wide">Height range</label>
+                            <Input
+                              value={heightRange}
+                              onChange={e => setHeightRange(e.target.value)}
+                              placeholder="e.g. 160–170 cm"
+                              className="bg-muted border-none h-12 rounded-xl text-sm font-medium focus-visible:ring-secondary/30"
+                            />
+                          </div>
+
+                          <div className="flex flex-col gap-1.5">
+                            <label className="text-xs font-bold text-muted-foreground uppercase tracking-wide">
+                              Measurements <span className="text-muted-foreground/70 font-normal normal-case">(optional)</span>
+                            </label>
+                            <Input
+                              value={measurements}
+                              onChange={e => setMeasurements(e.target.value)}
+                              placeholder="e.g. Bust 86cm, Waist 66cm, Hips 90cm"
+                              className="bg-muted border-none h-12 rounded-xl text-sm font-medium focus-visible:ring-secondary/30"
+                            />
+                          </div>
+
+                          <div className="flex flex-col gap-1.5">
+                            <label className="text-xs font-bold text-muted-foreground uppercase tracking-wide">
+                              Shoe size <span className="text-muted-foreground/70 font-normal normal-case">(optional)</span>
+                            </label>
+                            <Input
+                              value={shoeSize}
+                              onChange={e => setShoeSize(e.target.value)}
+                              placeholder="e.g. EU 39"
+                              className="bg-muted border-none h-12 rounded-xl text-sm font-medium focus-visible:ring-secondary/30"
+                            />
+                          </div>
+                        </div>
+
+                        {/* Included items */}
+                        <div className="bg-card rounded-3xl card-shadow p-5 flex flex-col gap-3">
+                          <p className="text-sm font-bold text-foreground">Included Items</p>
+                          <div className="grid grid-cols-2 gap-2">
+                            {INCLUDED_ITEM_OPTIONS.map(opt => {
+                              const checked = includedItems.includes(opt.id);
+                              return (
+                                <button
+                                  key={opt.id}
+                                  type="button"
+                                  onClick={() => toggleIncludedItem(opt.id)}
+                                  className={`h-11 rounded-xl text-sm font-bold border-2 flex items-center justify-center gap-2 transition-colors ${
+                                    checked
+                                      ? "bg-secondary/10 border-secondary text-secondary"
+                                      : "bg-muted border-transparent text-foreground hover:border-border"
+                                  }`}
+                                >
+                                  <span className={`h-4 w-4 rounded-md border-2 flex items-center justify-center shrink-0 ${checked ? "bg-secondary border-secondary" : "border-muted-foreground/30"}`}>
+                                    {checked && <CheckCircle2 className="h-3 w-3 text-white" />}
+                                  </span>
+                                  {opt.label}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+
+                        {/* Condition */}
+                        <div className="bg-card rounded-3xl card-shadow p-5 flex flex-col gap-2">
+                          <label className="text-sm font-bold text-foreground">Condition</label>
+                          <select
+                            value={condition}
+                            onChange={e => setCondition(e.target.value)}
+                            className="bg-muted border-none h-12 rounded-xl text-sm font-medium px-3.5 outline-none focus:ring-2 focus:ring-secondary/25 text-foreground"
+                          >
+                            <option value="">Select condition…</option>
+                            {CONDITION_OPTIONS.map(opt => (
+                              <option key={opt.id} value={opt.id}>{opt.label}</option>
+                            ))}
+                          </select>
+                        </div>
+
+                        {/* Care / return instructions */}
+                        <div className="bg-card rounded-3xl card-shadow p-5 flex flex-col gap-1.5">
+                          <label className="text-sm font-bold text-foreground">
+                            Care instructions / rental rules
+                            <span className="text-muted-foreground font-normal ml-2 text-xs">optional</span>
+                          </label>
+                          <textarea
+                            value={careInstructions}
+                            onChange={e => setCareInstructions(e.target.value)}
+                            placeholder="e.g. Hand wash wig only, return in provided garment bag…"
+                            rows={3}
+                            className="w-full rounded-xl bg-muted border-none p-3.5 text-sm font-medium resize-none outline-none focus:ring-2 focus:ring-secondary/25 placeholder:text-muted-foreground/50 leading-relaxed"
+                          />
+                        </div>
+
+                        {/* Location / delivery */}
+                        <div
+                          ref={deliveryRef}
+                          tabIndex={-1}
+                          className={`bg-card rounded-3xl card-shadow p-5 flex flex-col gap-3 outline-none ${
+                            rentalErrors.delivery ? "ring-2 ring-destructive" : ""
+                          }`}
+                        >
+                          <label className="text-sm font-bold text-foreground">
+                            Pickup / Delivery <span className="text-red-400">*</span>
+                          </label>
+                          <div className="grid grid-cols-3 gap-2">
+                            {DELIVERY_OPTIONS.map(opt => (
+                              <button
+                                key={opt.id}
+                                type="button"
+                                onClick={() => { setDeliveryMethod(opt.id); if (rentalErrors.delivery) setRentalErrors(p => ({ ...p, delivery: "" })); }}
+                                className={`h-11 rounded-xl text-xs font-bold border-2 px-1 transition-colors ${
+                                  deliveryMethod === opt.id
+                                    ? "bg-secondary/10 border-secondary text-secondary"
+                                    : "bg-muted border-transparent text-foreground hover:border-border"
+                                }`}
+                              >
+                                {opt.label}
+                              </button>
+                            ))}
+                          </div>
+                          {rentalErrors.delivery && (
+                            <p className="text-xs text-destructive font-semibold flex items-center gap-1.5">
+                              <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
+                              {rentalErrors.delivery}
+                            </p>
+                          )}
+                          <p className="text-xs text-muted-foreground font-medium">
+                            City/location is set on the Details step ({city ? city : "not set"}).
+                          </p>
+                        </div>
+
+                        {/* Damage policy */}
+                        <div className="bg-card rounded-3xl card-shadow p-5 flex flex-col gap-1.5">
+                          <label className="text-sm font-bold text-foreground">
+                            Damage policy
+                            <span className="text-muted-foreground font-normal ml-2 text-xs">optional</span>
+                          </label>
+                          <textarea
+                            value={damagePolicy}
+                            onChange={e => setDamagePolicy(e.target.value)}
+                            placeholder="e.g. Deposit may be partially withheld for damaged parts or missing accessories."
+                            rows={3}
+                            className="w-full rounded-xl bg-muted border-none p-3.5 text-sm font-medium resize-none outline-none focus:ring-2 focus:ring-secondary/25 placeholder:text-muted-foreground/50 leading-relaxed"
+                          />
+                        </div>
+
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
 
                 {/* Preview card */}
                 {(getValues("title") || category) && (
