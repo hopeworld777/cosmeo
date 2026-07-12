@@ -83,9 +83,25 @@ CREATE TABLE IF NOT EXISTS messages (
   conversation_id  INTEGER      REFERENCES conversations(id) ON DELETE CASCADE,
   sender_id        INTEGER      REFERENCES users(id)         ON DELETE CASCADE,
   recipient_id     INTEGER      REFERENCES users(id)         ON DELETE CASCADE,
-  body             TEXT         NOT NULL,
+  body             TEXT,
   is_read          BOOLEAN      DEFAULT false,
   created_at       TIMESTAMPTZ  DEFAULT NOW()
+);
+-- Idempotent migration guard: a pre-existing messages table (created before
+-- image attachments existed) has body NOT NULL — a message with only an
+-- image attachment and no caption needs body to be nullable. Running this
+-- against an already-nullable column is a safe no-op.
+ALTER TABLE messages ALTER COLUMN body DROP NOT NULL;
+
+-- Chat image attachments, kept in their own table (mirroring listing_images
+-- for listings) so chat media is never mixed with listing media — a message
+-- can have zero or more attachments, independent of its text body.
+CREATE TABLE IF NOT EXISTS message_attachments (
+  id          SERIAL PRIMARY KEY,
+  message_id  INTEGER      REFERENCES messages(id) ON DELETE CASCADE,
+  image_url   TEXT         NOT NULL,
+  thumb_url   TEXT,
+  created_at  TIMESTAMPTZ  DEFAULT NOW()
 );
 
 CREATE TABLE IF NOT EXISTS reviews (

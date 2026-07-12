@@ -1,7 +1,7 @@
 import { useParams, useLocation, Link } from "wouter";
 import {
   ChevronLeft, Send, Loader2, ShieldCheck,
-  Flag, AlertTriangle, X, CheckCircle2,
+  Flag, AlertTriangle, X, CheckCircle2, ImagePlus,
 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { motion, AnimatePresence } from "framer-motion";
@@ -10,6 +10,7 @@ import { api } from "@/lib/api";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { useTranslation } from "react-i18next";
+import { prepareImageFile, MAX_CHAT_IMAGE_BYTES } from "@/lib/imageUtils";
 
 // ─── Keyword → warning key map ────────────────────────────────────────────────
 const KEYWORD_RULES = [
@@ -277,6 +278,15 @@ export default function Chat() {
   const [convMeta, setConvMeta] = useState(null);
   const endRef = useRef(null);
   const inputRef = useRef(null);
+  const imageInputRef = useRef(null);
+
+  // ── Chat image attachment state ──────────────────────────────────────────
+  // Mirrors the Sell.jsx upload pattern: an instant local blob preview shows
+  // immediately, the real upload (through the same R2 + sharp pipeline used
+  // for listing photos) happens in the background, and `pendingImage.url`
+  // only gets set once it succeeds. Sending is blocked while status is
+  // "uploading" so a message is never sent with a null image URL.
+  const [pendingImage, setPendingImage] = useState(null); // { previewUrl, url, thumbUrl, status: 'uploading'|'done'|'error', error }
 
   // Warning + report state
   const [activeWarn, setActiveWarn] = useState(null);
@@ -318,15 +328,54 @@ export default function Chat() {
     setActiveWarn(null);
   }
 
+  async function handleImageSelect(e) {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+
+    const previewUrl = URL.createObjectURL(file);
+    setPendingImage({ previewUrl, url: null, thumbUrl: null, status: "uploading", error: null });
+
+    try {
+      const prepared = await prepareImageFile(file, { maxBytes: MAX_CHAT_IMAGE_BYTES });
+      const { url, thumbUrl } = await api.upload.chatImage(prepared);
+      setPendingImage((prev) =>
+        prev && prev.previewUrl === previewUrl ? { ...prev, url, thumbUrl, status: "done" } : prev
+      );
+    } catch (err) {
+      setPendingImage((prev) =>
+        prev && prev.previewUrl === previewUrl
+          ? { ...prev, status: "error", error: err.message || t("imageUploadFailed") }
+          : prev
+      );
+      toast({ title: t("imageUploadFailed"), description: err.message, variant: "destructive" });
+    }
+  }
+
+  function removePendingImage() {
+    setPendingImage((prev) => {
+      if (prev?.previewUrl) setTimeout(() => URL.revokeObjectURL(prev.previewUrl), 0);
+      return null;
+    });
+  }
+
   async function sendMessage() {
     const trimmed = text.trim();
-    if (!trimmed || sending) return;
+    const hasImage = pendingImage && pendingImage.status === "done" && pendingImage.url;
+    const imageStillUploading = pendingImage && pendingImage.status === "uploading";
+    if ((!trimmed && !hasImage) || sending || imageStillUploading) return;
     setSending(true);
     try {
-      const msg = await api.messages.sendMessage(id, trimmed);
+      const msg = await api.messages.sendMessage(
+        id,
+        trimmed,
+        hasImage ? { url: pendingImage.url, thumbUrl: pendingImage.thumbUrl } : undefined
+      );
       setMessages((prev) => [...prev, msg]);
       setText("");
       setActiveWarn(null);
+      if (pendingImage?.previewUrl) URL.revokeObjectURL(pendingImage.previewUrl);
+      setPendingImage(null);
     } catch (err) {
       toast({ title: t("failedToSend"), description: err.message, variant: "destructive" });
     } finally {
@@ -439,15 +488,36 @@ export default function Chat() {
                     </Avatar>
                   )}
                   <div className={`max-w-[72%] ${isMine ? "items-end" : "items-start"} flex flex-col gap-1`}>
-                    <div
-                      className={`px-4 py-2.5 rounded-2xl text-sm font-medium leading-snug ${
-                        isMine
-                          ? "bg-gradient-to-br from-primary to-secondary text-white rounded-br-sm"
-                          : "bg-muted text-foreground rounded-bl-sm"
-                      }`}
-                    >
-                      {msg.body}
-                    </div>
+                    {/* Attachments load from message_attachments via the API on every
+                        fetch, so they persist and re-render correctly after a refresh —
+                        nothing here depends on ephemeral local (blob:) state. */}
+                    {(msg.attachments || []).map((att) => (
+                      <a
+                        key={att.id}
+                        href={att.url}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="block max-w-[220px] rounded-2xl overflow-hidden border border-border/30"
+                      >
+                        <img
+                          src={att.url}
+                          alt=""
+                          loading="lazy"
+                          className="w-full h-auto max-h-[260px] object-cover bg-muted"
+                        />
+                      </a>
+                    ))}
+                    {msg.body && (
+                      <div
+                        className={`px-4 py-2.5 rounded-2xl text-sm font-medium leading-snug ${
+                          isMine
+                            ? "bg-gradient-to-br from-primary to-secondary text-white rounded-br-sm"
+                            : "bg-muted text-foreground rounded-bl-sm"
+                        }`}
+                      >
+                        {msg.body}
+                      </div>
+                    )}
                     <span className="text-[10px] text-muted-foreground font-medium px-1">
                       {formatTime(msg.created_at)}
                     </span>
@@ -465,7 +535,59 @@ export default function Chat() {
 
       {/* Input Bar */}
       <div className="sticky bottom-0 bg-card/95 backdrop-blur-xl border-t border-border/20 px-4 pb-8 pt-3">
+
+        {/* Pending image preview — shown above the input row while an image
+            is attached, uploading, or failed. */}
+        {pendingImage && (
+          <div className="mb-2 flex items-center gap-2">
+            <div className="relative h-16 w-16 rounded-xl overflow-hidden bg-muted shrink-0 border border-border/40">
+              <img src={pendingImage.previewUrl} alt="" className="w-full h-full object-cover" />
+              {pendingImage.status === "uploading" && (
+                <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+                  <Loader2 className="h-4 w-4 text-white animate-spin" />
+                </div>
+              )}
+              {pendingImage.status === "error" && (
+                <div className="absolute inset-0 bg-destructive/60 flex items-center justify-center">
+                  <AlertTriangle className="h-4 w-4 text-white" />
+                </div>
+              )}
+              <button
+                type="button"
+                onClick={removePendingImage}
+                aria-label={t("removeImageAttachment")}
+                className="absolute top-0.5 right-0.5 h-5 w-5 rounded-full bg-black/60 flex items-center justify-center"
+              >
+                <X className="h-3 w-3 text-white" />
+              </button>
+            </div>
+            <span className="text-xs font-medium text-muted-foreground">
+              {pendingImage.status === "uploading"
+                ? t("uploadingImageLabel")
+                : pendingImage.status === "error"
+                  ? pendingImage.error
+                  : null}
+            </span>
+          </div>
+        )}
+
         <div className="flex items-center gap-2 bg-muted rounded-2xl px-4 py-2.5">
+          <input
+            ref={imageInputRef}
+            type="file"
+            accept="image/jpeg,image/png,image/webp,image/avif,image/gif,image/heic,image/heif"
+            className="hidden"
+            onChange={handleImageSelect}
+          />
+          <button
+            type="button"
+            onClick={() => imageInputRef.current?.click()}
+            disabled={sending || pendingImage?.status === "uploading"}
+            aria-label={t("attachImage")}
+            className="h-9 w-9 shrink-0 rounded-xl flex items-center justify-center text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors disabled:opacity-40"
+          >
+            <ImagePlus className="h-5 w-5" />
+          </button>
           <input
             ref={inputRef}
             type="text"
@@ -479,7 +601,11 @@ export default function Chat() {
           <motion.button
             whileTap={{ scale: 0.88 }}
             onClick={sendMessage}
-            disabled={!text.trim() || sending}
+            disabled={
+              (!text.trim() && !(pendingImage?.status === "done")) ||
+              sending ||
+              pendingImage?.status === "uploading"
+            }
             className="h-10 w-10 rounded-xl bg-gradient-to-br from-primary to-secondary text-white flex items-center justify-center disabled:opacity-40 transition-opacity shadow-md"
           >
             {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}

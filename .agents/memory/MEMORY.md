@@ -4,3 +4,4 @@
 - [R2 uploads and image processing](kosmeo-r2-uploads.md) — sharp pipeline: 1600px WebP full + 600px WebP thumb; getThumbUrl() derives thumb URL; /api/media/ proxy; local disk fallback when R2 vars missing
 - [Dark/light theme system](kosmeo-dark-theme.md) — CSS-var `.dark` class architecture, toggle mounted in 3 headers, WaitlistLanding intentionally hardcoded dark and exempt from toggle
 - [Brand logo (moon/star mark)](kosmeo-brand-logo.md) — real logo is only a PNG; vectorized via potrace into BrandMark.jsx w/ gradient fill; WaitlistLanding excluded from brand-mark rework by request
+- [Chat attachments & beta limits](kosmeo-chat-attachments.md) — message_attachments is a separate table from listing_images; chat images reuse the listing upload pipeline; requireFullAccess existed unused, now wired to gate listing creation

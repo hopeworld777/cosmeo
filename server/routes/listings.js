@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { z } from "zod";
 import pool from "../db.js";
-import { requireAuth, optionalAuth } from "../middleware/auth.js";
+import { requireAuth, requireFullAccess, optionalAuth } from "../middleware/auth.js";
 import { deleteFromStorage } from "../r2.js";
 
 // ── Zod schema for creating a listing ─────────────────────────────────────────
@@ -31,7 +31,8 @@ const createListingSchema = z.object({
       (v) => v.startsWith("/") || /^https?:\/\//.test(v),
       { message: "Invalid image URL" }
     )
-  ).min(1, "At least one image is required"),
+  ).min(1, "At least one image is required")
+   .max(5, "Maximum 5 images per listing"),
 })
   .refine(d => d.is_for_sale || d.is_for_rent, {
     message: "Must be listed for sale or for rent (or both)",
@@ -204,7 +205,13 @@ router.get("/:id", optionalAuth, async (req, res) => {
 });
 
 // POST /api/listings
-router.post("/", requireAuth, async (req, res) => {
+// requireFullAccess closes a gap where a WAITLIST account (blocked from the
+// Sell page by the frontend route guard, but never checked server-side)
+// could call this endpoint directly and create a listing. The beta VIP
+// listing limit below only makes sense once this gate is in place — without
+// it, "each VIP user can create max 3" isn't actually VIP-scoped, it's
+// "each authenticated user".
+router.post("/", requireAuth, requireFullAccess, async (req, res) => {
   // Email verification gate — enforced server-side so the frontend cannot be bypassed
   const verifyCheck = await pool.query(
     "SELECT email_verified FROM users WHERE id = $1",
@@ -214,7 +221,10 @@ router.post("/", requireAuth, async (req, res) => {
     return res.status(403).json({ error: "email_not_verified" });
   }
 
-  // Active listing limit — max 3 per user (sold/deleted/inactive don't count)
+  // Beta VIP listing limit — max 3 active listings per user (sold/deleted/
+  // inactive listings don't count against it). This is a temporary beta
+  // constraint, not a permanent product limit — see listingLimitTitle/Body
+  // in the translation files for the user-facing copy.
   const countResult = await pool.query(
     "SELECT COUNT(*) FROM listings WHERE seller_id = $1 AND is_active = true",
     [req.userId]

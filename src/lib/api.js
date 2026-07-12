@@ -107,15 +107,22 @@ export const api = {
   messages: {
     conversations: () => request("/messages/conversations"),
     getMessages: (convId) => request(`/messages/conversations/${convId}`),
-    startConversation: (listing_id, body) =>
+    startConversation: (listing_id, body, image) =>
       request("/messages/conversations", {
         method: "POST",
-        body: JSON.stringify({ listing_id, body }),
+        body: JSON.stringify({
+          listing_id,
+          body,
+          ...(image ? { image_url: image.url, thumb_url: image.thumbUrl } : {}),
+        }),
       }),
-    sendMessage: (convId, body) =>
+    sendMessage: (convId, body, image) =>
       request(`/messages/conversations/${convId}`, {
         method: "POST",
-        body: JSON.stringify({ body }),
+        body: JSON.stringify({
+          body,
+          ...(image ? { image_url: image.url, thumb_url: image.thumbUrl } : {}),
+        }),
       }),
   },
 
@@ -212,6 +219,19 @@ export const api = {
       for (const file of files) formData.append("images", file);
       const token = getToken();
       const res = await fetch(`${BASE}/upload/multiple`, {
+        method: "POST",
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+        body: formData,
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || "Upload failed");
+      return data;
+    },
+    chatImage: async (file) => {
+      const formData = new FormData();
+      formData.append("image", file);
+      const token = getToken();
+      const res = await fetch(`${BASE}/upload/chat-image`, {
         method: "POST",
         headers: token ? { Authorization: `Bearer ${token}` } : {},
         body: formData,

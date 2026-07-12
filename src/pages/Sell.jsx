@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { useLocation } from "wouter";
 import { api } from "@/lib/api";
-import { prepareImageFile, MAX_LISTING_BYTES } from "@/lib/imageUtils";
+import { prepareImageFile, MAX_LISTING_BYTES, MAX_IMAGES_PER_LISTING } from "@/lib/imageUtils";
 import { useAuth } from "@/hooks/useAuth";
 import { useTranslation } from "react-i18next";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
@@ -374,11 +374,24 @@ export default function Sell() {
   const goBack = () => { setDir(-1); setStep(s => s - 1); };
 
   const handleFileSelect = async (e) => {
-    const files = Array.from(e.target.files || []);
+    let files = Array.from(e.target.files || []);
     // Reset the input value so selecting the exact same file again still
     // fires onChange (the browser won't re-fire change on an unchanged value).
     e.target.value = "";
     if (!files.length) return;
+
+    // Cap the total at MAX_IMAGES_PER_LISTING — silently drop the overflow
+    // and tell the user why, rather than uploading images that the backend
+    // (createListingSchema's images.max(5)) would reject at publish time.
+    const remainingSlots = MAX_IMAGES_PER_LISTING - uploadedImages.length;
+    if (remainingSlots <= 0) {
+      toast({ title: t("maxPhotosReached", { count: MAX_IMAGES_PER_LISTING }), variant: "destructive" });
+      return;
+    }
+    if (files.length > remainingSlots) {
+      toast({ title: t("maxPhotosReached", { count: MAX_IMAGES_PER_LISTING }), variant: "destructive" });
+      files = files.slice(0, remainingSlots);
+    }
 
     // Show an instant local preview (URL.createObjectURL) for each picked
     // file before the network upload even starts, so the UI never looks
@@ -503,7 +516,11 @@ export default function Sell() {
       window.dispatchEvent(new Event("kosmeo:listingChanged"));
       setTimeout(() => setLocation("/"), 2200);
     } catch (err) {
-      toast({ title: t("couldNotSave"), description: err.message, variant: "destructive" });
+      if (err.message === "listing_limit_reached") {
+        toast({ title: t("listingLimitTitle"), description: t("listingLimitBody"), variant: "destructive" });
+      } else {
+        toast({ title: t("couldNotSave"), description: err.message, variant: "destructive" });
+      }
       setSubmitting(false);
     }
   };
@@ -620,6 +637,9 @@ export default function Sell() {
                   <p className="text-sm font-bold text-foreground mb-3">
                     {t("photos")}
                     <span className="text-red-400 ml-1">*</span>
+                    <span className="text-muted-foreground font-normal ml-2 text-xs">
+                      {uploadedImages.length}/{MAX_IMAGES_PER_LISTING}
+                    </span>
                     {imageError && (
                       <span className="text-destructive font-normal ml-2 text-xs">
                         Please upload at least one image.
@@ -634,22 +654,24 @@ export default function Sell() {
                   </p>
                   <input type="file" multiple accept="image/jpeg,image/png,image/webp,image/avif,image/gif,image/heic,image/heif" className="hidden" ref={fileInputRef} onChange={handleFileSelect} />
                   <div className="flex gap-3 overflow-x-auto no-scrollbar pb-1">
-                    <button
-                      type="button"
-                      onClick={() => fileInputRef.current?.click()}
-                      disabled={uploading}
-                      className={`flex h-28 w-28 shrink-0 cursor-pointer flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed transition-colors disabled:opacity-60 ${
-                        imageError
-                          ? "border-destructive bg-destructive/5 text-destructive hover:bg-destructive/10"
-                          : "border-primary/40 bg-primary/5 hover:bg-primary/10 text-primary"
-                      }`}
-                    >
-                      {uploading ? (
-                        <span className={`h-5 w-5 rounded-full border-2 animate-spin ${imageError ? "border-destructive/40 border-t-destructive" : "border-primary/40 border-t-primary"}`} />
-                      ) : (
-                        <><Camera className="h-6 w-6" /><span className="text-xs font-bold">{t("addPhoto")}</span></>
-                      )}
-                    </button>
+                    {uploadedImages.length < MAX_IMAGES_PER_LISTING && (
+                      <button
+                        type="button"
+                        onClick={() => fileInputRef.current?.click()}
+                        disabled={uploading}
+                        className={`flex h-28 w-28 shrink-0 cursor-pointer flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed transition-colors disabled:opacity-60 ${
+                          imageError
+                            ? "border-destructive bg-destructive/5 text-destructive hover:bg-destructive/10"
+                            : "border-primary/40 bg-primary/5 hover:bg-primary/10 text-primary"
+                        }`}
+                      >
+                        {uploading ? (
+                          <span className={`h-5 w-5 rounded-full border-2 animate-spin ${imageError ? "border-destructive/40 border-t-destructive" : "border-primary/40 border-t-primary"}`} />
+                        ) : (
+                          <><Camera className="h-6 w-6" /><span className="text-xs font-bold">{t("addPhoto")}</span></>
+                        )}
+                      </button>
+                    )}
                     {uploadedImages.map((img, i) => (
                       <div key={img.id ?? i} className="relative h-28 w-28 shrink-0 rounded-2xl overflow-hidden bg-muted">
                         <img

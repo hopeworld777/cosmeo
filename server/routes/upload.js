@@ -215,4 +215,29 @@ router.post(
   }
 );
 
+// POST /api/upload/chat-image — one image attached to a chat message.
+// Reuses the exact same processAndSave() pipeline as listing photos (sharp
+// resize/compress to WebP, full + thumb, R2 or local-disk storage) so chat
+// images get identical optimization and storage behavior — no separate
+// image-processing path to maintain.
+router.post(
+  "/chat-image",
+  requireAuth,
+  handleUpload(upload.single("image")),
+  async (req, res) => {
+    console.log("[upload] POST /chat-image — req.file:", req.file
+      ? `name="${req.file.originalname}" mime="${req.file.mimetype}" size=${req.file.size}`
+      : "MISSING");
+    if (!req.file) return res.status(400).json({ error: "No file uploaded" });
+    try {
+      const { url, thumbUrl } = await processAndSave(req.file);
+      res.json({ url, thumbUrl });
+    } catch (err) {
+      console.error("[upload] chat-image error:", err.message);
+      const isStorageErr = err.message.startsWith("Storage") || err.message.startsWith("Disk");
+      res.status(isStorageErr ? 503 : 422).json({ error: err.message });
+    }
+  }
+);
+
 export default router;

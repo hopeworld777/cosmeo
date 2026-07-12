@@ -15,6 +15,12 @@ const HEIC_TYPES = new Set(["image/heic", "image/heif"]);
 
 export const MAX_AVATAR_BYTES   = 5  * 1024 * 1024; // 5 MB  — for avatars
 export const MAX_LISTING_BYTES  = 20 * 1024 * 1024; // 20 MB — for listing photos (server compresses)
+export const MAX_CHAT_IMAGE_BYTES = 15 * 1024 * 1024; // 15 MB — for chat attachments (server compresses)
+
+// Keep in sync with MAX_IMAGES_PER_LISTING in server/routes/upload.js and the
+// images.max(5) rule in server/routes/listings.js — this is the client-side
+// mirror used to cap selection before it ever reaches the server.
+export const MAX_IMAGES_PER_LISTING = 5;
 
 export const FORMAT_ERROR =
   "Unsupported image format. Please upload a JPG, PNG, WEBP, AVIF, or GIF image.";
