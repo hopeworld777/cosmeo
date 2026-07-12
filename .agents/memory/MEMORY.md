@@ -5,3 +5,4 @@
 - [Dark/light theme system](kosmeo-dark-theme.md) — CSS-var `.dark` class architecture, toggle mounted in 3 headers, WaitlistLanding intentionally hardcoded dark and exempt from toggle
 - [Brand logo (moon/star mark)](kosmeo-brand-logo.md) — real logo is only a PNG; vectorized via potrace into BrandMark.jsx w/ gradient fill; WaitlistLanding excluded from brand-mark rework by request
 - [Chat attachments & beta limits](kosmeo-chat-attachments.md) — message_attachments is a separate table from listing_images; chat images reuse the listing upload pipeline; requireFullAccess existed unused, now wired to gate listing creation
+- [Toast notifications silently invisible](kosmeo-toast-store.md) — useToast() lacked a shared store, so toast() calls from forms never reached <Toaster/>; fixed with module-level store

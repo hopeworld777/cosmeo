@@ -319,6 +319,32 @@ export default function Sell() {
     !isUploading &&
     uploadedImages.every((img) => img.status === "done" && isValidMediaUrl(img.url));
 
+  // ── Pricing / listing-type field-level validation ─────────────────────
+  // Mirrors the toast (which can be missed/dismissed) with a persistent
+  // inline message + highlighted field, and scrolls/focuses the first
+  // invalid field so "Publish did nothing" never happens silently.
+  const [priceErrors, setPriceErrors] = useState({ sale: "", rent: "" });
+  const [listingTypeError, setListingTypeError] = useState(false);
+  const salePriceRef = useRef(null);
+  const rentPriceRef = useRef(null);
+  const listingTypeRef = useRef(null);
+
+  const validatePriceValue = (raw) => {
+    if (raw === "" || raw === null || raw === undefined) {
+      return "Please enter a price amount.";
+    }
+    const num = Number(raw);
+    if (!Number.isFinite(num) || num <= 0) {
+      return "Please enter a valid price.";
+    }
+    return "";
+  };
+
+  const scrollToAndFocus = (ref) => {
+    ref?.current?.scrollIntoView?.({ behavior: "smooth", block: "center" });
+    ref?.current?.focus?.();
+  };
+
   const fileInputRef = useRef(null);
   // Guards against re-entrant goNext() calls — e.g. a user clicking Next
   // several times in the same tick, before the disabled-button re-render
@@ -475,16 +501,23 @@ export default function Sell() {
       toast({ title: "Please upload at least one image.", variant: "destructive" });
       return;
     }
+    // Reset stale field errors before revalidating this attempt.
+    setListingTypeError(false);
+    setPriceErrors({ sale: "", rent: "" });
+
     if (!isForSale && !isForRent) {
-      toast({ title: t("chooseHowToSell"), description: t("toggleSaleRent"), variant: "destructive" });
+      setListingTypeError(true);
+      toast({ title: "Please select a listing type.", variant: "destructive" });
+      scrollToAndFocus(listingTypeRef);
       return;
     }
-    if (isForSale && (!salePrice || Number(salePrice) <= 0)) {
-      toast({ title: t("enterSalePrice"), variant: "destructive" });
-      return;
-    }
-    if (isForRent && (!rentPrice || Number(rentPrice) <= 0)) {
-      toast({ title: t("enterRentalPrice"), variant: "destructive" });
+
+    const saleErr = isForSale ? validatePriceValue(salePrice) : "";
+    const rentErr = isForRent ? validatePriceValue(rentPrice) : "";
+    if (saleErr || rentErr) {
+      setPriceErrors({ sale: saleErr, rent: rentErr });
+      toast({ title: saleErr || rentErr, variant: "destructive" });
+      scrollToAndFocus(saleErr ? salePriceRef : rentPriceRef);
       return;
     }
 
@@ -813,14 +846,32 @@ export default function Sell() {
                   <p className="text-sm text-muted-foreground font-medium">{t("pricingBothOptions")}</p>
                 </div>
 
+                {/* Listing type selection error (Sell / Rent) */}
+                {listingTypeError && (
+                  <div className="flex items-start gap-2 rounded-2xl border border-destructive/30 bg-destructive/5 p-3 text-destructive">
+                    <AlertTriangle className="h-4 w-4 shrink-0 mt-0.5" />
+                    <p className="text-xs font-semibold leading-relaxed">Please select a listing type.</p>
+                  </div>
+                )}
+
                 {/* For Sale */}
-                <div className={`bg-card rounded-3xl card-shadow p-5 flex flex-col gap-4 transition-all ${isForSale ? "ring-2 ring-primary/30" : ""}`}>
+                <div
+                  ref={listingTypeRef}
+                  tabIndex={-1}
+                  className={`bg-card rounded-3xl card-shadow p-5 flex flex-col gap-4 transition-all outline-none ${
+                    isForSale ? "ring-2 ring-primary/30" : ""
+                  } ${listingTypeError ? "ring-2 ring-destructive" : ""}`}
+                >
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="font-extrabold text-foreground">{t("forSale")}</p>
                       <p className="text-xs text-muted-foreground font-medium mt-0.5">{t("oneTimePurchase")}</p>
                     </div>
-                    <button type="button" onClick={() => setIsForSale(v => !v)} className={`w-12 h-6 rounded-full transition-colors relative ${isForSale ? "bg-primary" : "bg-muted"}`}>
+                    <button
+                      type="button"
+                      onClick={() => { setIsForSale(v => !v); setListingTypeError(false); }}
+                      className={`w-12 h-6 rounded-full transition-colors relative ${isForSale ? "bg-primary" : "bg-muted"}`}
+                    >
                       <span className={`absolute top-1 h-4 w-4 rounded-full bg-white shadow transition-all ${isForSale ? "left-7" : "left-1"}`} />
                     </button>
                   </div>
@@ -829,21 +880,47 @@ export default function Sell() {
                       <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.18 }} className="overflow-hidden">
                         <div className="relative">
                           <span className="absolute left-4 top-1/2 -translate-y-1/2 text-lg font-black text-primary">₾</span>
-                          <input type="number" min="0" step="1" value={salePrice} onChange={e => setSalePrice(e.target.value)} placeholder="0" className="w-full h-14 rounded-2xl bg-muted border-none pl-10 pr-4 text-2xl font-black text-foreground outline-none focus:ring-2 focus:ring-primary/25" />
+                          <input
+                            ref={salePriceRef}
+                            type="number"
+                            min="0"
+                            step="1"
+                            value={salePrice}
+                            onChange={e => { setSalePrice(e.target.value); if (priceErrors.sale) setPriceErrors(p => ({ ...p, sale: "" })); }}
+                            placeholder="0"
+                            aria-invalid={!!priceErrors.sale}
+                            className={`w-full h-14 rounded-2xl bg-muted border-none pl-10 pr-4 text-2xl font-black text-foreground outline-none focus:ring-2 transition-shadow ${
+                              priceErrors.sale ? "ring-2 ring-destructive focus:ring-destructive" : "focus:ring-primary/25"
+                            }`}
+                          />
                         </div>
+                        {priceErrors.sale && (
+                          <p className="text-xs text-destructive font-semibold mt-2 flex items-center gap-1.5">
+                            <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
+                            {priceErrors.sale}
+                          </p>
+                        )}
                       </motion.div>
                     )}
                   </AnimatePresence>
                 </div>
 
                 {/* For Rent */}
-                <div className={`bg-card rounded-3xl card-shadow p-5 flex flex-col gap-4 transition-all ${isForRent ? "ring-2 ring-secondary/30" : ""}`}>
+                <div
+                  className={`bg-card rounded-3xl card-shadow p-5 flex flex-col gap-4 transition-all ${
+                    isForRent ? "ring-2 ring-secondary/30" : ""
+                  } ${listingTypeError ? "ring-2 ring-destructive" : ""}`}
+                >
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="font-extrabold text-foreground">{t("forRent")}</p>
                       <p className="text-xs text-muted-foreground font-medium mt-0.5">{t("dailyRentalRate")}</p>
                     </div>
-                    <button type="button" onClick={() => setIsForRent(v => !v)} className={`w-12 h-6 rounded-full transition-colors relative ${isForRent ? "bg-secondary" : "bg-muted"}`}>
+                    <button
+                      type="button"
+                      onClick={() => { setIsForRent(v => !v); setListingTypeError(false); }}
+                      className={`w-12 h-6 rounded-full transition-colors relative ${isForRent ? "bg-secondary" : "bg-muted"}`}
+                    >
                       <span className={`absolute top-1 h-4 w-4 rounded-full bg-white shadow transition-all ${isForRent ? "left-7" : "left-1"}`} />
                     </button>
                   </div>
@@ -852,9 +929,27 @@ export default function Sell() {
                       <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.18 }} className="overflow-hidden">
                         <div className="relative">
                           <span className="absolute left-4 top-1/2 -translate-y-1/2 text-lg font-black text-secondary">₾</span>
-                          <input type="number" min="0" step="1" value={rentPrice} onChange={e => setRentPrice(e.target.value)} placeholder="0" className="w-full h-14 rounded-2xl bg-muted border-none pl-10 pr-4 text-2xl font-black text-foreground outline-none focus:ring-2 focus:ring-secondary/25" />
+                          <input
+                            ref={rentPriceRef}
+                            type="number"
+                            min="0"
+                            step="1"
+                            value={rentPrice}
+                            onChange={e => { setRentPrice(e.target.value); if (priceErrors.rent) setPriceErrors(p => ({ ...p, rent: "" })); }}
+                            placeholder="0"
+                            aria-invalid={!!priceErrors.rent}
+                            className={`w-full h-14 rounded-2xl bg-muted border-none pl-10 pr-4 text-2xl font-black text-foreground outline-none focus:ring-2 transition-shadow ${
+                              priceErrors.rent ? "ring-2 ring-destructive focus:ring-destructive" : "focus:ring-secondary/25"
+                            }`}
+                          />
                           <span className="absolute right-4 top-1/2 -translate-y-1/2 text-sm text-muted-foreground font-bold">{t("perDay")}</span>
                         </div>
+                        {priceErrors.rent && (
+                          <p className="text-xs text-destructive font-semibold mt-2 flex items-center gap-1.5">
+                            <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
+                            {priceErrors.rent}
+                          </p>
+                        )}
                       </motion.div>
                     )}
                   </AnimatePresence>
