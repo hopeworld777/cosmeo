@@ -11,6 +11,7 @@ import { api } from "@/lib/api";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import VerifiedBadge from "@/components/VerifiedBadge";
+import { getThumbUrl } from "@/lib/imageUtils";
 
 const STATUS_CONFIG = {
   open:     { label: "მოთხოვნილია",  color: "bg-amber-100 text-amber-700 border-amber-200 dark:bg-amber-900/30 dark:text-amber-400 dark:border-amber-800" },
@@ -187,7 +188,7 @@ function ListingsTab({ toast }) {
           {listings.map(l => (
             <div key={l.id} className="bg-card border border-border rounded-2xl p-4 flex items-center gap-4 transition-all hover:border-primary/30">
               <div className="h-16 w-16 rounded-xl bg-muted overflow-hidden shrink-0">
-                {l.images?.[0] && <img src={l.images[0]} alt={l.title} className="h-full w-full object-cover" />}
+                {l.images?.[0] && <img src={getThumbUrl(l.images[0])} alt={l.title} className="h-full w-full object-cover" />}
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
@@ -464,7 +465,7 @@ function QuickModerationTab({ toast }) {
           {listings.map(l => (
             <div key={l.id} className="bg-card border border-border rounded-2xl p-4 flex items-center gap-4 flex-wrap transition-all hover:border-primary/30">
               <div className="h-14 w-14 rounded-xl bg-muted overflow-hidden shrink-0">
-                {l.images?.[0] && <img src={l.images[0]} alt={l.title} className="h-full w-full object-cover" />}
+                {l.images?.[0] && <img src={getThumbUrl(l.images[0])} alt={l.title} className="h-full w-full object-cover" />}
               </div>
               <div className="flex-1 min-w-[140px]">
                 <p className="font-extrabold text-[13.5px] text-foreground truncate flex items-center gap-2">

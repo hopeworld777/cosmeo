@@ -14,19 +14,19 @@ const SUPPORTED_TYPES = new Set([
 const HEIC_TYPES = new Set(["image/heic", "image/heif"]);
 
 export const MAX_AVATAR_BYTES   = 5  * 1024 * 1024; // 5 MB  — for avatars
-export const MAX_LISTING_BYTES  = 10 * 1024 * 1024; // 10 MB — for listing photos
+export const MAX_LISTING_BYTES  = 20 * 1024 * 1024; // 20 MB — for listing photos (server compresses)
 
 export const FORMAT_ERROR =
   "Unsupported image format. Please upload a JPG, PNG, WEBP, AVIF, or GIF image.";
 
 /**
  * Validates and prepares an image file for upload:
- *   - Enforces the supplied size limit (default 5 MB for avatars).
+ *   - Enforces the supplied size limit.
  *   - Converts HEIC/HEIF (iPhone photos) to JPEG automatically.
  *   - Rejects unsupported formats with a user-friendly message.
  *
- * Pass `maxBytes` to override the default limit, e.g. MAX_LISTING_BYTES for
- * listing photos where the server allows up to 10 MB.
+ * The server always re-compresses and converts to WebP, so the file sent from
+ * the browser just needs to be decodable — original quality/size don't matter.
  *
  * Returns a File ready to pass to api.upload.*(), or throws an Error
  * with a message safe to show directly to the user.
@@ -58,4 +58,29 @@ export async function prepareImageFile(file, { maxBytes = MAX_AVATAR_BYTES } = {
   }
 
   return file;
+}
+
+/**
+ * Derives the thumbnail URL from a full image URL.
+ *
+ * The server stores two WebP versions for every upload:
+ *   full  → /api/media/<key>.webp          (max 1600 px wide)
+ *   thumb → /api/media/thumb-<key>.webp    (max 600 px wide)
+ *
+ * The thumb key is simply "thumb-" prepended to the filename, so we can
+ * reconstruct it from the full URL without an extra DB column.
+ *
+ * Works for both R2 URLs (/api/media/...) and local-disk fallback (/uploads/...).
+ * Returns the original URL unchanged for any format it doesn't recognise,
+ * so callers can safely pass any image URL without conditional checks.
+ *
+ * @param {string|null|undefined} url  Full image URL
+ * @returns {string|null|undefined}    Thumbnail URL, or the input if unrecognised
+ */
+export function getThumbUrl(url) {
+  if (!url) return url;
+  // Insert "thumb-" before the last path segment:
+  //   /api/media/1234-abc.webp  →  /api/media/thumb-1234-abc.webp
+  //   /uploads/1234-abc.webp    →  /uploads/thumb-1234-abc.webp
+  return url.replace(/\/([^/]+)$/, "/thumb-$1");
 }

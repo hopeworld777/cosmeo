@@ -1,6 +1,6 @@
 - [Cosmeo stack](kosmeo-stack.md) — Express 3001 + Vite 5000, pg pool, JWT auth, multer uploads; Vite proxies /api and /uploads to backend; localStorage keys still use "kosmeo_*" prefix (internal only)
 - [Database schema](kosmeo-schema.md) — Schema was missing entirely; created server/schema.sql with all 9 tables; must run it manually against the DB if reset
 - [SQL template literal placeholders](kosmeo-sql-placeholders.md) — dynamic LIMIT/OFFSET/ILIKE placeholders in template-literal queries can silently lose their leading `$`; grep for `${idx}` vs `$${idx}` after editing paginated queries
-- [R2 credential/SDK gotchas](kosmeo-r2-uploads.md) — env secrets can carry stray whitespace breaking SigV4 signing; newer aws-sdk client-s3 also needs checksum opts disabled for R2 compatibility
+- [R2 uploads and image processing](kosmeo-r2-uploads.md) — sharp pipeline: 1600px WebP full + 600px WebP thumb; getThumbUrl() derives thumb URL; /api/media/ proxy; local disk fallback when R2 vars missing
 - [Dark/light theme system](kosmeo-dark-theme.md) — CSS-var `.dark` class architecture, toggle mounted in 3 headers, WaitlistLanding intentionally hardcoded dark and exempt from toggle
 - [Brand logo (moon/star mark)](kosmeo-brand-logo.md) — real logo is only a PNG; vectorized via potrace into BrandMark.jsx w/ gradient fill; WaitlistLanding excluded from brand-mark rework by request

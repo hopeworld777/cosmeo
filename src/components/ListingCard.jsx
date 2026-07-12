@@ -7,6 +7,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { api } from "@/lib/api";
 import { useTranslation } from "react-i18next";
+import { getThumbUrl } from "@/lib/imageUtils";
 
 export default function ListingCard({ listing, index = 0 }) {
   const { t } = useTranslation();
@@ -43,7 +44,8 @@ export default function ListingCard({ listing, index = 0 }) {
     }
   };
 
-  const imageSrc = listing.images?.[0] ?? null;
+  // Use thumbnail (600 px WebP) for cards — full image is used in ItemDetail.
+  const imageSrc = getThumbUrl(listing.images?.[0] ?? null);
   const city = listing.location || listing.seller_location || null;
   const rating = listing.seller_rating ? Number(listing.seller_rating).toFixed(1) : null;
   const formatGEL = (n) => n != null ? `₾${Number(n).toFixed(0)}` : null;

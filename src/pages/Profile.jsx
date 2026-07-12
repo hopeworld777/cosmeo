@@ -14,6 +14,7 @@ import { api } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
 import { useTranslation } from "react-i18next";
 import VerifiedBadge from "@/components/VerifiedBadge";
+import { getThumbUrl } from "@/lib/imageUtils";
 
 // ── Withdraw Modal ─────────────────────────────────────────────────────────────
 function WithdrawModal({ balance, onClose, onSuccess }) {
@@ -545,7 +546,7 @@ function MyListings({ onSold }) {
           ) : (
             <AnimatePresence mode="popLayout">
               {activeListings.map((l, i) => {
-                const img = l.images?.[0] ?? null;
+                const img = getThumbUrl(l.images?.[0] ?? null);
                 return (
                   <motion.div
                     key={l.id}
@@ -621,7 +622,7 @@ function MyListings({ onSold }) {
           ) : (
             <AnimatePresence mode="popLayout">
               {soldListings.map((l, i) => {
-                const img = l.images?.[0] ?? null;
+                const img = getThumbUrl(l.images?.[0] ?? null);
                 const soldDate = l.sold_at ? new Date(l.sold_at).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }) : null;
                 return (
                   <motion.div
