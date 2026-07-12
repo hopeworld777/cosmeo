@@ -165,6 +165,8 @@ export default function Register() {
       title={t("authTitle")}
       subtitle={t("authSubtitleRegister", "Join the Georgian cosplay community")}
       badge={t("joinBadge", "Join Cosmeo")}
+      compact
+      seamlessCard
       footer={
         <p className="text-[13px] font-medium" style={s.mutedStyle}>
           {t("alreadyHaveAccount2", "Already have an account?")}{" "}
@@ -176,7 +178,7 @@ export default function Register() {
         </p>
       }
     >
-      <div className="flex flex-col gap-4 mb-2">
+      <div className="flex flex-col gap-2 mb-1.5">
         <GoogleAuthButton onSuccess={() => setLocation("/")} />
         <div className="flex items-center gap-3">
           <div className="h-px flex-1" style={{ background: s.isDark ? "rgba(255,255,255,0.12)" : "rgba(109,40,217,0.15)" }} />
@@ -185,10 +187,10 @@ export default function Register() {
         </div>
       </div>
 
-      <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-4">
+      <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-2">
         {/* Username */}
         <div>
-          <label htmlFor="reg-username" className={s.labelClass} style={s.labelStyle}>
+          <label htmlFor="reg-username" className={s.labelClass + " !mb-1"} style={s.labelStyle}>
             {t("username")}
           </label>
           <input
@@ -197,19 +199,19 @@ export default function Register() {
             value={username}
             onChange={(e) => { setUsername(e.target.value); clearFieldError("username"); }}
             autoComplete="username"
-            className={s.inputClass}
+            className={s.inputClass + " !py-2.5"}
             style={fieldErrors.username ? s.inputErrorStyle : s.inputStyle}
             disabled={loading}
             data-testid="input-register-username"
           />
           {fieldErrors.username && (
-            <p className="text-[12px] font-medium mt-1.5" style={s.errorStyle}>{fieldErrors.username}</p>
+            <p className="text-[12px] font-medium mt-1" style={s.errorStyle}>{fieldErrors.username}</p>
           )}
         </div>
 
         {/* Email */}
         <div>
-          <label htmlFor="reg-email" className={s.labelClass} style={s.labelStyle}>
+          <label htmlFor="reg-email" className={s.labelClass + " !mb-1"} style={s.labelStyle}>
             {t("email")}
           </label>
           <input
@@ -219,13 +221,13 @@ export default function Register() {
             value={email}
             onChange={(e) => { setEmail(e.target.value); clearFieldError("email"); }}
             autoComplete="email"
-            className={s.inputClass}
+            className={s.inputClass + " !py-2.5"}
             style={fieldErrors.email ? s.inputErrorStyle : s.inputStyle}
             disabled={loading}
             data-testid="input-register-email"
           />
           {fieldErrors.email && (
-            <div className="mt-1.5">
+            <div className="mt-1">
               <p className="text-[12px] font-medium" style={s.errorStyle}>{fieldErrors.email}</p>
               {emailTaken && (
                 <p className="text-[12px] mt-0.5" style={s.mutedStyle}>
@@ -240,7 +242,7 @@ export default function Register() {
 
         {/* Password */}
         <div>
-          <label htmlFor="reg-password" className={s.labelClass} style={s.labelStyle}>
+          <label htmlFor="reg-password" className={s.labelClass + " !mb-1"} style={s.labelStyle}>
             {t("password")}
           </label>
           <div className="relative">
@@ -251,7 +253,7 @@ export default function Register() {
               value={password}
               onChange={(e) => { setPassword(e.target.value); clearFieldError("password"); }}
               autoComplete="new-password"
-              className={s.inputClass + " pr-11"}
+              className={s.inputClass + " pr-11 !py-2.5"}
               style={fieldErrors.password ? s.inputErrorStyle : s.inputStyle}
               disabled={loading}
               data-testid="input-register-password"
@@ -267,12 +269,12 @@ export default function Register() {
             </button>
           </div>
           {fieldErrors.password && (
-            <p className="text-[12px] font-medium mt-1.5" style={s.errorStyle}>{fieldErrors.password}</p>
+            <p className="text-[12px] font-medium mt-1" style={s.errorStyle}>{fieldErrors.password}</p>
           )}
         </div>
 
         {/* Age confirmation */}
-        <div className="flex items-start gap-3 rounded-2xl p-3" style={s.checkboxBoxStyle(ageError)}>
+        <div className="flex items-start gap-3 rounded-2xl p-2" style={s.checkboxBoxStyle(ageError)}>
           <input
             id="age-confirm"
             type="checkbox"
@@ -290,13 +292,13 @@ export default function Register() {
           </label>
         </div>
         {ageError && (
-          <p className="text-[12px] text-center -mt-1 font-medium" style={s.errorStyle}>
+          <p className="text-[12px] text-center -mt-0.5 font-medium" style={s.errorStyle}>
             {t("ageConfirmRequired")}
           </p>
         )}
 
         {/* Safety guide link */}
-        <p className="text-center text-[12px] -mt-1" style={s.mutedStyle}>
+        <p className="text-center text-[12px] -mt-0.5" style={s.mutedStyle}>
           <Link href="/terms" className="font-bold inline-flex items-center gap-1 hover:opacity-80" style={s.linkStyle}>
             <ShieldCheck className="h-3.5 w-3.5" />{t("readSafetyGuide")}
           </Link>
@@ -305,7 +307,7 @@ export default function Register() {
         {/* General error */}
         {fieldErrors.general && (
           <div
-            className="rounded-2xl px-4 py-3"
+            className="rounded-2xl px-4 py-2.5"
             style={{
               background: s.isDark ? "rgba(239,68,68,0.1)" : "rgba(239,68,68,0.07)",
               border: "1px solid rgba(239,68,68,0.25)",
@@ -318,7 +320,7 @@ export default function Register() {
         {/* Submit */}
         <button
           type="submit"
-          className={s.submitClass}
+          className={s.submitClass + " !py-2.5"}
           style={s.submitStyle}
           disabled={loading}
           data-testid="btn-register-submit"
@@ -344,7 +346,7 @@ export default function Register() {
         </button>
 
         {/* Terms */}
-        <p className="text-center text-[11px]" style={s.mutedStyle}>
+        <p className="text-center text-[11px] leading-tight" style={s.mutedStyle}>
           {t("termsNoticePrefix")}{" "}
           <Link href="/terms" className="font-bold hover:opacity-80" style={s.linkStyle}>
             {t("termsNoticeLinkText")}

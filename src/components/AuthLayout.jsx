@@ -19,6 +19,15 @@ import AuthCosmicBackground from "@/components/AuthCosmicBackground";
  *   footer     – node rendered below the card (links, fine-print, etc.)
  *   noCard     – when true children render without the frosted card wrapper
  *                (use for icon-only status screens)
+ *   seamlessCard – when true the card drops its opaque fill/border and
+ *                inherits the page's gradient instead, so there's no hard
+ *                edge between the hero (logo/title) and the form below it.
+ *                Inputs/buttons keep their own contrast, so legibility is
+ *                unaffected. Use for dense, single-screen auth flows.
+ *   compact    – when true, tightens all vertical spacing (logo, badge,
+ *                title, card padding, gaps) so the whole page fits within
+ *                one viewport height without scrolling. Use for forms with
+ *                more fields (e.g. Register) on short/laptop screens.
  */
 export default function AuthLayout({
   children,
@@ -29,6 +38,8 @@ export default function AuthLayout({
   backLabel,
   footer,
   noCard,
+  seamlessCard,
+  compact,
 }) {
   const { theme } = useTheme();
   const isDark = theme === "dark";
@@ -46,7 +57,10 @@ export default function AuthLayout({
       <AuthCosmicBackground isDark={isDark} />
 
       {/* ── Top bar ────────────────────────────────────────────────── */}
-      <div className="relative z-10 flex items-center justify-between px-5 pt-5 shrink-0">
+      {/* No background of its own — it inherits the same gradient as the
+          rest of the page, so there's no hard edge between it and the
+          content below. Keep it that way; do not give this bar a fill. */}
+      <div className={`relative z-10 flex items-center justify-between px-5 shrink-0 ${compact ? "pt-3" : "pt-5"}`}>
         {backHref ? (
           <Link href={backHref}>
             <button
@@ -73,7 +87,9 @@ export default function AuthLayout({
       </div>
 
       {/* ── Scrollable content ─────────────────────────────────────── */}
-      <div className="relative z-10 flex flex-1 overflow-y-auto px-5 py-5">
+      {/* overflow-y-auto stays as a safety net for tiny/zoomed viewports —
+          "compact" mode is what actually keeps content within one screen. */}
+      <div className={`relative z-10 flex flex-1 overflow-y-auto px-5 ${compact ? "py-2" : "py-5"}`}>
         <div className="w-full max-w-sm mx-auto my-auto flex flex-col items-center">
           <motion.div
             initial={{ opacity: 0, y: 28 }}
@@ -86,7 +102,7 @@ export default function AuthLayout({
               initial={{ scale: 0.8, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               transition={{ delay: 0.1, duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-              className="relative mb-4"
+              className={compact ? "relative mb-1" : "relative mb-4"}
             >
               <div
                 className="absolute inset-0 rounded-full blur-2xl"
@@ -96,7 +112,7 @@ export default function AuthLayout({
                   transform: "scale(1.7)",
                 }}
               />
-              <BrandMark className="relative h-24 w-24 sm:h-28 sm:w-28" />
+              <BrandMark className={compact ? "relative h-10 w-10 sm:h-12 sm:w-12" : "relative h-24 w-24 sm:h-28 sm:w-28"} />
             </motion.div>
 
             {/* Badge pill */}
@@ -105,7 +121,7 @@ export default function AuthLayout({
                 initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.2 }}
-                className="mb-4 inline-flex items-center gap-2 rounded-full px-4 py-1.5"
+                className={`inline-flex items-center gap-2 rounded-full px-4 ${compact ? "py-1 mb-1.5" : "py-1.5 mb-4"}`}
                 style={{
                   border: "1.5px solid rgba(192,132,252,0.3)",
                   background: "rgba(168,85,247,0.08)",
@@ -127,7 +143,7 @@ export default function AuthLayout({
                 initial={{ opacity: 0, y: 12 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.25 }}
-                className="mb-1.5 text-2xl font-black leading-tight text-center"
+                className={`font-black leading-tight text-center ${compact ? "mb-1 text-lg" : "mb-1.5 text-2xl"}`}
                 style={{
                   color: isDark ? "#ffffff" : "#1e1b4b",
                   textShadow: isDark ? "0 0 40px rgba(192,132,252,0.3)" : "none",
@@ -143,14 +159,18 @@ export default function AuthLayout({
                 initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.3 }}
-                className="mb-6 text-[13px] text-center font-medium leading-snug px-2"
+                className={`text-[13px] text-center font-medium leading-snug px-2 ${compact ? "mb-2" : "mb-6"}`}
                 style={{ color: isDark ? "rgba(255,255,255,0.45)" : "rgba(109,40,217,0.55)" }}
               >
                 {subtitle}
               </motion.p>
             )}
 
-            {/* Card (or bare children) */}
+            {/* Card (or bare children) — seamlessCard drops the opaque fill
+                and border so it reads as one continuous gradient scene from
+                the hero straight through to the form, instead of a distinct
+                panel. Inputs/buttons carry their own contrast (authStyles.js)
+                so legibility doesn't depend on the card's background. */}
             <motion.div
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
@@ -159,6 +179,12 @@ export default function AuthLayout({
               style={
                 noCard
                   ? {}
+                  : seamlessCard
+                  ? {
+                      background: "transparent",
+                      borderRadius: "1.5rem",
+                      padding: compact ? "0" : "0.5rem 0 0",
+                    }
                   : {
                       background: isDark
                         ? "rgba(255,255,255,0.04)"
@@ -168,7 +194,7 @@ export default function AuthLayout({
                         : "1px solid rgba(192,132,252,0.25)",
                       backdropFilter: "blur(16px)",
                       borderRadius: "1.5rem",
-                      padding: "1.5rem",
+                      padding: compact ? "1rem" : "1.5rem",
                     }
               }
             >
@@ -181,7 +207,7 @@ export default function AuthLayout({
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: 0.5 }}
-                className="mt-5 w-full text-center"
+                className={`w-full text-center ${compact ? "mt-3" : "mt-5"}`}
               >
                 {footer}
               </motion.div>
@@ -191,7 +217,7 @@ export default function AuthLayout({
       </div>
 
       {/* ── Bottom wordmark ────────────────────────────────────────── */}
-      <div className="relative z-10 pb-4 text-center shrink-0">
+      <div className={`relative z-10 text-center shrink-0 ${compact ? "pb-2" : "pb-4"}`}>
         <p
           className="text-[11px] tracking-widest font-bold uppercase"
           style={{ color: isDark ? "rgba(255,255,255,0.12)" : "rgba(109,40,217,0.2)" }}
