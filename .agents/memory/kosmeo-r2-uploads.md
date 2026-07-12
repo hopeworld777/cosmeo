@@ -123,3 +123,8 @@ Raw upload limit: 20 MB. Frontend `MAX_LISTING_BYTES` in `imageUtils.js` also 20
 - Input: 7 072 KB JPEG
 - Full WebP 1600 px: ~113 KB (98 % smaller)
 - Thumb WebP 600 px: ~23 KB (99 % smaller)
+
+## Env var changes require a workflow restart — Node doesn't hot-reload `process.env`
+`useR2`/`r2` in `r2.js` and the DB pool's connection string are computed once at process start. If `DATABASE_URL`, `R2_*`, or similar secrets are added/changed while the server is already running, that process keeps using the old values (old DB, local-disk fallback) even though newer values show up in a fresh shell — this looks exactly like "listing created fine but image doesn't display" because the image was saved wherever the *stale* process pointed (e.g. ephemeral local disk that doesn't survive a restart), while later checks query the *new* DB/bucket and find nothing.
+**Why:** discovered debugging a real "image doesn't display" regression — `/proc/<pid>/environ` showed the running server on the old DB host while a fresh shell already had the new one.
+**How to apply:** any time secrets tied to storage/DB config change, restart the workflow before doing further debugging or QA, and check `/proc/<pid>/environ` (or just the startup log lines like "Storage provider initialized: ...") if something seems inconsistent between what you observe from a shell and what the app is doing.
