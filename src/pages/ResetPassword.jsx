@@ -4,11 +4,9 @@ import { motion } from "framer-motion";
 import { Eye, EyeOff, KeyRound, CheckCircle2, XCircle } from "lucide-react";
 import { api } from "@/lib/api";
 import { useAuth } from "@/hooks/useAuth";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { useTranslation } from "react-i18next";
+import { useAuthStyles } from "@/lib/authStyles";
 import AuthLayout from "@/components/AuthLayout";
 
 export default function ResetPassword() {
@@ -19,6 +17,7 @@ export default function ResetPassword() {
   const { toast } = useToast();
   const { setUser } = useAuth();
   const [, setLocation] = useLocation();
+  const s = useAuthStyles();
 
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
@@ -60,123 +59,166 @@ export default function ResetPassword() {
     }
   };
 
+  // ── Validating (spinner) ────────────────────────────────────────────────────
   if (validating) {
     return (
-      <AuthLayout>
-        <div className="flex items-center justify-center py-20">
-          <div className="w-8 h-8 rounded-full border-2 border-primary border-t-transparent animate-spin" />
+      <AuthLayout title={t("setNewPasswordTitle", "Set new password")} badge={t("passwordResetBadge", "Password reset")}>
+        <div className="flex items-center justify-center py-8">
+          <span
+            className="h-8 w-8 rounded-full border-2 border-t-transparent animate-spin"
+            style={{ borderColor: "rgba(192,132,252,0.4)", borderTopColor: "#a855f7" }}
+          />
         </div>
       </AuthLayout>
     );
   }
 
+  // ── Invalid / expired token ─────────────────────────────────────────────────
   if (!token || !tokenValid) {
     return (
-      <AuthLayout backHref="/forgot-password" backLabel={t("requestNewLink")}>
+      <AuthLayout
+        title={t("linkExpiredTitle")}
+        subtitle={t("linkExpiredDesc")}
+        badge={t("linkExpiredBadge", "Link expired")}
+        backHref="/forgot-password"
+        backLabel={t("requestNewLink")}
+      >
         <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          className="w-full text-center"
+          initial={{ opacity: 0, scale: 0.92 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="flex flex-col gap-4"
         >
-          <div className="w-24 h-24 rounded-[2rem] bg-destructive/10 flex items-center justify-center mx-auto mb-6">
-            <XCircle className="h-12 w-12 text-destructive" strokeWidth={1.5} />
+          <div className="flex justify-center py-2">
+            <div className="h-16 w-16 rounded-[1.25rem] flex items-center justify-center" style={s.iconBoxRed}>
+              <XCircle className="h-8 w-8" style={{ color: "rgba(239,68,68,0.85)" }} strokeWidth={1.5} />
+            </div>
           </div>
-          <h2 className="text-2xl font-black text-foreground mb-3">{t("linkExpiredTitle")}</h2>
-          <p className="text-muted-foreground text-sm mb-8">{t("linkExpiredDesc")}</p>
-          <Button
+          <button
             onClick={() => setLocation("/forgot-password")}
-            className="w-full h-12 rounded-2xl font-bold bg-gradient-to-r from-primary to-secondary"
+            className={s.submitClass}
+            style={s.submitStyle}
           >
+            <span
+              className="pointer-events-none absolute inset-0"
+              style={{
+                background: "linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.12) 50%, transparent 100%)",
+                backgroundSize: "200% 100%",
+                animation: "ag-shimmer 2.4s ease-in-out infinite",
+              }}
+            />
             {t("requestNewLink")}
-          </Button>
+          </button>
         </motion.div>
       </AuthLayout>
     );
   }
 
+  // ── Success ─────────────────────────────────────────────────────────────────
   if (success) {
     return (
-      <AuthLayout>
+      <AuthLayout
+        title={t("passwordSuccessTitle")}
+        subtitle={t("passwordSuccessDesc")}
+        badge={t("allDoneBadge", "All done")}
+      >
         <motion.div
-          initial={{ opacity: 0, scale: 0.9 }}
+          initial={{ opacity: 0, scale: 0.92 }}
           animate={{ opacity: 1, scale: 1 }}
-          className="w-full text-center"
+          className="flex justify-center py-4"
         >
-          <div className="w-24 h-24 rounded-[2rem] bg-green-100 flex items-center justify-center mx-auto mb-6">
-            <CheckCircle2 className="h-12 w-12 text-green-500" strokeWidth={1.5} />
+          <div className="h-16 w-16 rounded-[1.25rem] flex items-center justify-center" style={s.iconBoxGreen}>
+            <CheckCircle2 className="h-8 w-8 text-green-500" strokeWidth={1.5} />
           </div>
-          <h2 className="text-2xl font-black text-foreground mb-2">{t("passwordSuccessTitle")}</h2>
-          <p className="text-muted-foreground text-sm">{t("passwordSuccessDesc")}</p>
         </motion.div>
       </AuthLayout>
     );
   }
 
+  // ── Form ────────────────────────────────────────────────────────────────────
   return (
-    <AuthLayout backHref="/login" backLabel={t("backToSignIn")}>
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="w-full"
-      >
-        {/* Header icon + title */}
-        <div className="text-center mb-8">
-          <div className="w-20 h-20 rounded-[1.5rem] bg-primary/10 flex items-center justify-center mx-auto mb-5">
-            <KeyRound className="h-10 w-10 text-primary" strokeWidth={1.5} />
-          </div>
-          <h1 className="text-2xl font-black text-foreground mb-2">{t("setNewPasswordTitle")}</h1>
-          <p className="text-muted-foreground text-sm font-medium">{t("setNewPasswordDesc")}</p>
-        </div>
-
-        {/* Form card */}
-        <div className="bg-card rounded-3xl p-6 card-shadow md:bg-transparent md:p-0 md:shadow-none md:rounded-none">
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="new-pw" className="font-bold">{t("newPasswordLabel")}</Label>
-              <div className="relative">
-                <Input
-                  id="new-pw"
-                  type={showPw ? "text" : "password"}
-                  placeholder={t("newPasswordPlaceholder")}
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="h-12 rounded-2xl pr-11"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPw(!showPw)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-                >
-                  {showPw ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                </button>
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="confirm-pw" className="font-bold">{t("confirmPasswordLabel")}</Label>
-              <Input
-                id="confirm-pw"
-                type="password"
-                placeholder={t("confirmPasswordPlaceholder")}
-                value={confirm}
-                onChange={(e) => setConfirm(e.target.value)}
-                className="h-12 rounded-2xl"
-              />
-              {confirm && password !== confirm && (
-                <p className="text-xs text-destructive font-bold">{t("passwordMismatch")}</p>
-              )}
-            </div>
-
-            <Button
-              type="submit"
-              className="w-full h-12 rounded-2xl text-base font-bold bg-gradient-to-r from-primary to-secondary"
-              disabled={loading || Boolean(confirm && password !== confirm)}
+    <AuthLayout
+      title={t("setNewPasswordTitle")}
+      subtitle={t("setNewPasswordDesc")}
+      badge={t("passwordResetBadge", "Password reset")}
+      backHref="/login"
+      backLabel={t("backToSignIn")}
+    >
+      <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+        {/* New password */}
+        <div>
+          <label htmlFor="new-pw" className={s.labelClass} style={s.labelStyle}>
+            {t("newPasswordLabel")}
+          </label>
+          <div className="relative">
+            <input
+              id="new-pw"
+              type={showPw ? "text" : "password"}
+              placeholder={t("newPasswordPlaceholder")}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              className={s.inputClass + " pr-11"}
+              style={s.inputStyle}
+            />
+            <button
+              type="button"
+              onClick={() => setShowPw(!showPw)}
+              className="absolute right-3.5 top-1/2 -translate-y-1/2 transition-opacity hover:opacity-70 focus:outline-none"
+              style={{ color: s.isDark ? "rgba(255,255,255,0.35)" : "rgba(109,40,217,0.45)" }}
+              tabIndex={-1}
             >
-              {loading ? t("updatingPassword") : t("updatePasswordBtn")}
-            </Button>
-          </form>
+              {showPw ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+            </button>
+          </div>
         </div>
-      </motion.div>
+
+        {/* Confirm password */}
+        <div>
+          <label htmlFor="confirm-pw" className={s.labelClass} style={s.labelStyle}>
+            {t("confirmPasswordLabel")}
+          </label>
+          <input
+            id="confirm-pw"
+            type="password"
+            placeholder={t("confirmPasswordPlaceholder")}
+            value={confirm}
+            onChange={(e) => setConfirm(e.target.value)}
+            required
+            className={s.inputClass}
+            style={confirm && password !== confirm ? s.inputErrorStyle : s.inputStyle}
+          />
+          {confirm && password !== confirm && (
+            <p className="text-[12px] font-bold mt-1.5" style={s.errorStyle}>{t("passwordMismatch")}</p>
+          )}
+        </div>
+
+        {/* Submit */}
+        <button
+          type="submit"
+          className={s.submitClass + " mt-1"}
+          style={s.submitStyle}
+          disabled={loading || Boolean(confirm && password !== confirm)}
+        >
+          {!loading && (
+            <span
+              className="pointer-events-none absolute inset-0"
+              style={{
+                background: "linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.12) 50%, transparent 100%)",
+                backgroundSize: "200% 100%",
+                animation: "ag-shimmer 2.4s ease-in-out infinite",
+              }}
+            />
+          )}
+          {loading ? (
+            <span className="flex items-center justify-center gap-2">
+              <span className="h-4 w-4 rounded-full border-2 border-white/30 border-t-white animate-spin" />
+              {t("updatingPassword")}
+            </span>
+          ) : (
+            t("updatePasswordBtn")
+          )}
+        </button>
+      </form>
     </AuthLayout>
   );
 }

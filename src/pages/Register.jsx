@@ -1,15 +1,13 @@
 import { useState, useRef, useEffect } from "react";
 import { Link, useLocation } from "wouter";
 import { motion } from "framer-motion";
-import { Sparkles, Eye, EyeOff, Mail, CheckCircle2, Loader2, ShieldCheck, Camera } from "lucide-react";
+import { Mail, CheckCircle2, Loader2, ShieldCheck, Camera, Eye, EyeOff } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { api } from "@/lib/api";
 import { prepareImageFile } from "@/lib/imageUtils";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { useTranslation } from "react-i18next";
+import { useAuthStyles } from "@/lib/authStyles";
 import AuthLayout from "@/components/AuthLayout";
 
 function isValidEmail(str) {
@@ -21,6 +19,7 @@ export default function Register() {
   const { register, setUser } = useAuth();
   const [, setLocation] = useLocation();
   const { toast } = useToast();
+  const s = useAuthStyles();
 
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
@@ -41,7 +40,6 @@ export default function Register() {
   const [avatarError, setAvatarError] = useState("");
   const [isConverting, setIsConverting] = useState(false);
 
-  // Revoke object URL on cleanup to avoid memory leaks
   useEffect(() => {
     return () => { if (avatarPreview) URL.revokeObjectURL(avatarPreview); };
   }, [avatarPreview]);
@@ -71,8 +69,6 @@ export default function Register() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
-    // Collect all validation errors before bailing
     const errors = { username: "", email: "", password: "", general: "" };
     if (!username.trim()) errors.username = t("usernameRequired");
     if (!email.trim()) errors.email = t("emailRequired");
@@ -91,19 +87,12 @@ export default function Register() {
     setLoading(true);
 
     try {
-      // Register the user — JWT is stored in localStorage after this resolves
       const u = await register(username.trim(), email.trim(), password);
-
-      // Upload avatar only if the user chose one — otherwise avatar_url stays
-      // null and every avatar-rendering surface (header, chat, profile, settings)
-      // already falls back to a clean initial-letter placeholder.
       if (avatarFile) {
         try {
           const { avatar_url } = await api.upload.avatar(avatarFile);
           setUser({ ...u, avatar_url });
         } catch (avatarErr) {
-          // Account was created — surface the failure so the user knows
-          // they can add a photo in Settings, then continue to success screen.
           toast({
             title: "Photo upload failed",
             description:
@@ -113,7 +102,6 @@ export default function Register() {
           });
         }
       }
-
       setRegistered(true);
     } catch (err) {
       const raw = err.message || "";
@@ -144,53 +132,68 @@ export default function Register() {
     }
   };
 
+  // ── Check-inbox success screen ───────────────────────────────────────────────
   if (registered) {
     return (
-      <AuthLayout>
+      <AuthLayout
+        title={t("checkInbox")}
+        subtitle={t("verificationSentTo") + " " + email}
+        badge={t("almostThere", "Almost there")}
+      >
         <motion.div
-          initial={{ opacity: 0, scale: 0.9 }}
+          initial={{ opacity: 0, scale: 0.92 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ type: "spring", duration: 0.5 }}
-          className="w-full text-center"
+          className="flex flex-col gap-4"
         >
-          <div className="w-24 h-24 rounded-[2rem] bg-primary/10 flex items-center justify-center mx-auto mb-6 shadow-lg">
-            <Mail className="h-12 w-12 text-primary" strokeWidth={1.5} />
+          {/* Steps */}
+          <div className="flex flex-col gap-3">
+            {[t("verifyClickLink"), t("browseWhileUnverified")].map((text, i) => (
+              <div
+                key={i}
+                className="flex items-start gap-3 rounded-2xl p-3"
+                style={{
+                  background: s.isDark ? "rgba(34,197,94,0.07)" : "rgba(34,197,94,0.06)",
+                  border: s.isDark ? "1px solid rgba(34,197,94,0.2)" : "1px solid rgba(34,197,94,0.18)",
+                }}
+              >
+                <CheckCircle2 className="h-4 w-4 text-green-500 shrink-0 mt-0.5" />
+                <p className="text-[13px] font-medium" style={s.mutedStyle}>{text}</p>
+              </div>
+            ))}
           </div>
-          <h2 className="text-2xl font-black text-foreground mb-2">{t("checkInbox")}</h2>
-          <p className="text-muted-foreground text-sm mb-1 font-medium">{t("verificationSentTo")}</p>
-          <p className="text-primary font-bold text-sm mb-8">{email}</p>
 
-          <div className="bg-card rounded-3xl p-6 card-shadow md:bg-muted/30 space-y-4 text-left mb-6">
-            <div className="flex items-start gap-3">
-              <CheckCircle2 className="h-5 w-5 text-green-500 shrink-0 mt-0.5" />
-              <p className="text-sm text-muted-foreground font-medium">{t("verifyClickLink")}</p>
-            </div>
-            <div className="flex items-start gap-3">
-              <CheckCircle2 className="h-5 w-5 text-green-500 shrink-0 mt-0.5" />
-              <p className="text-sm text-muted-foreground font-medium">{t("browseWhileUnverified")}</p>
-            </div>
-          </div>
-
-          <Button
+          {/* Continue */}
+          <button
             onClick={async () => {
-              // Re-fetch from the server before navigating so that email
-              // verification done in another tab is reflected immediately.
               try {
                 const me = await api.auth.me();
                 setUser(me);
               } catch {
-                // Non-fatal — navigate anyway if the refresh fails.
+                // Non-fatal
               }
               setLocation("/");
             }}
-            className="w-full h-12 rounded-2xl text-base font-bold bg-gradient-to-r from-primary to-secondary mb-3"
+            className={s.submitClass}
+            style={s.submitStyle}
           >
+            <span
+              className="pointer-events-none absolute inset-0"
+              style={{
+                background: "linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.12) 50%, transparent 100%)",
+                backgroundSize: "200% 100%",
+                animation: "ag-shimmer 2.4s ease-in-out infinite",
+              }}
+            />
             {t("continueToCosmeo")}
-          </Button>
+          </button>
+
+          {/* Resend */}
           <button
             onClick={handleResend}
             disabled={resending}
-            className="w-full h-10 text-sm font-semibold text-muted-foreground hover:text-primary transition-colors disabled:opacity-50"
+            className="w-full py-2.5 text-[13px] font-semibold transition-opacity hover:opacity-70 disabled:opacity-40 focus:outline-none"
+            style={s.mutedStyle}
           >
             {resending ? t("sending") : t("resendEmail")}
           </button>
@@ -199,218 +202,245 @@ export default function Register() {
     );
   }
 
+  // ── Registration form ────────────────────────────────────────────────────────
   return (
-    <AuthLayout>
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="w-full"
-      >
-        {/* Logo — mobile only */}
-        <div className="md:hidden text-center mb-10">
-          <div className="flex items-center justify-center gap-2 mb-3">
-            <Sparkles className="h-7 w-7 text-primary" />
-            <h1 className="text-3xl font-black text-foreground">cosmeo</h1>
-          </div>
-          <p className="text-muted-foreground text-sm font-medium">{t("authTitle")}</p>
-        </div>
-
-        {/* Desktop heading */}
-        <div className="hidden md:block mb-8">
-          <h2 className="text-3xl font-black text-foreground mb-2">{t("authTitle")}</h2>
-        </div>
-
-        {/* Form card */}
-        <div className="bg-card rounded-3xl p-6 card-shadow md:bg-transparent md:p-0 md:shadow-none md:rounded-none space-y-4">
-          <form onSubmit={handleSubmit} noValidate className="space-y-4">
-
-            {/* ── Profile photo ─────────────────────────────────────── */}
-            <div className="flex flex-col items-center gap-2 pt-1 pb-1">
-              <button
-                type="button"
-                onClick={() => avatarInputRef.current?.click()}
-                className={`relative focus:outline-none group rounded-full transition-all ${
-                  avatarError ? "ring-2 ring-destructive ring-offset-2" : ""
-                }`}
-                disabled={loading || isConverting}
-                aria-label="Upload profile photo"
-              >
-                <div className="h-20 w-20 rounded-full overflow-hidden bg-muted border-4 border-white shadow-lg flex items-center justify-center relative">
-                  {avatarPreview ? (
-                    <img src={avatarPreview} alt="Profile preview" className="w-full h-full object-cover" />
-                  ) : (
-                    <Camera className="h-7 w-7 text-muted-foreground/40" />
-                  )}
-                  {isConverting && (
-                    <div className="absolute inset-0 bg-black/30 flex items-center justify-center rounded-full">
-                      <div className="h-5 w-5 rounded-full border-2 border-white border-t-transparent animate-spin" />
-                    </div>
-                  )}
-                </div>
-                <div
-                  className={`absolute -bottom-1 -right-1 h-7 w-7 rounded-full flex items-center justify-center shadow-md transition-colors ${
-                    avatarFile ? "bg-secondary" : "bg-primary"
-                  } group-hover:opacity-80`}
-                >
-                  <Camera className="h-3 w-3 text-white" />
-                </div>
-              </button>
-              <input
-                ref={avatarInputRef}
-                type="file"
-                accept="image/*,.heic,.heif"
-                className="hidden"
-                onChange={handleAvatarChange}
-              />
-              {avatarError ? (
-                <p className="text-xs text-destructive font-medium">{avatarError}</p>
-              ) : (
-                <p className="text-xs text-muted-foreground font-medium">
-                  {avatarFile ? "Photo selected ✓" : "Add a profile photo (optional)"}
-                </p>
-              )}
-            </div>
-
-            <div className="space-y-1">
-              <Label htmlFor="reg-username" className="font-bold">{t("username")}</Label>
-              <Input
-                id="reg-username"
-                placeholder={t("usernamePlaceholder")}
-                value={username}
-                onChange={(e) => { setUsername(e.target.value); clearFieldError("username"); }}
-                autoComplete="username"
-                className={`h-12 rounded-2xl ${fieldErrors.username ? "border-destructive focus-visible:ring-destructive" : ""}`}
-                disabled={loading}
-                data-testid="input-register-username"
-              />
-              {fieldErrors.username && (
-                <p className="text-xs text-destructive font-medium pl-1">{fieldErrors.username}</p>
-              )}
-            </div>
-
-            <div className="space-y-1">
-              <Label htmlFor="reg-email" className="font-bold">{t("email")}</Label>
-              <Input
-                id="reg-email"
-                type="email"
-                placeholder={t("emailPlaceholder")}
-                value={email}
-                onChange={(e) => { setEmail(e.target.value); clearFieldError("email"); }}
-                autoComplete="email"
-                className={`h-12 rounded-2xl ${fieldErrors.email ? "border-destructive focus-visible:ring-destructive" : ""}`}
-                disabled={loading}
-                data-testid="input-register-email"
-              />
-              {fieldErrors.email && (
-                <div className="pl-1">
-                  <p className="text-xs text-destructive font-medium">{fieldErrors.email}</p>
-                  {emailTaken && (
-                    <p className="text-xs text-muted-foreground mt-0.5">
-                      <Link href="/login" className="text-primary font-semibold hover:underline">
-                        Log in instead →
-                      </Link>
-                    </p>
-                  )}
-                </div>
-              )}
-            </div>
-
-            <div className="space-y-1">
-              <Label htmlFor="reg-password" className="font-bold">{t("password")}</Label>
-              <div className="relative">
-                <Input
-                  id="reg-password"
-                  type={showPassword ? "text" : "password"}
-                  placeholder={t("passwordPlaceholder")}
-                  value={password}
-                  onChange={(e) => { setPassword(e.target.value); clearFieldError("password"); }}
-                  autoComplete="new-password"
-                  className={`h-12 rounded-2xl pr-11 ${fieldErrors.password ? "border-destructive focus-visible:ring-destructive" : ""}`}
-                  disabled={loading}
-                  data-testid="input-register-password"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-                  tabIndex={-1}
-                >
-                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                </button>
-              </div>
-              {fieldErrors.password && (
-                <p className="text-xs text-destructive font-medium pl-1">{fieldErrors.password}</p>
-              )}
-            </div>
-
-            <div
-              className={`flex items-start gap-3 rounded-2xl border p-3 ${
-                ageError ? "border-destructive bg-destructive/5" : "border-border/50 bg-muted/40"
-              }`}
-            >
-              <input
-                id="age-confirm"
-                type="checkbox"
-                checked={ageConfirmed}
-                onChange={(e) => { setAgeConfirmed(e.target.checked); if (e.target.checked) setAgeError(false); }}
-                disabled={loading}
-                className="mt-0.5 h-4 w-4 accent-primary shrink-0 cursor-pointer"
-              />
-              <label
-                htmlFor="age-confirm"
-                className={`text-xs leading-snug cursor-pointer select-none ${ageError ? "text-destructive font-medium" : "text-muted-foreground"}`}
-              >
-                {t("ageConfirmCheckbox")}
-              </label>
-            </div>
-            {ageError && (
-              <p className="text-xs text-destructive text-center -mt-1 font-medium">{t("ageConfirmRequired")}</p>
-            )}
-
-            <p className="text-center text-xs text-muted-foreground -mt-1">
-              <Link href="/terms" className="text-primary font-semibold hover:underline inline-flex items-center gap-1">
-                <ShieldCheck className="h-3.5 w-3.5" />{t("readSafetyGuide")}
-              </Link>
-            </p>
-
-            {fieldErrors.general && (
-              <div className="rounded-2xl bg-destructive/10 border border-destructive/20 px-4 py-3">
-                <p className="text-xs text-destructive font-medium">{fieldErrors.general}</p>
-              </div>
-            )}
-
-            <Button
-              type="submit"
-              className="w-full h-12 rounded-2xl text-base font-bold bg-gradient-to-r from-primary to-secondary"
-              disabled={loading}
-              data-testid="btn-register-submit"
-            >
-              {loading ? (
-                <span className="flex items-center gap-2">
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  {t("creatingAccount")}
-                </span>
-              ) : t("createAccountBtn")}
-            </Button>
-          </form>
-
-          <p className="text-center text-xs text-muted-foreground pt-1">
-            {t("termsNoticePrefix")}{" "}
-            <Link href="/terms" className="underline text-primary font-semibold">
-              {t("termsNoticeLinkText")}
-            </Link>
-            .
-          </p>
-        </div>
-
-        <p className="text-center mt-6 text-sm text-muted-foreground">
+    <AuthLayout
+      title={t("authTitle")}
+      subtitle={t("authSubtitleRegister", "Join the Georgian cosplay community")}
+      badge={t("joinBadge", "Join Cosmeo")}
+      footer={
+        <p className="text-[13px] font-medium" style={s.mutedStyle}>
+          {t("alreadyHaveAccount2", "Already have an account?")}{" "}
           <Link href="/login">
-            <span className="text-primary font-semibold cursor-pointer hover:underline">
-              {t("alreadyHaveAccount")}
+            <span className="font-bold cursor-pointer hover:opacity-80 transition-opacity" style={s.linkStyle}>
+              {t("signInLink", "Sign in")}
             </span>
           </Link>
         </p>
-      </motion.div>
+      }
+    >
+      <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-4">
+        {/* ── Avatar picker ──────────────────────────────────────── */}
+        <div className="flex flex-col items-center gap-2 py-1">
+          <button
+            type="button"
+            onClick={() => avatarInputRef.current?.click()}
+            className="relative focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-400 rounded-full"
+            disabled={loading || isConverting}
+            aria-label="Upload profile photo"
+          >
+            <div
+              className="h-20 w-20 rounded-full overflow-hidden flex items-center justify-center relative"
+              style={{
+                background: s.isDark ? "rgba(255,255,255,0.07)" : "rgba(255,255,255,0.85)",
+                border: avatarError
+                  ? "2px solid rgba(239,68,68,0.6)"
+                  : s.isDark
+                  ? "2px solid rgba(192,132,252,0.25)"
+                  : "2px solid rgba(192,132,252,0.4)",
+              }}
+            >
+              {avatarPreview ? (
+                <img src={avatarPreview} alt="Profile preview" className="w-full h-full object-cover" />
+              ) : (
+                <Camera className="h-7 w-7" style={{ color: s.isDark ? "rgba(192,132,252,0.5)" : "rgba(109,40,217,0.4)" }} />
+              )}
+              {isConverting && (
+                <div className="absolute inset-0 bg-black/30 flex items-center justify-center rounded-full">
+                  <div className="h-5 w-5 rounded-full border-2 border-white border-t-transparent animate-spin" />
+                </div>
+              )}
+            </div>
+            {/* Badge dot */}
+            <div
+              className="absolute -bottom-0.5 -right-0.5 h-6 w-6 rounded-full flex items-center justify-center shadow-md"
+              style={{
+                background: avatarFile
+                  ? "linear-gradient(135deg, #a855f7, #ec4899)"
+                  : "linear-gradient(135deg, #a855f7, #6366f1)",
+              }}
+            >
+              <Camera className="h-3 w-3 text-white" />
+            </div>
+          </button>
+          <input
+            ref={avatarInputRef}
+            type="file"
+            accept="image/*,.heic,.heif"
+            className="hidden"
+            onChange={handleAvatarChange}
+          />
+          <p className="text-[12px] font-medium" style={avatarError ? { color: "rgba(239,68,68,0.9)" } : s.mutedStyle}>
+            {avatarError ? avatarError : avatarFile ? "Photo selected ✓" : "Add a profile photo (optional)"}
+          </p>
+        </div>
+
+        {/* Username */}
+        <div>
+          <label htmlFor="reg-username" className={s.labelClass} style={s.labelStyle}>
+            {t("username")}
+          </label>
+          <input
+            id="reg-username"
+            placeholder={t("usernamePlaceholder")}
+            value={username}
+            onChange={(e) => { setUsername(e.target.value); clearFieldError("username"); }}
+            autoComplete="username"
+            className={s.inputClass}
+            style={fieldErrors.username ? s.inputErrorStyle : s.inputStyle}
+            disabled={loading}
+            data-testid="input-register-username"
+          />
+          {fieldErrors.username && (
+            <p className="text-[12px] font-medium mt-1.5" style={s.errorStyle}>{fieldErrors.username}</p>
+          )}
+        </div>
+
+        {/* Email */}
+        <div>
+          <label htmlFor="reg-email" className={s.labelClass} style={s.labelStyle}>
+            {t("email")}
+          </label>
+          <input
+            id="reg-email"
+            type="email"
+            placeholder={t("emailPlaceholder")}
+            value={email}
+            onChange={(e) => { setEmail(e.target.value); clearFieldError("email"); }}
+            autoComplete="email"
+            className={s.inputClass}
+            style={fieldErrors.email ? s.inputErrorStyle : s.inputStyle}
+            disabled={loading}
+            data-testid="input-register-email"
+          />
+          {fieldErrors.email && (
+            <div className="mt-1.5">
+              <p className="text-[12px] font-medium" style={s.errorStyle}>{fieldErrors.email}</p>
+              {emailTaken && (
+                <p className="text-[12px] mt-0.5" style={s.mutedStyle}>
+                  <Link href="/login" className="font-bold hover:opacity-80" style={s.linkStyle}>
+                    Log in instead →
+                  </Link>
+                </p>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* Password */}
+        <div>
+          <label htmlFor="reg-password" className={s.labelClass} style={s.labelStyle}>
+            {t("password")}
+          </label>
+          <div className="relative">
+            <input
+              id="reg-password"
+              type={showPassword ? "text" : "password"}
+              placeholder={t("passwordPlaceholder")}
+              value={password}
+              onChange={(e) => { setPassword(e.target.value); clearFieldError("password"); }}
+              autoComplete="new-password"
+              className={s.inputClass + " pr-11"}
+              style={fieldErrors.password ? s.inputErrorStyle : s.inputStyle}
+              disabled={loading}
+              data-testid="input-register-password"
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute right-3.5 top-1/2 -translate-y-1/2 transition-opacity hover:opacity-70 focus:outline-none"
+              style={{ color: s.isDark ? "rgba(255,255,255,0.35)" : "rgba(109,40,217,0.45)" }}
+              tabIndex={-1}
+            >
+              {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+            </button>
+          </div>
+          {fieldErrors.password && (
+            <p className="text-[12px] font-medium mt-1.5" style={s.errorStyle}>{fieldErrors.password}</p>
+          )}
+        </div>
+
+        {/* Age confirmation */}
+        <div className="flex items-start gap-3 rounded-2xl p-3" style={s.checkboxBoxStyle(ageError)}>
+          <input
+            id="age-confirm"
+            type="checkbox"
+            checked={ageConfirmed}
+            onChange={(e) => { setAgeConfirmed(e.target.checked); if (e.target.checked) setAgeError(false); }}
+            disabled={loading}
+            className="mt-0.5 h-4 w-4 shrink-0 cursor-pointer accent-purple-500"
+          />
+          <label
+            htmlFor="age-confirm"
+            className="text-[12px] leading-snug cursor-pointer select-none font-medium"
+            style={ageError ? s.errorStyle : s.mutedStyle}
+          >
+            {t("ageConfirmCheckbox")}
+          </label>
+        </div>
+        {ageError && (
+          <p className="text-[12px] text-center -mt-1 font-medium" style={s.errorStyle}>
+            {t("ageConfirmRequired")}
+          </p>
+        )}
+
+        {/* Safety guide link */}
+        <p className="text-center text-[12px] -mt-1" style={s.mutedStyle}>
+          <Link href="/terms" className="font-bold inline-flex items-center gap-1 hover:opacity-80" style={s.linkStyle}>
+            <ShieldCheck className="h-3.5 w-3.5" />{t("readSafetyGuide")}
+          </Link>
+        </p>
+
+        {/* General error */}
+        {fieldErrors.general && (
+          <div
+            className="rounded-2xl px-4 py-3"
+            style={{
+              background: s.isDark ? "rgba(239,68,68,0.1)" : "rgba(239,68,68,0.07)",
+              border: "1px solid rgba(239,68,68,0.25)",
+            }}
+          >
+            <p className="text-[12px] font-medium" style={s.errorStyle}>{fieldErrors.general}</p>
+          </div>
+        )}
+
+        {/* Submit */}
+        <button
+          type="submit"
+          className={s.submitClass}
+          style={s.submitStyle}
+          disabled={loading}
+          data-testid="btn-register-submit"
+        >
+          {!loading && (
+            <span
+              className="pointer-events-none absolute inset-0"
+              style={{
+                background: "linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.12) 50%, transparent 100%)",
+                backgroundSize: "200% 100%",
+                animation: "ag-shimmer 2.4s ease-in-out infinite",
+              }}
+            />
+          )}
+          {loading ? (
+            <span className="flex items-center justify-center gap-2">
+              <Loader2 className="h-4 w-4 animate-spin" />
+              {t("creatingAccount")}
+            </span>
+          ) : (
+            t("createAccountBtn")
+          )}
+        </button>
+
+        {/* Terms */}
+        <p className="text-center text-[11px]" style={s.mutedStyle}>
+          {t("termsNoticePrefix")}{" "}
+          <Link href="/terms" className="font-bold hover:opacity-80" style={s.linkStyle}>
+            {t("termsNoticeLinkText")}
+          </Link>
+          .
+        </p>
+      </form>
     </AuthLayout>
   );
 }

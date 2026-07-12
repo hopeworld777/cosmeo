@@ -4,15 +4,18 @@ import { motion } from "framer-motion";
 import { CheckCircle2, XCircle, Loader2 } from "lucide-react";
 import { api } from "@/lib/api";
 import { useAuth } from "@/hooks/useAuth";
-import { Button } from "@/components/ui/button";
+import { useTranslation } from "react-i18next";
+import { useAuthStyles } from "@/lib/authStyles";
 import AuthLayout from "@/components/AuthLayout";
 
 export default function VerifyEmail() {
+  const { t } = useTranslation();
   const search = useSearch();
   const params = new URLSearchParams(search);
   const token = params.get("token");
   const { setUser } = useAuth();
   const [, setLocation] = useLocation();
+  const s = useAuthStyles();
   const [status, setStatus] = useState("loading");
 
   useEffect(() => {
@@ -27,21 +30,45 @@ export default function VerifyEmail() {
       .catch(() => setStatus("error"));
   }, [token]);
 
+  const configs = {
+    loading: {
+      title: "Verifying your email…",
+      subtitle: "Just a moment.",
+      badge: "Email verification",
+    },
+    success: {
+      title: "Email verified",
+      subtitle: "Your account is fully set up. Welcome to cosmeo!",
+      badge: "All done ✨",
+    },
+    error: {
+      title: "Link not valid",
+      subtitle: "This verification link has expired or already been used.",
+      badge: "Verification failed",
+    },
+  };
+
+  const cfg = configs[status];
+
   return (
-    <AuthLayout>
+    <AuthLayout title={cfg.title} subtitle={cfg.subtitle} badge={cfg.badge}>
       <motion.div
-        initial={{ opacity: 0, scale: 0.9 }}
+        initial={{ opacity: 0, scale: 0.92 }}
         animate={{ opacity: 1, scale: 1 }}
-        className="w-full text-center"
+        transition={{ type: "spring", duration: 0.5 }}
+        className="flex flex-col items-center gap-4 py-2"
       >
         {status === "loading" && (
-          <>
-            <div className="w-24 h-24 rounded-[2rem] bg-primary/10 flex items-center justify-center mx-auto mb-6">
-              <Loader2 className="h-12 w-12 text-primary animate-spin" strokeWidth={1.5} />
-            </div>
-            <h2 className="text-2xl font-black text-foreground mb-2">Verifying your email...</h2>
-            <p className="text-muted-foreground text-sm">Just a moment.</p>
-          </>
+          <div
+            className="h-16 w-16 rounded-[1.25rem] flex items-center justify-center"
+            style={s.iconBoxPurple}
+          >
+            <Loader2
+              className="h-8 w-8 animate-spin"
+              style={{ color: s.isDark ? "#d8b4fe" : "#7c3aed" }}
+              strokeWidth={1.5}
+            />
+          </div>
         )}
 
         {status === "success" && (
@@ -50,31 +77,45 @@ export default function VerifyEmail() {
               initial={{ scale: 0.7 }}
               animate={{ scale: 1 }}
               transition={{ type: "spring", damping: 12 }}
-              className="w-24 h-24 rounded-[2rem] bg-green-100 flex items-center justify-center mx-auto mb-6 shadow-lg"
+              className="h-16 w-16 rounded-[1.25rem] flex items-center justify-center"
+              style={s.iconBoxGreen}
             >
-              <CheckCircle2 className="h-12 w-12 text-green-500" strokeWidth={1.5} />
+              <CheckCircle2 className="h-8 w-8 text-green-500" strokeWidth={1.5} />
             </motion.div>
-            <h2 className="text-2xl font-black text-foreground mb-2">Email verified</h2>
-            <p className="text-muted-foreground text-sm mb-2">Your account is fully set up. Welcome to cosmeo!</p>
-            <p className="text-xs text-muted-foreground">Taking you home...</p>
+            <p className="text-[12px] font-medium text-center" style={s.mutedStyle}>
+              Taking you home…
+            </p>
           </>
         )}
 
         {status === "error" && (
           <>
-            <div className="w-24 h-24 rounded-[2rem] bg-destructive/10 flex items-center justify-center mx-auto mb-6">
-              <XCircle className="h-12 w-12 text-destructive" strokeWidth={1.5} />
-            </div>
-            <h2 className="text-2xl font-black text-foreground mb-2">Link not valid</h2>
-            <p className="text-muted-foreground text-sm mb-8">
-              This verification link has expired or already been used.
-            </p>
-            <Button
-              onClick={() => setLocation("/")}
-              className="w-full h-12 rounded-2xl font-bold bg-gradient-to-r from-primary to-secondary"
+            <div
+              className="h-16 w-16 rounded-[1.25rem] flex items-center justify-center"
+              style={s.iconBoxRed}
             >
+              <XCircle
+                className="h-8 w-8"
+                style={{ color: "rgba(239,68,68,0.85)" }}
+                strokeWidth={1.5}
+              />
+            </div>
+            <button
+              onClick={() => setLocation("/")}
+              className={s.submitClass + " w-full mt-2"}
+              style={s.submitStyle}
+            >
+              <span
+                className="pointer-events-none absolute inset-0"
+                style={{
+                  background:
+                    "linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.12) 50%, transparent 100%)",
+                  backgroundSize: "200% 100%",
+                  animation: "ag-shimmer 2.4s ease-in-out infinite",
+                }}
+              />
               Go to cosmeo
-            </Button>
+            </button>
           </>
         )}
       </motion.div>

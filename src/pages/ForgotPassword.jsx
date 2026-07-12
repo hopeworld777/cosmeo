@@ -1,18 +1,18 @@
 import { useState } from "react";
 import { Link } from "wouter";
 import { motion } from "framer-motion";
-import { ArrowLeft, Mail } from "lucide-react";
+import { Mail } from "lucide-react";
 import { api } from "@/lib/api";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { useTranslation } from "react-i18next";
+import { useAuthStyles } from "@/lib/authStyles";
 import AuthLayout from "@/components/AuthLayout";
 
 export default function ForgotPassword() {
   const { t } = useTranslation();
   const { toast } = useToast();
+  const s = useAuthStyles();
+
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const [sent, setSent] = useState(false);
@@ -33,86 +33,112 @@ export default function ForgotPassword() {
     }
   };
 
+  // ── Success state ────────────────────────────────────────────────────────────
   if (sent) {
     return (
-      <AuthLayout backHref="/login" backLabel={t("backToSignIn")}>
+      <AuthLayout
+        title={t("successResetEmail")}
+        subtitle={email}
+        badge={t("checkInboxBadge", "Check your inbox")}
+        backHref="/login"
+        backLabel={t("backToSignIn")}
+      >
         <motion.div
-          initial={{ opacity: 0, scale: 0.9 }}
+          initial={{ opacity: 0, scale: 0.92 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ type: "spring", duration: 0.5 }}
-          className="w-full text-center"
+          className="flex flex-col gap-4"
         >
-          <div className="w-24 h-24 rounded-[2rem] bg-primary/10 flex items-center justify-center mx-auto mb-6 shadow-lg">
-            <Mail className="h-12 w-12 text-primary" strokeWidth={1.5} />
+          {/* Icon */}
+          <div className="flex justify-center py-2">
+            <div
+              className="h-16 w-16 rounded-[1.25rem] flex items-center justify-center"
+              style={s.iconBoxPurple}
+            >
+              <Mail className="h-8 w-8" style={{ color: s.isDark ? "#d8b4fe" : "#7c3aed" }} strokeWidth={1.5} />
+            </div>
           </div>
-          <h2 className="text-2xl font-black text-foreground mb-4">{t("successResetEmail")}</h2>
-          <p className="text-primary font-bold text-sm mb-8">{email}</p>
 
           {devLink && (
-            <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 mb-6 text-left">
-              <p className="text-xs font-bold text-amber-700 mb-2">Dev mode — no SMTP configured</p>
-              <a href={devLink} className="text-xs text-primary font-semibold break-all hover:underline">
+            <div
+              className="rounded-2xl p-4 text-left"
+              style={{
+                background: s.isDark ? "rgba(251,191,36,0.08)" : "rgba(251,191,36,0.1)",
+                border: "1px solid rgba(251,191,36,0.3)",
+              }}
+            >
+              <p className="text-[11px] font-bold mb-2" style={{ color: "rgba(251,191,36,0.9)" }}>
+                Dev mode — no SMTP configured
+              </p>
+              <a href={devLink} className="text-[11px] font-semibold break-all hover:opacity-80" style={s.linkStyle}>
                 {devLink}
               </a>
             </div>
           )}
 
           <Link href="/login">
-            <Button variant="outline" className="w-full h-12 rounded-2xl font-bold">
+            <button className={s.outlineClass} style={s.outlineStyle}>
               {t("backToSignIn")}
-            </Button>
+            </button>
           </Link>
         </motion.div>
       </AuthLayout>
     );
   }
 
+  // ── Form ─────────────────────────────────────────────────────────────────────
   return (
-    <AuthLayout backHref="/login" backLabel={t("backToSignIn")}>
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="w-full"
-      >
-        {/* Back link — mobile only (desktop uses AuthLayout's back link) */}
-        <Link href="/login">
-          <button className="md:hidden flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors mb-8 font-semibold text-sm">
-            <ArrowLeft className="h-4 w-4" />
-            {t("backToSignIn")}
-          </button>
-        </Link>
-
-        {/* Heading */}
-        <div className="mb-8">
-          <h1 className="text-2xl font-black text-foreground mb-2">{t("forgotPasswordTitle")}</h1>
-          <p className="text-muted-foreground text-sm font-medium">{t("forgotPasswordDesc")}</p>
+    <AuthLayout
+      title={t("forgotPasswordTitle")}
+      subtitle={t("forgotPasswordDesc")}
+      badge={t("passwordResetBadge", "Password reset")}
+      backHref="/login"
+      backLabel={t("backToSignIn")}
+    >
+      <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+        <div>
+          <label htmlFor="forgot-email" className={s.labelClass} style={s.labelStyle}>
+            {t("email")}
+          </label>
+          <input
+            id="forgot-email"
+            type="email"
+            placeholder={t("emailPlaceholder")}
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            autoComplete="email"
+            required
+            className={s.inputClass}
+            style={s.inputStyle}
+          />
         </div>
 
-        {/* Form card */}
-        <div className="bg-card rounded-3xl p-6 card-shadow md:bg-transparent md:p-0 md:shadow-none md:rounded-none">
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="forgot-email" className="font-bold">{t("email")}</Label>
-              <Input
-                id="forgot-email"
-                type="email"
-                placeholder={t("emailPlaceholder")}
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                autoComplete="email"
-                className="h-12 rounded-2xl"
-              />
-            </div>
-            <Button
-              type="submit"
-              className="w-full h-12 rounded-2xl text-base font-bold bg-gradient-to-r from-primary to-secondary"
-              disabled={loading}
-            >
-              {loading ? t("sending") : t("resetLinkBtn")}
-            </Button>
-          </form>
-        </div>
-      </motion.div>
+        <button
+          type="submit"
+          className={s.submitClass + " mt-1"}
+          style={s.submitStyle}
+          disabled={loading}
+        >
+          {!loading && (
+            <span
+              className="pointer-events-none absolute inset-0"
+              style={{
+                background: "linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.12) 50%, transparent 100%)",
+                backgroundSize: "200% 100%",
+                animation: "ag-shimmer 2.4s ease-in-out infinite",
+              }}
+            />
+          )}
+          {loading ? (
+            <span className="flex items-center justify-center gap-2">
+              <span className="h-4 w-4 rounded-full border-2 border-white/30 border-t-white animate-spin" />
+              {t("sending")}
+            </span>
+          ) : (
+            t("resetLinkBtn")
+          )}
+        </button>
+      </form>
     </AuthLayout>
   );
 }
