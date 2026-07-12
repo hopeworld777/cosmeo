@@ -4,22 +4,127 @@ import { useTranslation } from "react-i18next";
 import { api } from "@/lib/api";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
 
-// ── Particle dots — pure CSS, no JS animation cost ───────────────────────────
-const PARTICLES = [
-  { top: "12%",  left: "8%",  size: 3, delay: "0s",   dur: "6s"  },
-  { top: "25%",  left: "88%", size: 2, delay: "1.2s", dur: "8s"  },
-  { top: "65%",  left: "5%",  size: 2, delay: "2.4s", dur: "7s"  },
-  { top: "78%",  left: "92%", size: 3, delay: "0.6s", dur: "9s"  },
-  { top: "45%",  left: "95%", size: 1.5, delay: "3s", dur: "5s"  },
-  { top: "90%",  left: "30%", size: 2, delay: "1.8s", dur: "7s"  },
-  { top: "8%",   left: "55%", size: 1.5, delay: "4s", dur: "6s"  },
-  { top: "55%",  left: "2%",  size: 2.5, delay: "2s", dur: "8s"  },
+// ── 4-pointed sparkle SVG ────────────────────────────────────────────────────
+function Sparkle({ size = 14, color = "#c084fc", opacity = 0.7, style = {} }) {
+  const half = size / 2;
+  const thin = size * 0.08;
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox={`0 0 ${size} ${size}`}
+      style={{ display: "block", opacity, ...style }}
+      aria-hidden="true"
+    >
+      <path
+        d={`M${half},0 C${half},${half - thin} ${half + thin},${half} ${size},${half} C${half + thin},${half} ${half},${half + thin} ${half},${size} C${half},${half + thin} ${half - thin},${half} 0,${half} C${half - thin},${half} ${half},${half - thin} ${half},0 Z`}
+        fill={color}
+      />
+    </svg>
+  );
+}
+
+// ── Sparkle positions — kept in the outer ring of the page ──────────────────
+// top/left in %, size in px, color, opacity, animation delay+duration
+const SPARKLES = [
+  // top-left quadrant
+  { top:  6,  left:  4,  size: 18, color: "#c084fc", op: 0.65, delay: "0s",    dur: "4.5s" },
+  { top: 14,  left: 14,  size:  9, color: "#f472b6", op: 0.45, delay: "1.2s",  dur: "6s"   },
+  { top:  3,  left: 28,  size: 12, color: "#a5f3fc", op: 0.35, delay: "2.8s",  dur: "5s"   },
+  { top: 22,  left:  3,  size:  7, color: "#fde68a", op: 0.5,  delay: "0.7s",  dur: "7s"   },
+  { top: 36,  left:  8,  size: 15, color: "#c084fc", op: 0.5,  delay: "3.5s",  dur: "5.5s" },
+
+  // top-right quadrant
+  { top:  5,  left: 72,  size: 10, color: "#f472b6", op: 0.55, delay: "1.5s",  dur: "5s"   },
+  { top: 10,  left: 85,  size: 20, color: "#c084fc", op: 0.6,  delay: "0s",    dur: "4s"   },
+  { top:  2,  left: 91,  size:  8, color: "#fde68a", op: 0.4,  delay: "2s",    dur: "6.5s" },
+  { top: 20,  left: 94,  size: 13, color: "#a5f3fc", op: 0.4,  delay: "3.2s",  dur: "5s"   },
+  { top: 32,  left: 88,  size:  7, color: "#f472b6", op: 0.5,  delay: "0.5s",  dur: "7s"   },
+
+  // bottom-left quadrant
+  { top: 64,  left:  5,  size: 16, color: "#f472b6", op: 0.55, delay: "1.8s",  dur: "5.5s" },
+  { top: 75,  left: 14,  size:  9, color: "#c084fc", op: 0.45, delay: "3s",    dur: "4.5s" },
+  { top: 85,  left:  4,  size: 12, color: "#fde68a", op: 0.4,  delay: "0.4s",  dur: "6s"   },
+  { top: 93,  left: 22,  size:  8, color: "#a5f3fc", op: 0.35, delay: "2.2s",  dur: "5s"   },
+  { top: 58,  left: 10,  size: 10, color: "#c084fc", op: 0.4,  delay: "4s",    dur: "7s"   },
+
+  // bottom-right quadrant
+  { top: 62,  left: 90,  size: 14, color: "#a5f3fc", op: 0.5,  delay: "1s",    dur: "5s"   },
+  { top: 78,  left: 84,  size: 20, color: "#c084fc", op: 0.55, delay: "2.6s",  dur: "4s"   },
+  { top: 88,  left: 92,  size:  9, color: "#f472b6", op: 0.45, delay: "0.2s",  dur: "6s"   },
+  { top: 96,  left: 74,  size: 12, color: "#fde68a", op: 0.4,  delay: "3.8s",  dur: "5.5s" },
+  { top: 70,  left: 96,  size:  7, color: "#c084fc", op: 0.35, delay: "1.6s",  dur: "7s"   },
+
+  // mid-sides — far enough from center
+  { top: 47,  left:  2,  size: 11, color: "#f472b6", op: 0.4,  delay: "0.9s",  dur: "6s"   },
+  { top: 50,  left: 97,  size:  9, color: "#c084fc", op: 0.4,  delay: "2.4s",  dur: "5.5s" },
+];
+
+// ── Tiny glitter dots ────────────────────────────────────────────────────────
+const DOTS = [
+  { top:  9,  left: 42,  size: 2.5, color: "#c084fc", delay: "0.3s",  dur: "5s"  },
+  { top: 18,  left: 62,  size: 2,   color: "#f472b6", delay: "1.4s",  dur: "7s"  },
+  { top: 30,  left: 78,  size: 1.5, color: "#a5f3fc", delay: "2.1s",  dur: "6s"  },
+  { top: 42,  left: 18,  size: 2,   color: "#fde68a", delay: "3.3s",  dur: "8s"  },
+  { top: 56,  left: 32,  size: 2.5, color: "#c084fc", delay: "0.8s",  dur: "5.5s"},
+  { top: 68,  left: 55,  size: 2,   color: "#f472b6", delay: "1.9s",  dur: "7s"  },
+  { top: 80,  left: 42,  size: 1.5, color: "#a5f3fc", delay: "0.1s",  dur: "6.5s"},
+  { top: 91,  left: 60,  size: 2,   color: "#c084fc", delay: "2.7s",  dur: "5s"  },
+  { top: 15,  left: 36,  size: 1.5, color: "#fde68a", delay: "3.9s",  dur: "7.5s"},
+  { top: 72,  left: 72,  size: 2,   color: "#c084fc", delay: "1.1s",  dur: "6s"  },
+  { top: 48,  left: 64,  size: 1.5, color: "#f472b6", delay: "4.2s",  dur: "5s"  },
+  { top: 25,  left: 48,  size: 2,   color: "#a5f3fc", delay: "2.5s",  dur: "8s"  },
+];
+
+// ── Decorative constellation clusters ────────────────────────────────────────
+// Small tight groups of 3 dots hinting at star clusters
+const CLUSTERS = [
+  { cx: 8,  cy: 48,  r: 18 },
+  { cx: 92, cy: 45,  r: 16 },
+  { cx: 18, cy: 88,  r: 14 },
+  { cx: 82, cy: 15,  r: 16 },
+];
+
+function ConstellationCluster({ cx, cy, r }) {
+  // 3 dots in a loose triangle
+  const pts = [
+    { dx: 0,  dy: -r,      size: 2,   op: 0.25 },
+    { dx: r * 0.7,  dy: r * 0.5, size: 1.5, op: 0.2  },
+    { dx: -r * 0.6, dy: r * 0.6, size: 1.5, op: 0.2  },
+  ];
+  return (
+    <>
+      {pts.map((p, i) => (
+        <div
+          key={i}
+          className="pointer-events-none absolute rounded-full"
+          style={{
+            top:  `calc(${cy}% + ${p.dy}px)`,
+            left: `calc(${cx}% + ${p.dx}px)`,
+            width:  p.size,
+            height: p.size,
+            background: "#c084fc",
+            opacity: p.op,
+            transform: "translate(-50%, -50%)",
+          }}
+        />
+      ))}
+    </>
+  );
+}
+
+// ── Ambient ring halos ────────────────────────────────────────────────────────
+const RINGS = [
+  { top: "8%",  left: "5%",  size: 120, color: "#c084fc", op: 0.06, delay: "0s",   dur: "8s"  },
+  { top: "80%", left: "88%", size: 150, color: "#f472b6", op: 0.05, delay: "2s",   dur: "10s" },
+  { top: "55%", left: "2%",  size:  90, color: "#a5f3fc", op: 0.05, delay: "4s",   dur: "7s"  },
+  { top: "15%", left: "85%", size: 100, color: "#c084fc", op: 0.06, delay: "1.5s", dur: "9s"  },
 ];
 
 export default function WaitlistLanding() {
   const { t } = useTranslation();
   const [email, setEmail]     = useState("");
-  const [status, setStatus]   = useState("idle"); // idle | submitting | success | duplicate | error
+  const [status, setStatus]   = useState("idle");
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -31,48 +136,99 @@ export default function WaitlistLanding() {
     } else if (result.ok) {
       setStatus("success");
     } else {
-      // Generic server error — re-enable form so user can retry
       setStatus("idle");
     }
   };
 
-  const isDuplicate = status === "duplicate";
-  const isSuccess   = status === "success";
+  const isDuplicate  = status === "duplicate";
+  const isSuccess    = status === "success";
   const isSubmitting = status === "submitting";
 
   return (
-    // Fixed full-screen overlay — sits above AppShell chrome (DesktopNav z-80)
-    <div className="fixed inset-0 z-[100] flex flex-col overflow-hidden"
+    <div
+      className="fixed inset-0 z-[100] flex flex-col overflow-hidden"
       style={{ background: "linear-gradient(135deg, #0c0a14 0%, #11091a 50%, #0a0c18 100%)" }}
     >
-      {/* Ambient glow blobs */}
+      {/* ── Deep ambient glow blobs ─────────────────────────────────────── */}
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
-        <div className="absolute -top-32 -left-32 h-[500px] w-[500px] rounded-full opacity-[0.07]"
+        <div className="absolute -top-32 -left-32 h-[500px] w-[500px] rounded-full opacity-[0.08]"
           style={{ background: "radial-gradient(circle, #c084fc 0%, transparent 70%)" }} />
-        <div className="absolute -bottom-32 -right-16 h-[400px] w-[400px] rounded-full opacity-[0.06]"
+        <div className="absolute -bottom-32 -right-16 h-[400px] w-[400px] rounded-full opacity-[0.07]"
           style={{ background: "radial-gradient(circle, #f472b6 0%, transparent 70%)" }} />
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-[600px] w-[600px] rounded-full opacity-[0.04]"
           style={{ background: "radial-gradient(circle, #a855f7 0%, transparent 70%)" }} />
+        {/* Extra corner blobs for warmth */}
+        <div className="absolute top-0 right-0 h-[300px] w-[300px] rounded-full opacity-[0.05]"
+          style={{ background: "radial-gradient(circle, #a5f3fc 0%, transparent 70%)" }} />
+        <div className="absolute bottom-0 left-0 h-[250px] w-[250px] rounded-full opacity-[0.05]"
+          style={{ background: "radial-gradient(circle, #fde68a 0%, transparent 70%)" }} />
       </div>
 
-      {/* Floating particles */}
-      {PARTICLES.map((p, i) => (
-        <div
-          key={i}
-          className="pointer-events-none absolute rounded-full"
-          style={{
-            top: p.top,
-            left: p.left,
-            width: p.size,
-            height: p.size,
-            background: i % 2 === 0 ? "#c084fc" : "#f472b6",
-            opacity: 0.4,
-            animation: `wl-float ${p.dur} ${p.delay} ease-in-out infinite alternate`,
-          }}
-        />
-      ))}
+      {/* ── Pulsing ring halos ─────────────────────────────────────────── */}
+      <div className="pointer-events-none absolute inset-0 overflow-hidden">
+        {RINGS.map((r, i) => (
+          <div
+            key={i}
+            className="absolute rounded-full"
+            style={{
+              top:  r.top,
+              left: r.left,
+              width:  r.size,
+              height: r.size,
+              border: `1px solid ${r.color}`,
+              opacity: r.op,
+              transform: "translate(-50%, -50%)",
+              animation: `wl-pulse ${r.dur} ${r.delay} ease-in-out infinite alternate`,
+            }}
+          />
+        ))}
+      </div>
 
-      {/* Top bar: Language switcher only — no public login link */}
+      {/* ── Constellation clusters ─────────────────────────────────────── */}
+      <div className="pointer-events-none absolute inset-0 overflow-hidden">
+        {CLUSTERS.map((c, i) => (
+          <ConstellationCluster key={i} {...c} />
+        ))}
+      </div>
+
+      {/* ── Tiny glitter dots ─────────────────────────────────────────── */}
+      <div className="pointer-events-none absolute inset-0 overflow-hidden">
+        {DOTS.map((d, i) => (
+          <div
+            key={i}
+            className="absolute rounded-full"
+            style={{
+              top:    `${d.top}%`,
+              left:   `${d.left}%`,
+              width:  d.size,
+              height: d.size,
+              background: d.color,
+              opacity: 0.35,
+              animation: `wl-twinkle ${d.dur} ${d.delay} ease-in-out infinite alternate`,
+            }}
+          />
+        ))}
+      </div>
+
+      {/* ── 4-pointed sparkles ─────────────────────────────────────────── */}
+      <div className="pointer-events-none absolute inset-0 overflow-hidden">
+        {SPARKLES.map((s, i) => (
+          <div
+            key={i}
+            className="absolute"
+            style={{
+              top:  `${s.top}%`,
+              left: `${s.left}%`,
+              transform: "translate(-50%, -50%)",
+              animation: `wl-sparkle-float ${s.dur} ${s.delay} ease-in-out infinite alternate`,
+            }}
+          >
+            <Sparkle size={s.size} color={s.color} opacity={s.op} />
+          </div>
+        ))}
+      </div>
+
+      {/* ── Top bar ───────────────────────────────────────────────────── */}
       <div className="relative z-10 flex items-center justify-between px-6 pt-6">
         <div className="text-white/30 text-xs font-bold tracking-widest uppercase select-none">
           cosmeo
@@ -80,7 +236,7 @@ export default function WaitlistLanding() {
         <LanguageSwitcher />
       </div>
 
-      {/* Main centered content */}
+      {/* ── Main centered content ─────────────────────────────────────── */}
       <div className="relative z-10 flex flex-1 flex-col items-center justify-center px-6 py-8">
         <motion.div
           initial={{ opacity: 0, y: 28 }}
@@ -93,9 +249,14 @@ export default function WaitlistLanding() {
             initial={{ scale: 0.8, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             transition={{ delay: 0.1, duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-            className="mb-6"
+            className="mb-6 relative"
           >
-            <img src="/waitlist-logo-v2.png" alt="Cosmeo" className="h-[144px] w-[144px] object-contain" />
+            {/* Soft glow ring behind logo */}
+            <div
+              className="absolute inset-0 rounded-full opacity-20 blur-2xl"
+              style={{ background: "radial-gradient(circle, #c084fc 0%, #f472b6 60%, transparent 100%)", transform: "scale(1.6)" }}
+            />
+            <img src="/waitlist-logo-v2.png" alt="Cosmeo" className="relative h-[144px] w-[144px] object-contain" />
           </motion.div>
 
           {/* Badge pill */}
@@ -160,7 +321,6 @@ export default function WaitlistLanding() {
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
               >
-                {/* Email input */}
                 <div className="relative">
                   <input
                     type="email"
@@ -181,7 +341,6 @@ export default function WaitlistLanding() {
                   />
                 </div>
 
-                {/* Duplicate error */}
                 <AnimatePresence>
                   {isDuplicate && (
                     <motion.p
@@ -196,7 +355,6 @@ export default function WaitlistLanding() {
                   )}
                 </AnimatePresence>
 
-                {/* CTA button */}
                 <button
                   type="submit"
                   disabled={isSubmitting}
@@ -206,7 +364,6 @@ export default function WaitlistLanding() {
                     boxShadow: "0 4px 32px rgba(168,85,247,0.45), 0 0 0 1px rgba(168,85,247,0.2)",
                   }}
                 >
-                  {/* Shimmer */}
                   {!isSubmitting && (
                     <span
                       className="pointer-events-none absolute inset-0"
@@ -242,18 +399,28 @@ export default function WaitlistLanding() {
         </motion.div>
       </div>
 
-      {/* Bottom wordmark */}
+      {/* ── Bottom wordmark ───────────────────────────────────────────── */}
       <div className="relative z-10 pb-8 text-center">
         <p className="text-[11px] tracking-widest font-bold text-white/15 uppercase">
           cosmeo &mdash; Georgia's Cosplay Marketplace
         </p>
       </div>
 
-      {/* Keyframe styles — injected once inline */}
+      {/* ── Keyframes ─────────────────────────────────────────────────── */}
       <style>{`
-        @keyframes wl-float {
-          from { transform: translateY(0px) scale(1); }
-          to   { transform: translateY(-14px) scale(1.3); }
+        @keyframes wl-sparkle-float {
+          0%   { transform: translate(-50%, -50%) translateY(0px)   scale(1)    rotate(0deg);   opacity: var(--op, 0.6); }
+          50%  { opacity: calc(var(--op, 0.6) * 0.6); }
+          100% { transform: translate(-50%, -50%) translateY(-12px) scale(1.15) rotate(15deg);  opacity: var(--op, 0.6); }
+        }
+        @keyframes wl-twinkle {
+          0%   { transform: scale(1);   opacity: 0.35; }
+          50%  { opacity: 0.12; }
+          100% { transform: scale(1.6); opacity: 0.5; }
+        }
+        @keyframes wl-pulse {
+          0%   { transform: translate(-50%, -50%) scale(1);    opacity: 0.06; }
+          100% { transform: translate(-50%, -50%) scale(1.25); opacity: 0.01; }
         }
         @keyframes wl-shimmer {
           0%   { background-position: -200% 0; }
