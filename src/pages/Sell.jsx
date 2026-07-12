@@ -284,13 +284,48 @@ export default function Sell() {
   const [salePrice, setSalePrice] = useState("");
   const [rentPrice, setRentPrice] = useState("");
   const [brand, setBrand] = useState("");
+  // ── Image upload state ─────────────────────────────────────────────────
+  // `uploadedImages` holds every selected image (id/previewUrl/url/status),
+  // regardless of where it is in its lifecycle. `uploadingImages` and
+  // `uploadErrors` are derived/tracked explicitly below so the Next button's
+  // disabled state, its label, and the step-advance guard all read from the
+  // same source of truth instead of each re-deriving it ad hoc.
   const [uploadedImages, setUploadedImages] = useState([]);
+  const [uploadErrors, setUploadErrors] = useState([]); // string messages from the most recent batch
   const [imageError, setImageError] = useState(false);
-  const [uploading, setUploading] = useState(false);
+  const [uploading, setUploading] = useState(false); // true while a handleFileSelect batch is in flight
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess]   = useState(false);
 
+  // Images currently mid-upload — the single source of truth for "is it safe
+  // to advance past step 0 yet". Anything with status "uploading" still has
+  // url === null, so letting the user proceed would carry a null image URL
+  // into the pricing preview and, if not caught again at publish, into the
+  // final listing payload.
+  const uploadingImages = uploadedImages.filter((img) => img.status === "uploading");
+  const isUploading = uploadingImages.length > 0;
+
+  // A finished upload always resolves to a media-serving route — either the
+  // R2 proxy (/api/media/...) or the local-disk fallback (/uploads/...), see
+  // server/routes/upload.js `saveBuffer()`. Anything else (null, a stale
+  // blob: preview, etc.) means the upload hasn't actually completed yet.
+  const isValidMediaUrl = (url) =>
+    typeof url === "string" && (url.startsWith("/api/media/") || url.startsWith("/uploads/"));
+
+  // Gate for leaving step 0: at least one image, none still uploading, and
+  // every one of them resolved to a real, valid final URL.
+  const imagesReady =
+    uploadedImages.length > 0 &&
+    !isUploading &&
+    uploadedImages.every((img) => img.status === "done" && isValidMediaUrl(img.url));
+
   const fileInputRef = useRef(null);
+  // Guards against re-entrant goNext() calls — e.g. a user clicking Next
+  // several times in the same tick, before the disabled-button re-render
+  // has actually landed. Without this, two rapid calls can both read the
+  // same `step` from closure and both call setStep(s => s + 1), skipping a
+  // step entirely.
+  const navigatingRef = useRef(false);
 
   const { register, handleSubmit, trigger, getValues, formState: { errors } } = useForm({
     resolver: zodResolver(detailsSchema),
@@ -300,27 +335,40 @@ export default function Sell() {
   const STEP_LABELS = [t("stepCategory"), t("stepDetails"), t("stepPricing")];
 
   const goNext = async () => {
-    if (step === 0 && !category) {
-      toast({ title: t("pickCategoryFirst"), variant: "destructive" });
-      return;
+    // Re-entrancy guard: ignore this call entirely if a previous call is
+    // still resolving (covers rapid repeated clicks and the async step-1
+    // validation branch below).
+    if (navigatingRef.current) return;
+    navigatingRef.current = true;
+    try {
+      if (step === 0 && !category) {
+        toast({ title: t("pickCategoryFirst"), variant: "destructive" });
+        return;
+      }
+      if (step === 0 && uploadedImages.length === 0) {
+        setImageError(true);
+        return;
+      }
+      // Block navigating forward while any photo is still mid-upload, or if
+      // one finished without a valid final URL — its `url` would still be
+      // null/invalid at this point, so the pricing-step preview (and, if
+      // this guard were ever bypassed, the final publish payload) would have
+      // nothing but a possibly-already-revoked blob to fall back on. The
+      // Next button is also disabled for the same condition below, so this
+      // is a defense-in-depth check, not the only place this is enforced.
+      if (step === 0 && !imagesReady) {
+        toast({ title: "Please wait for photos to finish uploading.", variant: "destructive" });
+        return;
+      }
+      if (step === 1) {
+        const ok = await trigger(["title", "description"]);
+        if (!ok) return;
+      }
+      setDir(1);
+      setStep(s => s + 1);
+    } finally {
+      navigatingRef.current = false;
     }
-    if (step === 0 && uploadedImages.length === 0) {
-      setImageError(true);
-      return;
-    }
-    // Block navigating forward while a photo is still mid-upload — its
-    // `url` is still null at this point, so the pricing-step preview would
-    // have nothing but the (possibly already-revoked) blob to fall back on.
-    if (step === 0 && uploadedImages.some(img => img.status === "uploading")) {
-      toast({ title: "Please wait for photos to finish uploading.", variant: "destructive" });
-      return;
-    }
-    if (step === 1) {
-      const ok = await trigger(["title", "description"]);
-      if (!ok) return;
-    }
-    setDir(1);
-    setStep(s => s + 1);
   };
 
   const goBack = () => { setDir(-1); setStep(s => s - 1); };
@@ -351,6 +399,7 @@ export default function Sell() {
     }));
     setUploadedImages(prev => [...prev, ...pending]);
     setImageError(false);
+    setUploadErrors([]); // clear stale errors from a previous batch
     setUploading(true);
 
     try {
@@ -379,6 +428,7 @@ export default function Sell() {
       // upload doesn't leave a permanently-spinning/broken thumbnail behind.
       setUploadedImages(prev => prev.filter(img => !pending.some(p => p.id === img.id)));
       pending.forEach(p => URL.revokeObjectURL(p.previewUrl));
+      setUploadErrors(prev => [...prev, err.message || t("uploadFailed")]);
       toast({ title: t("uploadFailed"), description: err.message, variant: "destructive" });
     } finally {
       setUploading(false);
@@ -425,7 +475,7 @@ export default function Sell() {
       return;
     }
 
-    if (uploadedImages.some(img => img.status === "uploading")) {
+    if (!imagesReady) {
       toast({ title: "Please wait for photos to finish uploading.", variant: "destructive" });
       return;
     }
@@ -575,6 +625,12 @@ export default function Sell() {
                         Please upload at least one image.
                       </span>
                     )}
+                    {isUploading && (
+                      <span className="text-primary font-normal ml-2 text-xs inline-flex items-center gap-1.5">
+                        <span className="h-3 w-3 rounded-full border-2 border-primary/30 border-t-primary animate-spin" />
+                        Uploading images...
+                      </span>
+                    )}
                   </p>
                   <input type="file" multiple accept="image/jpeg,image/png,image/webp,image/avif,image/gif,image/heic,image/heif" className="hidden" ref={fileInputRef} onChange={handleFileSelect} />
                   <div className="flex gap-3 overflow-x-auto no-scrollbar pb-1">
@@ -631,6 +687,13 @@ export default function Sell() {
                       </div>
                     ))}
                   </div>
+
+                  {uploadErrors.length > 0 && (
+                    <div className="mt-3 flex items-start gap-2 rounded-2xl border border-destructive/30 bg-destructive/5 p-3 text-destructive">
+                      <AlertTriangle className="h-4 w-4 shrink-0 mt-0.5" />
+                      <p className="text-xs font-semibold leading-relaxed">{uploadErrors[uploadErrors.length - 1]}</p>
+                    </div>
+                  )}
 
                   {/* Real Photos Only warning */}
                   <div className="mt-4 flex items-start gap-3 rounded-2xl border border-amber-500/30 bg-amber-500/10 p-4 text-amber-800">
@@ -844,10 +907,24 @@ export default function Sell() {
             <Button
               type="button"
               onClick={goNext}
-              className="w-full h-14 rounded-2xl bg-gradient-to-r from-primary to-secondary text-white font-extrabold text-base shadow-[0_4px_20px_rgba(124,58,237,0.3)] hover:opacity-90 transition-opacity flex items-center justify-center gap-2"
+              // Disabled at the button level (not just inside goNext) so a
+              // real click while images are uploading never even fires the
+              // handler — the browser's native `disabled` attribute blocks
+              // it outright, independent of the navigatingRef guard.
+              disabled={step === 0 && isUploading}
+              className="w-full h-14 rounded-2xl bg-gradient-to-r from-primary to-secondary text-white font-extrabold text-base shadow-[0_4px_20px_rgba(124,58,237,0.3)] hover:opacity-90 transition-opacity flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed"
             >
-              {step === 1 ? t("nextSetPrice") : t("nextDetails")}
-              <ArrowRight className="h-5 w-5" />
+              {step === 0 && isUploading ? (
+                <>
+                  <span className="h-5 w-5 rounded-full border-2 border-white/40 border-t-white animate-spin" />
+                  Uploading images...
+                </>
+              ) : (
+                <>
+                  {step === 1 ? t("nextSetPrice") : t("nextDetails")}
+                  <ArrowRight className="h-5 w-5" />
+                </>
+              )}
             </Button>
           </motion.div>
         </div>
