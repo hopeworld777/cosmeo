@@ -462,11 +462,12 @@ function MyListings({ onSold }) {
   };
 
   const handleDelete = async (id) => {
+    if (!window.confirm(t("confirmDelete"))) return;
     try {
       await api.listings.delete(id);
       setListings((prev) => prev.filter((l) => l.id !== id));
       window.dispatchEvent(new Event("kosmeo:listingChanged"));
-      toast({ title: "Listing removed" });
+      toast({ title: t("listingDeleted") });
     } catch (err) {
       toast({ title: "Error", description: err.message, variant: "destructive" });
     }

@@ -294,9 +294,12 @@ router.delete("/:id", requireAuth, async (req, res) => {
       [req.params.id, req.userId]
     );
 
-    // 2. Soft-delete the listing.
+    // 2. Soft-delete the listing. status='deleted' is what /listings/me and
+    //    the single-listing GET actually filter on (`status != 'deleted'`),
+    //    so it must be set here too — is_active alone left deleted listings
+    //    reappearing in the seller's own profile on the next refetch.
     const result = await pool.query(
-      "UPDATE listings SET is_active = false WHERE id = $1 AND seller_id = $2 RETURNING id",
+      "UPDATE listings SET is_active = false, status = 'deleted' WHERE id = $1 AND seller_id = $2 RETURNING id",
       [req.params.id, req.userId]
     );
     if (!result.rows[0]) return res.status(404).json({ error: "Not found or not authorized" });
