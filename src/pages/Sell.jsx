@@ -308,6 +308,13 @@ export default function Sell() {
       setImageError(true);
       return;
     }
+    // Block navigating forward while a photo is still mid-upload — its
+    // `url` is still null at this point, so the pricing-step preview would
+    // have nothing but the (possibly already-revoked) blob to fall back on.
+    if (step === 0 && uploadedImages.some(img => img.status === "uploading")) {
+      toast({ title: "Please wait for photos to finish uploading.", variant: "destructive" });
+      return;
+    }
     if (step === 1) {
       const ok = await trigger(["title", "description"]);
       if (!ok) return;
@@ -775,10 +782,22 @@ export default function Sell() {
                     <div className="flex items-center gap-3">
                       <div className="h-14 w-14 rounded-2xl overflow-hidden bg-muted shrink-0">
                         <img
+                          key={uploadedImages[0]?.id ?? "placeholder"}
                           src={uploadedImages[0]?.url || uploadedImages[0]?.previewUrl || PLACEHOLDER[category]}
                           alt=""
                           className="h-full w-full object-cover"
-                          onError={(e) => console.log("Image failed to load:", e.target.src)}
+                          onError={(e) => {
+                            // Mirror the step-0 thumbnail's resilience: if the
+                            // server URL fails, fall back to the still-alive
+                            // local blob preview instead of showing nothing.
+                            const fallback = uploadedImages[0]?.previewUrl;
+                            if (fallback && e.target.src !== fallback) {
+                              console.warn("[sell] preview server URL failed, falling back to blob preview:", e.target.src);
+                              e.target.src = fallback;
+                            } else {
+                              console.error("[sell] preview image failed to load:", e.target.src);
+                            }
+                          }}
                         />
                       </div>
                       <div className="flex-1 min-w-0">
