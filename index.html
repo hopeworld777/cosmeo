@@ -18,9 +18,7 @@
       (function () {
         try {
           var stored = localStorage.getItem("kosmeo_theme");
-          var isDark = stored
-            ? stored === "dark"
-            : window.matchMedia("(prefers-color-scheme: dark)").matches;
+          var isDark = stored ? stored === "dark" : true;
           document.documentElement.classList.toggle("dark", isDark);
         } catch (e) {
           document.documentElement.classList.add("dark");
