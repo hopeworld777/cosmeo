@@ -17,12 +17,18 @@ const R2_SECRET_ACCESS_KEY = process.env.R2_SECRET_ACCESS_KEY?.trim();
 const R2_BUCKET_NAME       = process.env.R2_BUCKET_NAME?.trim();
 
 // Startup diagnostic — never logs actual secret values, only presence/length.
-console.log("[r2] env check →", {
-  R2_ACCOUNT_ID:        R2_ACCOUNT_ID        ? `set (${R2_ACCOUNT_ID.length} chars)`        : "MISSING",
-  R2_ACCESS_KEY_ID:     R2_ACCESS_KEY_ID     ? `set (${R2_ACCESS_KEY_ID.length} chars)`     : "MISSING",
-  R2_SECRET_ACCESS_KEY: R2_SECRET_ACCESS_KEY ? `set (${R2_SECRET_ACCESS_KEY.length} chars)` : "MISSING",
-  R2_BUCKET_NAME:       R2_BUCKET_NAME       ? `set (${R2_BUCKET_NAME.length} chars)`       : "MISSING",
-});
+const _allSet = R2_ACCOUNT_ID && R2_ACCESS_KEY_ID && R2_SECRET_ACCESS_KEY && R2_BUCKET_NAME;
+if (_allSet) {
+  console.log(`Storage provider initialized: R2 (bucket: ${R2_BUCKET_NAME})`);
+} else {
+  console.log("Storage provider initialized: local disk (R2 not configured — uploads will not persist across restarts)");
+  console.log("[r2] missing vars →", {
+    R2_ACCOUNT_ID:        R2_ACCOUNT_ID        ? "set" : "MISSING",
+    R2_ACCESS_KEY_ID:     R2_ACCESS_KEY_ID     ? "set" : "MISSING",
+    R2_SECRET_ACCESS_KEY: R2_SECRET_ACCESS_KEY ? "set" : "MISSING",
+    R2_BUCKET_NAME:       R2_BUCKET_NAME       ? "set" : "MISSING",
+  });
+}
 
 export const r2 = R2_ACCOUNT_ID
   ? new S3Client({
