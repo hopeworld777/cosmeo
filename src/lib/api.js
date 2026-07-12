@@ -41,6 +41,7 @@ export const api = {
   auth: {
     register: (body) =>
       request("/auth/register", { method: "POST", body: JSON.stringify(body) }),
+    checkInvite: (code) => request(`/auth/invite/${encodeURIComponent(code)}`),
     login: (body) =>
       request("/auth/login", { method: "POST", body: JSON.stringify(body) }),
     me: () => request("/auth/me"),

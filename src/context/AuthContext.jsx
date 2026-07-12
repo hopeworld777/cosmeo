@@ -3,9 +3,22 @@ import { api } from "@/lib/api";
 
 export const AuthContext = createContext(null);
 
+const INVITE_CODE_KEY = "cosmeo_invite_code";
+
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  // Whether the invite-only waitlist gate is currently enforced at all.
+  // Defaults to true (fail closed) until /api/config resolves; flip
+  // PUBLIC_LAUNCH=true server-side at launch to turn this false for everyone.
+  const [waitlistEnabled, setWaitlistEnabled] = useState(true);
+
+  useEffect(() => {
+    fetch("/api/config")
+      .then(r => r.json())
+      .then(cfg => setWaitlistEnabled(cfg.waitlistEnabled !== false))
+      .catch(() => {}); // keep the safe default (gate enforced) on failure
+  }, []);
 
   const fetchMe = useCallback(async () => {
     const token = localStorage.getItem("kosmeo_token");
@@ -46,7 +59,9 @@ export function AuthProvider({ children }) {
   };
 
   const register = async (username, email, password) => {
-    const { user: u, token } = await api.auth.register({ username, email, password });
+    const inviteCode = sessionStorage.getItem(INVITE_CODE_KEY) || undefined;
+    const { user: u, token } = await api.auth.register({ username, email, password, inviteCode });
+    sessionStorage.removeItem(INVITE_CODE_KEY);
     localStorage.setItem("kosmeo_token", token);
     setUser(u);
     return u;
@@ -58,7 +73,7 @@ export function AuthProvider({ children }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, logout, setUser }}>
+    <AuthContext.Provider value={{ user, loading, login, register, logout, setUser, waitlistEnabled }}>
       {children}
     </AuthContext.Provider>
   );

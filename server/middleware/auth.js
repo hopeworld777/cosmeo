@@ -41,6 +41,23 @@ export async function requireAdmin(req, res, next) {
   }
 }
 
+// Gate that enforces the invite-only beta: only VIP/ADMIN accounts may use
+// the real app APIs. Must run after requireAuth (needs req.userId).
+// Set PUBLIC_LAUNCH=true (env) to lift this gate for everyone once Cosmeo
+// launches publicly — no code change or migration needed at that point.
+export async function requireFullAccess(req, res, next) {
+  if (process.env.PUBLIC_LAUNCH === "true") return next();
+  try {
+    const check = await pool.query("SELECT access_status FROM users WHERE id = $1", [req.userId]);
+    const status = check.rows[0]?.access_status;
+    if (status === "VIP" || status === "ADMIN") return next();
+    return res.status(403).json({ error: "waitlist_pending" });
+  } catch (err) {
+    console.error("requireFullAccess error:", err);
+    return res.status(500).json({ error: "Access check failed" });
+  }
+}
+
 export function optionalAuth(req, res, next) {
   const authHeader = req.headers.authorization;
   if (authHeader && authHeader.startsWith("Bearer ")) {

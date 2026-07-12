@@ -49,13 +49,24 @@ router.post("/waitlist/:id/send-link", requireNumericId, async (req, res) => {
 });
 
 // ── POST /api/admin/waitlist/:id/send-vip-invite ─────────────────────────────
+// Emails a reusable invite link (/invite/<code>) — the same link can be sent
+// to anyone (e.g. via Instagram DM); this endpoint just also marks the
+// waitlist row as invited for bookkeeping. Defaults to the seeded
+// "COSMEOBETA" code; pass a different active code from invite_codes if you
+// rotate it.
 router.post("/waitlist/:id/send-vip-invite", requireNumericId, async (req, res) => {
-  const vipCode = process.env.VIP_CODE?.trim();
-  if (!vipCode) return res.status(503).json({ error: "VIP_CODE is not configured on the server." });
+  const inviteCode = req.body?.inviteCode?.trim() || "COSMEOBETA";
   try {
+    const codeCheck = await pool.query(
+      "SELECT id FROM invite_codes WHERE code = $1 AND is_active = true",
+      [inviteCode.toUpperCase()]
+    );
+    if (codeCheck.rows.length === 0) {
+      return res.status(400).json({ error: "That invite code doesn't exist or is inactive." });
+    }
     const { rows } = await pool.query("SELECT * FROM waitlist WHERE id = $1", [req.params.id]);
     if (!rows[0]) return res.status(404).json({ error: "Not found" });
-    await sendWaitlistVipInvite(rows[0].email, vipCode);
+    await sendWaitlistVipInvite(rows[0].email, inviteCode.toUpperCase());
     const updated = await pool.query(
       "UPDATE waitlist SET vip_invited = true, vip_invited_at = NOW() WHERE id = $1 RETURNING *",
       [req.params.id]

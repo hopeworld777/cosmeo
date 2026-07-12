@@ -66,8 +66,13 @@ async function createAuthToken(userId, type, expiresInHours = 24) {
 }
 
 // POST /api/auth/register
+// Everyone lands on the WAITLIST by default (see access_status default in
+// schema.sql). Passing a valid, active `inviteCode` (from an /invite/:code
+// link) grants VIP access — full app permissions — immediately on signup.
+// An invalid/missing code is never an error here; the account is just
+// created on the waitlist like any normal signup.
 router.post("/register", registerLimiter, async (req, res) => {
-  const { username, email, password, bio } = req.body;
+  const { username, email, password, bio, inviteCode } = req.body;
   if (!username || !email || !password) {
     return res.status(400).json({ error: "Username, email and password are required" });
   }
@@ -89,12 +94,22 @@ router.post("/register", registerLimiter, async (req, res) => {
     if (usernameCheck.rows.length > 0) {
       return res.status(409).json({ error: "username_taken" });
     }
+
+    let accessStatus = "WAITLIST";
+    if (inviteCode && inviteCode.trim()) {
+      const inviteCheck = await pool.query(
+        "SELECT id FROM invite_codes WHERE code = $1 AND is_active = true",
+        [inviteCode.trim().toUpperCase()]
+      );
+      if (inviteCheck.rows.length > 0) accessStatus = "VIP";
+    }
+
     const hashedPassword = await bcrypt.hash(password, BCRYPT_ROUNDS);
     const result = await pool.query(
-      `INSERT INTO users (username, email, password_hash, bio, email_verified)
-       VALUES ($1, $2, $3, $4, false)
-       RETURNING id, username, email, bio, avatar_url, rating, review_count, sales_count, email_verified, created_at`,
-      [username, email.toLowerCase(), hashedPassword, bio || ""]
+      `INSERT INTO users (username, email, password_hash, bio, email_verified, access_status)
+       VALUES ($1, $2, $3, $4, false, $5)
+       RETURNING id, username, email, bio, avatar_url, rating, review_count, sales_count, email_verified, access_status, created_at`,
+      [username, email.toLowerCase(), hashedPassword, bio || "", accessStatus]
     );
     const user = result.rows[0];
 
@@ -121,59 +136,20 @@ router.post("/register", registerLimiter, async (req, res) => {
   }
 });
 
-// POST /api/auth/vip-register — bypasses waitlist for pre-launch testers.
-// Protected by VIP_CODE env var (set it in Replit Secrets).
-// Creates an account with email_verified = true so they can log in immediately.
-router.post("/vip-register", async (req, res) => {
-  const VIP_CODE = process.env.VIP_CODE?.trim();
-  if (!VIP_CODE) {
-    return res.status(503).json({ error: "VIP registration is not currently active." });
-  }
-  const { vipCode, username, email, password, bio } = req.body;
-  if (!vipCode || vipCode.trim() !== VIP_CODE) {
-    return res.status(401).json({ error: "Invalid VIP code." });
-  }
-  if (!username || !email || !password) {
-    return res.status(400).json({ error: "Username, email and password are required." });
-  }
-  if (password.length < 6) {
-    return res.status(400).json({ error: "Password must be at least 6 characters." });
-  }
+// GET /api/auth/invite/:code — public check used by the /invite/:code
+// landing route before it drops the visitor into the normal register form.
+router.get("/invite/:code", async (req, res) => {
+  const code = (req.params.code || "").trim().toUpperCase();
+  if (!code) return res.json({ valid: false });
   try {
-    const emailCheck = await pool.query(
-      "SELECT id FROM users WHERE email = $1",
-      [email.toLowerCase()]
-    );
-    if (emailCheck.rows.length > 0) {
-      return res.status(409).json({ error: "email_taken" });
-    }
-    const usernameCheck = await pool.query(
-      "SELECT id FROM users WHERE username = $1",
-      [username]
-    );
-    if (usernameCheck.rows.length > 0) {
-      return res.status(409).json({ error: "username_taken" });
-    }
-    const hashedPassword = await bcrypt.hash(password, BCRYPT_ROUNDS);
     const result = await pool.query(
-      `INSERT INTO users (username, email, password_hash, bio, email_verified)
-       VALUES ($1, $2, $3, $4, true)
-       RETURNING id, username, email, bio, avatar_url, rating, review_count, sales_count, email_verified, created_at`,
-      [username, email.toLowerCase(), hashedPassword, bio || ""]
+      "SELECT id FROM invite_codes WHERE code = $1 AND is_active = true",
+      [code]
     );
-    const user = result.rows[0];
-    const jwtToken = generateToken(user.id);
-    console.log(`[VIP] New tester account created: ${username} (${email})`);
-    res.status(201).json({ user, token: jwtToken });
+    res.json({ valid: result.rows.length > 0 });
   } catch (err) {
-    if (err.code === "23505" && err.constraint?.includes("email")) {
-      return res.status(409).json({ error: "email_taken" });
-    }
-    if (err.code === "23505" && err.constraint?.includes("username")) {
-      return res.status(409).json({ error: "username_taken" });
-    }
-    console.error("VIP register error:", err);
-    res.status(500).json({ error: "Registration failed." });
+    console.error("Invite check error:", err);
+    res.status(500).json({ valid: false });
   }
 });
 
@@ -237,7 +213,7 @@ router.get("/me", requireAuth, async (req, res) => {
   try {
     const result = await pool.query(
       `SELECT id, username, email, bio, avatar_url, rating, review_count, sales_count, balance, email_verified, created_at, location,
-              is_admin, is_verified, is_banned, warning_count
+              is_admin, is_verified, is_banned, warning_count, access_status
        FROM users WHERE id = $1`,
       [req.userId]
     );
@@ -322,7 +298,7 @@ router.patch("/me", requireAuth, async (req, res) => {
       `UPDATE users SET ${fields.join(", ")} WHERE id = ${idx}
        RETURNING id, username, email, bio, avatar_url, rating, review_count,
                  sales_count, balance, email_verified, created_at, location,
-                 is_admin, is_verified, is_banned, warning_count`,
+                 is_admin, is_verified, is_banned, warning_count, access_status`,
       values
     );
     res.json(result.rows[0]);
@@ -383,7 +359,7 @@ router.post("/verify-email", async (req, res) => {
     // Generate a fresh JWT so user is logged in after verifying
     const jwtToken = generateToken(row.user_id);
     const userResult = await pool.query(
-      "SELECT id, username, email, bio, avatar_url, email_verified, rating, review_count, sales_count, is_admin, is_verified, is_banned, warning_count FROM users WHERE id = $1",
+      "SELECT id, username, email, bio, avatar_url, email_verified, rating, review_count, sales_count, is_admin, is_verified, is_banned, warning_count, access_status FROM users WHERE id = $1",
       [row.user_id]
     );
     res.json({ success: true, user: userResult.rows[0], token: jwtToken });
@@ -447,7 +423,7 @@ router.post("/reset-password", async (req, res) => {
     // Auto-login after reset
     const jwtToken = generateToken(row.user_id);
     const userResult = await pool.query(
-      "SELECT id, username, email, bio, avatar_url, email_verified, rating, review_count, sales_count, is_admin, is_verified, is_banned, warning_count FROM users WHERE id = $1",
+      "SELECT id, username, email, bio, avatar_url, email_verified, rating, review_count, sales_count, is_admin, is_verified, is_banned, warning_count, access_status FROM users WHERE id = $1",
       [row.user_id]
     );
     res.json({ success: true, user: userResult.rows[0], token: jwtToken });

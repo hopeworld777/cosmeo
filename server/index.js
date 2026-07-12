@@ -6,7 +6,7 @@ import { fileURLToPath } from "url";
 import "dotenv/config";
 
 import authRoutes from "./routes/auth.js";
-import { requireAuth } from "./middleware/auth.js";
+import { requireAuth, requireFullAccess } from "./middleware/auth.js";
 import listingsRoutes from "./routes/listings.js";
 import favoritesRoutes from "./routes/favorites.js";
 import messagesRoutes from "./routes/messages.js";
@@ -75,21 +75,28 @@ app.get("/api/media/{*key}", async (req, res) => {
   }
 });
 
-// ── Waitlist gate ─────────────────────────────────────────────────────────────
-// Pre-launch: every API route except auth, waitlist, health, and the media
-// proxy requires a valid JWT. Unauthenticated requests to any other endpoint
-// receive 403 immediately, so even direct curl/fetch calls can't bypass the
-// frontend gate and pull real data.
+// ── Invite-only beta gate ─────────────────────────────────────────────────────
+// Every API route except auth, waitlist, health, config, and the media proxy
+// requires both a valid JWT AND full access (VIP/ADMIN access_status) — a
+// WAITLIST account can log in but gets a clean 403 from every other endpoint,
+// so even direct curl/fetch calls can't bypass the frontend gate and pull
+// real data. Set PUBLIC_LAUNCH=true to drop the access_status check for
+// everyone once Cosmeo goes public (see requireFullAccess).
 // /api/media/* is registered above this block and never reaches this middleware.
-// Pre-launch: only auth, waitlist signup, health, and the media proxy are public.
-// Everything else — listings, reviews, messages, wallet, etc. — requires a valid JWT.
-const PUBLIC_API_PREFIXES = ["/auth", "/waitlist", "/health", "/media"];
+const PUBLIC_API_PREFIXES = ["/auth", "/waitlist", "/health", "/config", "/media"];
 app.use("/api", (req, res, next) => {
   const isPublic = PUBLIC_API_PREFIXES.some(
     p => req.path === p || req.path.startsWith(p + "/")
   );
   if (isPublic) return next();
-  return requireAuth(req, res, next);
+  return requireAuth(req, res, () => requireFullAccess(req, res, next));
+});
+
+// GET /api/config — public, tiny flag the frontend uses to know whether the
+// invite-only waitlist gate is currently enforced. Flip PUBLIC_LAUNCH=true
+// at launch time to open the app to everyone without touching this code.
+app.get("/api/config", (req, res) => {
+  res.json({ waitlistEnabled: process.env.PUBLIC_LAUNCH !== "true" });
 });
 
 // Routes

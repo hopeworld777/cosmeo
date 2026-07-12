@@ -23,7 +23,7 @@ import Chat from "@/pages/Chat";
 import TermsAndSafety from "@/pages/TermsAndSafety";
 import AdminDashboard from "@/pages/AdminDashboard";
 import NewDashboard from "@/pages/NewDashboard";
-import VipRegister from "@/pages/VipRegister";
+import Invite from "@/pages/Invite";
 import { AuthProvider } from "@/context/AuthContext";
 import { useAuth } from "@/hooks/useAuth";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
@@ -38,7 +38,7 @@ export const ADMIN_LOGIN_PATH = "/secret-admin-gate";
 // Routes that hide everything (login / register / etc.), including the
 // secret admin login gate — it reuses the same <Login> page and must get
 // the same chrome-free treatment (no DesktopNav/BottomNav/header).
-const AUTH_ROUTES = ["/login", "/register", "/forgot-password", "/reset-password", "/verify-email", "/vip-signup", ADMIN_LOGIN_PATH];
+const AUTH_ROUTES = ["/login", "/register", "/forgot-password", "/reset-password", "/verify-email", "/invite", ADMIN_LOGIN_PATH];
 
 // Routes that unauthenticated visitors may access without being bounced to the
 // waitlist landing. Authenticated users (any role) bypass this list entirely.
@@ -49,7 +49,7 @@ const WAITLIST_PUBLIC = [
   "/reset-password",
   "/verify-email",
   "/terms",
-  "/vip-signup",   // invite link — lets new users register with VIP code
+  "/invite",   // reusable invite link (/invite/COSMEOBETA) — grants VIP on signup
   "/login",
   "/register",
 ];
@@ -79,17 +79,28 @@ function ownsLangSwitcher(location) {
   });
 }
 
+// True once a visitor is allowed to use the real app instead of the
+// waitlist landing page: either the invite-only gate has been lifted
+// globally (PUBLIC_LAUNCH=true → waitlistEnabled=false), or the signed-in
+// user is VIP/ADMIN. A plain WAITLIST account (default for every normal
+// signup) does not have full access, even while logged in.
+function hasFullAccess(user, waitlistEnabled) {
+  if (!waitlistEnabled) return true;
+  return user?.access_status === "VIP" || user?.access_status === "ADMIN";
+}
+
 function ProtectedRoute({ component: Component, ...rest }) {
-  const { user, loading } = useAuth();
+  const { user, loading, waitlistEnabled } = useAuth();
   const [, setLocation] = useLocation();
+  const fullAccess = hasFullAccess(user, waitlistEnabled);
 
   useEffect(() => {
-    // Unauthenticated → back to waitlist landing, not /login
-    if (!loading && !user) setLocation("/");
-  }, [loading, user]);
+    // Unauthenticated or still-on-the-waitlist → back to waitlist landing, not /login
+    if (!loading && !fullAccess) setLocation("/");
+  }, [loading, fullAccess]);
 
   if (loading) return null;
-  if (!user) return null;
+  if (!fullAccess) return null;
   return <Component {...rest} />;
 }
 
@@ -115,38 +126,43 @@ function OnboardingGuard() {
   return null;
 }
 
-// Gate: redirect unauthenticated visitors away from private routes.
-// Authenticated users (any role, including VIP registrants) pass through freely.
-// Only the secret admin path is used for admin login — /login and /register
-// are also whitelisted so invite-link recipients can sign up.
+// Gate: redirect visitors without full access away from private routes.
+// VIP/ADMIN users pass through freely. WAITLIST users (default for every
+// normal signup) are bounced back to the landing page just like guests —
+// only an invite link (or an admin flipping their status) lifts that.
+// The secret admin path, /login, and /register stay whitelisted so
+// invite-link recipients (and admins) can reach the sign-in flow at all.
 function WaitlistGate() {
-  const { user, loading } = useAuth();
+  const { user, loading, waitlistEnabled } = useAuth();
   const [location, setLocation] = useLocation();
 
   useEffect(() => {
-    if (loading || user) return; // logged-in users always pass through
+    if (loading || hasFullAccess(user, waitlistEnabled)) return;
     const isPublic = WAITLIST_PUBLIC.some(r =>
       r === "/" ? location === "/" : location === r || location.startsWith(r + "/")
     );
     if (!isPublic) setLocation("/");
-  }, [loading, user, location]);
+  }, [loading, user, waitlistEnabled, location]);
 
   return null;
 }
 
 // "/" — show WaitlistLanding immediately (prevents blank-screen flash).
-// If auth resolves to a logged-in user, redirect them to /home right away.
+// If auth resolves to a user with full access, redirect them to /home right away.
+// A logged-in WAITLIST user simply sees the same landing page as a guest.
 function RootRoute() {
-  const { user, loading } = useAuth();
+  const { user, loading, waitlistEnabled } = useAuth();
   const [, setLocation] = useLocation();
+  const fullAccess = hasFullAccess(user, waitlistEnabled);
 
   useEffect(() => {
-    if (!loading && user) setLocation("/home");
-  }, [loading, user]);
+    if (!loading && fullAccess) setLocation("/home");
+  }, [loading, fullAccess]);
 
-  // Render the landing page straight away — it's the correct default for guests.
-  // The effect above will redirect if a session is found, with no visible flash.
-  if (user) return null;
+  // Render the landing page straight away — it's the correct default for
+  // guests and WAITLIST users alike. The effect above redirects VIP/ADMIN
+  // sessions with no visible flash.
+  if (fullAccess) return null;
   return <WaitlistLanding />;
 }
 
@@ -304,7 +320,7 @@ function AppShell() {
             <Route path="/chat/:id"><ProtectedRoute component={Chat} /></Route>
             <Route path="/profile"><ProtectedRoute component={Profile} /></Route>
             <Route path="/wishlist"><ProtectedRoute component={Wishlist} /></Route>
-            <Route path="/vip-signup" component={VipRegister} />
+            <Route path="/invite/:code" component={Invite} />
             <Route path="/terms" component={TermsAndSafety} />
             <Route path="/admin"><AdminRoute component={AdminDashboard} /></Route>
             <Route path="/new-dashboard" component={NewDashboard} />

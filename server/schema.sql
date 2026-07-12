@@ -160,3 +160,27 @@ BEGIN
     ALTER TABLE reviews ADD CONSTRAINT reviews_listing_id_reviewer_id_review_type_key UNIQUE (listing_id, reviewer_id, review_type);
   END IF;
 END $migration$;
+
+-- Invite-only beta access system.
+-- access_status drives whether an authenticated user gets full app access
+-- or is held on the waitlist screen: WAITLIST (default) | VIP | ADMIN.
+-- Kept as a plain column (not derived) so it survives independently of
+-- is_admin/is_banned and can be flipped by hand for support purposes.
+ALTER TABLE users ADD COLUMN IF NOT EXISTS access_status VARCHAR(10) NOT NULL DEFAULT 'WAITLIST'
+  CHECK (access_status IN ('WAITLIST', 'VIP', 'ADMIN'));
+
+-- Keep existing admin accounts consistent with the new column.
+UPDATE users SET access_status = 'ADMIN' WHERE is_admin = true AND access_status <> 'ADMIN';
+
+-- Reusable invite-link codes, e.g. /invite/COSMEOBETA — anyone who signs up
+-- through a valid, active code is granted VIP access immediately.
+CREATE TABLE IF NOT EXISTS invite_codes (
+  id          SERIAL PRIMARY KEY,
+  code        VARCHAR(50)  NOT NULL UNIQUE,
+  is_active   BOOLEAN      NOT NULL DEFAULT true,
+  created_at  TIMESTAMPTZ  DEFAULT NOW()
+);
+-- Idempotent migration guard: covers a pre-existing invite_codes table
+-- (created before is_active existed) so this file stays safe to re-run.
+ALTER TABLE invite_codes ADD COLUMN IF NOT EXISTS is_active BOOLEAN NOT NULL DEFAULT true;
+INSERT INTO invite_codes (code) VALUES ('COSMEOBETA') ON CONFLICT (code) DO NOTHING;
