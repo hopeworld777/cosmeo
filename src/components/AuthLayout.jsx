@@ -5,18 +5,7 @@ import { useTheme } from "@/context/ThemeContext";
 import BrandMark from "@/components/BrandMark";
 import ThemeToggle from "@/components/ThemeToggle";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
-
-// ── Floating particles (same as AdminLogin / WaitlistLanding) ─────────────────
-const PARTICLES = [
-  { top: "10%",  left: "7%",  size: 2.5, delay: "0s",   dur: "6s"  },
-  { top: "22%",  left: "90%", size: 2,   delay: "1.4s", dur: "8s"  },
-  { top: "68%",  left: "4%",  size: 2,   delay: "2.6s", dur: "7s"  },
-  { top: "80%",  left: "91%", size: 3,   delay: "0.8s", dur: "9s"  },
-  { top: "48%",  left: "96%", size: 1.5, delay: "3.2s", dur: "5s"  },
-  { top: "88%",  left: "28%", size: 2,   delay: "1.8s", dur: "7s"  },
-  { top: "6%",   left: "52%", size: 1.5, delay: "4.2s", dur: "6s"  },
-  { top: "52%",  left: "1%",  size: 2.5, delay: "2.2s", dur: "8s"  },
-];
+import AuthCosmicBackground from "@/components/AuthCosmicBackground";
 
 /**
  * Shared auth shell — matches the Secret Admin Gate visual design.
@@ -53,47 +42,8 @@ export default function AuthLayout({
           : "linear-gradient(135deg, hsl(265 45% 96%) 0%, hsl(300 35% 94%) 50%, hsl(250 40% 95%) 100%)",
       }}
     >
-      {/* ── Ambient glow blobs ─────────────────────────────────────── */}
-      <div className="pointer-events-none absolute inset-0 overflow-hidden">
-        <div
-          className="absolute -top-32 -left-32 h-[500px] w-[500px] rounded-full"
-          style={{
-            opacity: isDark ? 0.07 : 0.25,
-            background: "radial-gradient(circle, #c084fc 0%, transparent 70%)",
-          }}
-        />
-        <div
-          className="absolute -bottom-32 -right-16 h-[400px] w-[400px] rounded-full"
-          style={{
-            opacity: isDark ? 0.06 : 0.18,
-            background: "radial-gradient(circle, #f472b6 0%, transparent 70%)",
-          }}
-        />
-        <div
-          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-[600px] w-[600px] rounded-full"
-          style={{
-            opacity: isDark ? 0.04 : 0.12,
-            background: "radial-gradient(circle, #a855f7 0%, transparent 70%)",
-          }}
-        />
-      </div>
-
-      {/* ── Floating particles ─────────────────────────────────────── */}
-      {PARTICLES.map((p, i) => (
-        <div
-          key={i}
-          className="pointer-events-none absolute rounded-full"
-          style={{
-            top: p.top,
-            left: p.left,
-            width: p.size,
-            height: p.size,
-            background: i % 2 === 0 ? "#c084fc" : "#f472b6",
-            opacity: isDark ? 0.4 : 0.5,
-            animation: `ag-float ${p.dur} ${p.delay} ease-in-out infinite alternate`,
-          }}
-        />
-      ))}
+      {/* ── Cosmic night-sky decoration: blobs, stars, sparkles, shooting stars, glow particles ── */}
+      <AuthCosmicBackground isDark={isDark} />
 
       {/* ── Top bar ────────────────────────────────────────────────── */}
       <div className="relative z-10 flex items-center justify-between px-5 pt-5 shrink-0">
@@ -131,14 +81,22 @@ export default function AuthLayout({
             transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
             className="w-full flex flex-col items-center"
           >
-            {/* Logo */}
+            {/* Logo — enlarged into the page's visual focal point */}
             <motion.div
               initial={{ scale: 0.8, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               transition={{ delay: 0.1, duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-              className="mb-5"
+              className="relative mb-4"
             >
-              <BrandMark className="h-14 w-14" />
+              <div
+                className="absolute inset-0 rounded-full blur-2xl"
+                style={{
+                  opacity: isDark ? 0.35 : 0.4,
+                  background: "radial-gradient(circle, #c084fc 0%, #f472b6 55%, transparent 100%)",
+                  transform: "scale(1.7)",
+                }}
+              />
+              <BrandMark className="relative h-24 w-24 sm:h-28 sm:w-28" />
             </motion.div>
 
             {/* Badge pill */}
@@ -251,6 +209,11 @@ export default function AuthLayout({
         @keyframes ag-shimmer {
           0%   { background-position: -200% 0; }
           100% { background-position: 200% 0; }
+        }
+        @media (prefers-reduced-motion: reduce) {
+          [style*="ag-shimmer"], [style*="ag-float"] {
+            animation: none !important;
+          }
         }
       `}</style>
     </div>
