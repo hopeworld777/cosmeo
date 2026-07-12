@@ -11,7 +11,9 @@ function getInitialTheme() {
   if (typeof window === "undefined") return "dark";
   const stored = localStorage.getItem(STORAGE_KEY);
   if (stored === "light" || stored === "dark") return stored;
-  return document.documentElement.classList.contains("dark") ? "dark" : "dark";
+  // No stored preference — respect the OS setting (inline script already
+  // applied the right class before first paint, so just read it back).
+  return document.documentElement.classList.contains("dark") ? "dark" : "light";
 }
 
 export function ThemeProvider({ children }) {

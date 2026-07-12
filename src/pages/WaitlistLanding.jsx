@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useTranslation } from "react-i18next";
 import { api } from "@/lib/api";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
+import { useTheme } from "@/context/ThemeContext";
 
 // ── 4-pointed sparkle SVG ────────────────────────────────────────────────────
 function Sparkle({ size = 14, color = "#c084fc", opacity = 0.7, style = {} }) {
@@ -121,6 +122,68 @@ const RINGS = [
   { top: "15%", left: "85%", size: 100, color: "#c084fc", op: 0.06, delay: "1.5s", dur: "9s"  },
 ];
 
+// ── Cosmos-styled theme toggle (fits the hardcoded dark page) ────────────────
+function WaitlistThemeToggle() {
+  const { theme, toggleTheme } = useTheme();
+  const isDark = theme === "dark";
+  return (
+    <motion.button
+      type="button"
+      onClick={toggleTheme}
+      aria-label={isDark ? "Switch to light mode" : "Switch to dark mode"}
+      whileTap={{ scale: 0.88 }}
+      whileHover={{ scale: 1.08 }}
+      className="relative h-[34px] w-[34px] rounded-full flex items-center justify-center shrink-0 transition-colors"
+      style={{
+        background: "rgba(192,132,252,0.12)",
+        border: "1px solid rgba(192,132,252,0.25)",
+      }}
+    >
+      <AnimatePresence mode="wait" initial={false}>
+        {isDark ? (
+          <motion.span
+            key="sun"
+            initial={{ opacity: 0, rotate: -60, scale: 0.5 }}
+            animate={{ opacity: 1, rotate: 0,   scale: 1   }}
+            exit={{    opacity: 0, rotate:  60, scale: 0.5 }}
+            transition={{ duration: 0.22 }}
+            className="absolute"
+            style={{ lineHeight: 1 }}
+          >
+            {/* Sun — warm gold */}
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fde68a" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="12" cy="12" r="4"/>
+              <line x1="12" y1="2"  x2="12" y2="5"/>
+              <line x1="12" y1="19" x2="12" y2="22"/>
+              <line x1="4.22" y1="4.22"  x2="6.34" y2="6.34"/>
+              <line x1="17.66" y1="17.66" x2="19.78" y2="19.78"/>
+              <line x1="2"  y1="12" x2="5"  y2="12"/>
+              <line x1="19" y1="12" x2="22" y2="12"/>
+              <line x1="4.22"  y1="19.78" x2="6.34"  y2="17.66"/>
+              <line x1="17.66" y1="6.34"  x2="19.78" y2="4.22"/>
+            </svg>
+          </motion.span>
+        ) : (
+          <motion.span
+            key="moon"
+            initial={{ opacity: 0, rotate: 60,  scale: 0.5 }}
+            animate={{ opacity: 1, rotate: 0,   scale: 1   }}
+            exit={{    opacity: 0, rotate: -60, scale: 0.5 }}
+            transition={{ duration: 0.22 }}
+            className="absolute"
+            style={{ lineHeight: 1 }}
+          >
+            {/* Moon — soft lavender */}
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#c084fc" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+            </svg>
+          </motion.span>
+        )}
+      </AnimatePresence>
+    </motion.button>
+  );
+}
+
 export default function WaitlistLanding() {
   const { t } = useTranslation();
   const [email, setEmail]     = useState("");
@@ -233,7 +296,10 @@ export default function WaitlistLanding() {
         <div className="text-white/30 text-xs font-bold tracking-widest uppercase select-none">
           cosmeo
         </div>
-        <LanguageSwitcher />
+        <div className="flex items-center gap-2">
+          <WaitlistThemeToggle />
+          <LanguageSwitcher />
+        </div>
       </div>
 
       {/* ── Main centered content ─────────────────────────────────────── */}
