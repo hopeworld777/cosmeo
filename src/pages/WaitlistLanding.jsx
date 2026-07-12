@@ -2,7 +2,9 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useTranslation } from "react-i18next";
 import { api } from "@/lib/api";
+import { useTheme } from "@/context/ThemeContext";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
+import ThemeToggle from "@/components/ThemeToggle";
 
 // ── 4-pointed sparkle SVG ────────────────────────────────────────────────────
 function Sparkle({ size = 14, color = "#c084fc", opacity = 0.7, style = {} }) {
@@ -120,6 +122,8 @@ const RINGS = [
 
 export default function WaitlistLanding() {
   const { t } = useTranslation();
+  const { theme } = useTheme();
+  const isDark = theme === "dark";
   const [email, setEmail]     = useState("");
   const [status, setStatus]   = useState("idle"); // idle | submitting | success | duplicate | error
 
@@ -143,7 +147,12 @@ export default function WaitlistLanding() {
 
   return (
     <div className="fixed inset-0 z-[100] flex flex-col overflow-hidden"
-      style={{ background: "linear-gradient(135deg, #0c0a14 0%, #11091a 50%, #0a0c18 100%)" }}
+      style={{
+        background: isDark
+          ? "linear-gradient(135deg, #0c0a14 0%, #11091a 50%, #0a0c18 100%)"
+          : "linear-gradient(135deg, hsl(265 45% 96%) 0%, hsl(300 35% 94%) 50%, hsl(250 40% 95%) 100%)",
+        transition: "background 0.3s ease",
+      }}
     >
       {/* ── Deep ambient glow blobs ─────────────────────────────────────── */}
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
@@ -225,10 +234,16 @@ export default function WaitlistLanding() {
 
       {/* ── Top bar ───────────────────────────────────────────────────── */}
       <div className="relative z-10 flex items-center justify-between px-6 pt-6">
-        <div className="text-white/30 text-xs font-bold tracking-widest uppercase select-none">
+        <div
+          className="text-xs font-bold tracking-widest uppercase select-none"
+          style={{ color: isDark ? "rgba(255,255,255,0.3)" : "rgba(109,40,217,0.45)" }}
+        >
           cosmeo
         </div>
-        <LanguageSwitcher />
+        <div className="flex items-center gap-2">
+          <ThemeToggle />
+          <LanguageSwitcher />
+        </div>
       </div>
 
       {/* ── Main centered content ─────────────────────────────────────── */}
@@ -271,8 +286,11 @@ export default function WaitlistLanding() {
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.25 }}
-            className="mb-4 text-[28px] font-black leading-[1.15] text-white"
-            style={{ textShadow: "0 0 40px rgba(192,132,252,0.3)" }}
+            className="mb-4 text-[28px] font-black leading-[1.15]"
+            style={{
+              color: isDark ? "#ffffff" : "#1e1b4b",
+              textShadow: isDark ? "0 0 40px rgba(192,132,252,0.3)" : "none",
+            }}
           >
             {t("waitlistHeadline")}
           </motion.h1>
@@ -282,7 +300,8 @@ export default function WaitlistLanding() {
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.32 }}
-            className="mb-8 text-[14px] leading-relaxed text-white/55 font-medium"
+            className="mb-8 text-[14px] leading-relaxed font-medium"
+            style={{ color: isDark ? "rgba(255,255,255,0.55)" : "rgba(109,40,217,0.65)" }}
           >
             {t("waitlistSubtitle")}
           </motion.p>
@@ -302,7 +321,7 @@ export default function WaitlistLanding() {
                   style={{ background: "linear-gradient(135deg, #c084fc22, #f472b622)", border: "1.5px solid #c084fc55" }}>
                   <span className="text-3xl">✨</span>
                 </div>
-                <p className="text-[16px] font-bold text-white">
+                <p className="text-[16px] font-bold" style={{ color: isDark ? "#ffffff" : "#1e1b4b" }}>
                   {t("waitlistSuccess")}
                 </p>
               </motion.div>
@@ -325,11 +344,13 @@ export default function WaitlistLanding() {
                     autoComplete="email"
                     className={[
                       "w-full rounded-2xl px-5 py-4 text-[14px] font-semibold outline-none transition-all",
-                      "bg-white/90 text-slate-800 placeholder-slate-400/70",
+                      isDark ? "bg-white/90 text-slate-800 placeholder-slate-400/70" : "bg-white text-slate-800 placeholder-slate-400",
                       "border focus:ring-0",
                       isDuplicate
                         ? "border-rose-500/60 focus:border-rose-400"
-                        : "border-white/20 focus:border-purple-500/60 hover:border-white/30",
+                        : isDark
+                          ? "border-white/20 focus:border-purple-500/60 hover:border-white/30"
+                          : "border-purple-300/40 focus:border-purple-500/60 hover:border-purple-400/50",
                     ].join(" ")}
                     style={{ backdropFilter: "blur(12px)" }}
                   />
@@ -386,7 +407,8 @@ export default function WaitlistLanding() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.5 }}
-            className="mt-6 text-[11px] text-white/25 font-medium"
+            className="mt-6 text-[11px] font-medium"
+            style={{ color: isDark ? "rgba(255,255,255,0.25)" : "rgba(109,40,217,0.35)" }}
           >
             No spam. Unsubscribe anytime.
           </motion.p>
@@ -395,7 +417,10 @@ export default function WaitlistLanding() {
 
       {/* ── Bottom wordmark ───────────────────────────────────────────── */}
       <div className="relative z-10 pb-8 text-center">
-        <p className="text-[11px] tracking-widest font-bold text-white/15 uppercase">
+        <p
+          className="text-[11px] tracking-widest font-bold uppercase"
+          style={{ color: isDark ? "rgba(255,255,255,0.15)" : "rgba(109,40,217,0.25)" }}
+        >
           cosmeo &mdash; Georgia's Cosplay Marketplace
         </p>
       </div>

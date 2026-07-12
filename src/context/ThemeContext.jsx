@@ -3,15 +3,17 @@ import { createContext, useContext, useEffect, useState } from "react";
 const STORAGE_KEY = "kosmeo_theme";
 const ThemeContext = createContext(null);
 
-// Default theme is "dark" — matches the Dark Cosmos brand aesthetic shown
-// on the waitlist landing page. The inline script in index.html applies the
-// class before first paint so there's no flash of the wrong theme; this
-// just keeps React state in sync with whatever ended up on <html>.
+// If the visitor has an explicit saved preference, use it. Otherwise fall
+// back to the OS/browser color-scheme preference. The inline script in
+// index.html applies the class before first paint (using the same rule) so
+// there's no flash of the wrong theme; this just keeps React state in sync
+// with whatever ended up on <html>.
 function getInitialTheme() {
   if (typeof window === "undefined") return "dark";
   const stored = localStorage.getItem(STORAGE_KEY);
   if (stored === "light" || stored === "dark") return stored;
-  return document.documentElement.classList.contains("dark") ? "dark" : "dark";
+  const prefersDark = window.matchMedia?.("(prefers-color-scheme: dark)").matches;
+  return prefersDark === false ? "light" : "dark";
 }
 
 export function ThemeProvider({ children }) {

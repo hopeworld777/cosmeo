@@ -14,11 +14,14 @@
     <meta name="description" content="Buy and rent cosplay costumes, props, and accessories from the community." />
     <script>
       // Applied before first paint so there's no flash of the wrong theme.
-      // Default is "dark" (Dark Cosmos) — matches src/context/ThemeContext.jsx.
+      // Mirrors the logic in src/context/ThemeContext.jsx: explicit saved
+      // preference wins, otherwise fall back to the OS color-scheme.
       (function () {
         try {
           var stored = localStorage.getItem("kosmeo_theme");
-          var isDark = stored ? stored === "dark" : true;
+          var isDark = stored
+            ? stored === "dark"
+            : window.matchMedia("(prefers-color-scheme: dark)").matches;
           document.documentElement.classList.toggle("dark", isDark);
         } catch (e) {
           document.documentElement.classList.add("dark");
