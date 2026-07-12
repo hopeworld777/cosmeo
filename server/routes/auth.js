@@ -4,10 +4,14 @@ import crypto from "crypto";
 import multer from "multer";
 import path from "path";
 import rateLimit from "express-rate-limit";
+import { OAuth2Client } from "google-auth-library";
 import pool from "../db.js";
 import { generateToken, requireAuth } from "../middleware/auth.js";
 import { sendVerificationEmail, sendPasswordResetEmail } from "../email.js";
 import { uploadToR2 } from "../r2.js";
+
+const GOOGLE_CLIENT_ID = process.env.Google_OAuth_Client_ID;
+const googleClient = GOOGLE_CLIENT_ID ? new OAuth2Client(GOOGLE_CLIENT_ID) : null;
 
 const ALLOWED_AVATAR_TYPES = new Set([
   "image/jpeg", "image/jpg", "image/png", "image/webp",
@@ -55,6 +59,34 @@ function generateSecureToken() {
   return crypto.randomBytes(48).toString("hex");
 }
 
+// Shared by /register and /google — an active invite code grants VIP
+// access immediately; anything else (missing/invalid code) lands on the
+// default WAITLIST tier like a normal signup.
+async function resolveAccessStatus(inviteCode) {
+  if (!inviteCode || !inviteCode.trim()) return "WAITLIST";
+  const inviteCheck = await pool.query(
+    "SELECT id FROM invite_codes WHERE code = $1 AND is_active = true",
+    [inviteCode.trim().toUpperCase()]
+  );
+  return inviteCheck.rows.length > 0 ? "VIP" : "WAITLIST";
+}
+
+// Derives a unique username from a Google display name / email local-part.
+// Falls back to a random suffix on collision so signup never fails on this.
+async function generateUniqueUsername(seed) {
+  const base = (seed || "cosplayer")
+    .toLowerCase()
+    .replace(/[^a-z0-9_.]/g, "")
+    .slice(0, 24) || "cosplayer";
+  let candidate = base;
+  for (let attempt = 0; attempt < 5; attempt++) {
+    const existing = await pool.query("SELECT id FROM users WHERE username = $1", [candidate]);
+    if (existing.rows.length === 0) return candidate;
+    candidate = `${base}${Math.floor(1000 + Math.random() * 9000)}`;
+  }
+  return `${base}${crypto.randomBytes(4).toString("hex")}`;
+}
+
 async function createAuthToken(userId, type, expiresInHours = 24) {
   const token = generateSecureToken();
   const expiresAt = new Date(Date.now() + expiresInHours * 60 * 60 * 1000);
@@ -95,14 +127,7 @@ router.post("/register", registerLimiter, async (req, res) => {
       return res.status(409).json({ error: "username_taken" });
     }
 
-    let accessStatus = "WAITLIST";
-    if (inviteCode && inviteCode.trim()) {
-      const inviteCheck = await pool.query(
-        "SELECT id FROM invite_codes WHERE code = $1 AND is_active = true",
-        [inviteCode.trim().toUpperCase()]
-      );
-      if (inviteCheck.rows.length > 0) accessStatus = "VIP";
-    }
+    const accessStatus = await resolveAccessStatus(inviteCode);
 
     const hashedPassword = await bcrypt.hash(password, BCRYPT_ROUNDS);
     const result = await pool.query(
@@ -153,6 +178,80 @@ router.get("/invite/:code", async (req, res) => {
   }
 });
 
+// POST /api/auth/google
+// Google Identity Services on the frontend hands us a signed ID token
+// ("credential") after the user picks a Google account — we verify it
+// server-side (never trust an unverified token) and either:
+//   1. find an existing user by google_id → sign them in
+//   2. find an existing user by email (signed up with a password before)
+//      → link this Google account to it so we never create a duplicate
+//   3. create a brand-new account, same WAITLIST/VIP invite-code logic as
+//      /register, with the email pre-verified (Google already confirmed it)
+router.post("/google", registerLimiter, async (req, res) => {
+  if (!googleClient) {
+    return res.status(503).json({ error: "Google sign-in is not configured" });
+  }
+  const { credential, inviteCode } = req.body;
+  if (!credential) return res.status(400).json({ error: "Missing Google credential" });
+
+  try {
+    const ticket = await googleClient.verifyIdToken({
+      idToken: credential,
+      audience: GOOGLE_CLIENT_ID,
+    });
+    const payload = ticket.getPayload();
+    if (!payload?.email) {
+      return res.status(400).json({ error: "Google account has no email" });
+    }
+    const googleId = payload.sub;
+    const email = payload.email.toLowerCase();
+    const picture = payload.picture || null;
+
+    // 1. Already linked — sign in.
+    let result = await pool.query("SELECT * FROM users WHERE google_id = $1", [googleId]);
+    let user = result.rows[0];
+
+    // 2. Existing email/password account — link, don't duplicate.
+    if (!user) {
+      result = await pool.query("SELECT * FROM users WHERE email = $1", [email]);
+      user = result.rows[0];
+      if (user) {
+        const updated = await pool.query(
+          `UPDATE users SET google_id = $1, avatar_url = COALESCE(avatar_url, $2), email_verified = true
+           WHERE id = $3 RETURNING *`,
+          [googleId, picture, user.id]
+        );
+        user = updated.rows[0];
+      }
+    }
+
+    // 3. Brand-new account.
+    if (!user) {
+      const accessStatus = await resolveAccessStatus(inviteCode);
+      const usernameSeed = payload.name || email.split("@")[0];
+      const username = await generateUniqueUsername(usernameSeed);
+      const inserted = await pool.query(
+        `INSERT INTO users (username, email, password_hash, avatar_url, google_id, email_verified, access_status)
+         VALUES ($1, $2, NULL, $3, $4, true, $5)
+         RETURNING *`,
+        [username, email, picture, googleId, accessStatus]
+      );
+      user = inserted.rows[0];
+    }
+
+    if (user.is_banned) {
+      return res.status(403).json({ error: "This account has been suspended." });
+    }
+
+    const jwtToken = generateToken(user.id);
+    const { password_hash, ...safeUser } = user;
+    res.json({ user: safeUser, token: jwtToken });
+  } catch (err) {
+    console.error("Google auth error:", err.message);
+    res.status(401).json({ error: "Google sign-in failed. Please try again." });
+  }
+});
+
 const BCRYPT_ROUNDS = 10; // cost 10 ≈ 100 ms; cost 12 (old default) ≈ 400–2000 ms on shared CPU
 
 // POST /api/auth/login
@@ -173,6 +272,9 @@ router.post("/login", loginLimiter, async (req, res) => {
     const user = result.rows[0];
     if (!user) {
       return res.status(401).json({ error: "Invalid email or password" });
+    }
+    if (!user.password_hash) {
+      return res.status(401).json({ error: "This account uses Google sign-in. Continue with Google to log in." });
     }
 
     const rounds = bcrypt.getRounds(user.password_hash);

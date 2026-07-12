@@ -96,7 +96,13 @@ app.use("/api", (req, res, next) => {
 // invite-only waitlist gate is currently enforced. Flip PUBLIC_LAUNCH=true
 // at launch time to open the app to everyone without touching this code.
 app.get("/api/config", (req, res) => {
-  res.json({ waitlistEnabled: process.env.PUBLIC_LAUNCH !== "true" });
+  res.json({
+    waitlistEnabled: process.env.PUBLIC_LAUNCH !== "true",
+    // Google OAuth Client ID is not secret — it's meant to be embedded in
+    // frontend code. Omitted entirely (rather than sent as null) when unset
+    // so the frontend can cleanly hide the "Continue with Google" button.
+    googleClientId: process.env.Google_OAuth_Client_ID || null,
+  });
 });
 
 // Routes

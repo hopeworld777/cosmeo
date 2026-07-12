@@ -5,7 +5,7 @@ CREATE TABLE IF NOT EXISTS users (
   id              SERIAL PRIMARY KEY,
   username        VARCHAR(30)    NOT NULL UNIQUE,
   email           VARCHAR(255)   NOT NULL UNIQUE,
-  password_hash   TEXT           NOT NULL,
+  password_hash   TEXT,
   bio             TEXT           DEFAULT '',
   avatar_url      TEXT,
   location        VARCHAR(100),
@@ -200,3 +200,10 @@ CREATE TABLE IF NOT EXISTS invite_codes (
 -- (created before is_active existed) so this file stays safe to re-run.
 ALTER TABLE invite_codes ADD COLUMN IF NOT EXISTS is_active BOOLEAN NOT NULL DEFAULT true;
 INSERT INTO invite_codes (code) VALUES ('COSMEOBETA') ON CONFLICT (code) DO NOTHING;
+
+-- Google Sign-In support: accounts created (or linked) via Google have no
+-- local password, so password_hash must be nullable. google_id is the
+-- stable Google "sub" claim — unique per Google account, used to find or
+-- link a user without ever creating a duplicate for the same email.
+ALTER TABLE users ALTER COLUMN password_hash DROP NOT NULL;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS google_id VARCHAR(255) UNIQUE;

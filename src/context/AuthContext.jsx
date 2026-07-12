@@ -67,13 +67,25 @@ export function AuthProvider({ children }) {
     return u;
   };
 
+  // Google Identity Services hands us a signed ID token ("credential") —
+  // the backend verifies it, finds/links/creates the account, and returns
+  // the same { user, token } shape as email login/register.
+  const loginWithGoogle = async (credential) => {
+    const inviteCode = sessionStorage.getItem(INVITE_CODE_KEY) || undefined;
+    const { user: u, token } = await api.auth.google({ credential, inviteCode });
+    sessionStorage.removeItem(INVITE_CODE_KEY);
+    localStorage.setItem("kosmeo_token", token);
+    setUser(u);
+    return u;
+  };
+
   const logout = () => {
     localStorage.removeItem("kosmeo_token");
     setUser(null);
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, logout, setUser, waitlistEnabled }}>
+    <AuthContext.Provider value={{ user, loading, login, register, loginWithGoogle, logout, setUser, waitlistEnabled }}>
       {children}
     </AuthContext.Provider>
   );

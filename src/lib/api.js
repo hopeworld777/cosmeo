@@ -44,6 +44,8 @@ export const api = {
     checkInvite: (code) => request(`/auth/invite/${encodeURIComponent(code)}`),
     login: (body) =>
       request("/auth/login", { method: "POST", body: JSON.stringify(body) }),
+    google: (body) =>
+      request("/auth/google", { method: "POST", body: JSON.stringify(body) }),
     me: () => request("/auth/me"),
     updateMe: (body) =>
       request("/auth/me", { method: "PATCH", body: JSON.stringify(body) }),

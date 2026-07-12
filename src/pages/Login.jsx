@@ -7,6 +7,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useTranslation } from "react-i18next";
 import { useAuthStyles } from "@/lib/authStyles";
 import AuthLayout from "@/components/AuthLayout";
+import GoogleAuthButton from "@/components/GoogleAuthButton";
 
 export default function Login() {
   const { t } = useTranslation();
@@ -50,6 +51,15 @@ export default function Login() {
         </p>
       }
     >
+      <div className="flex flex-col gap-4 mb-2">
+        <GoogleAuthButton onSuccess={() => setLocation("/")} />
+        <div className="flex items-center gap-3">
+          <div className="h-px flex-1" style={{ background: s.isDark ? "rgba(255,255,255,0.12)" : "rgba(109,40,217,0.15)" }} />
+          <span className="text-[11px] font-semibold uppercase tracking-wide" style={s.mutedStyle}>{t("orDivider", "or")}</span>
+          <div className="h-px flex-1" style={{ background: s.isDark ? "rgba(255,255,255,0.12)" : "rgba(109,40,217,0.15)" }} />
+        </div>
+      </div>
+
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
         {/* Email */}
         <div>

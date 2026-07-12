@@ -1,14 +1,14 @@
-import { useState, useRef, useEffect } from "react";
+import { useState } from "react";
 import { Link, useLocation } from "wouter";
 import { motion } from "framer-motion";
-import { Mail, CheckCircle2, Loader2, ShieldCheck, Camera, Eye, EyeOff } from "lucide-react";
+import { Mail, CheckCircle2, Loader2, ShieldCheck, Eye, EyeOff } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { api } from "@/lib/api";
-import { prepareImageFile } from "@/lib/imageUtils";
 import { useToast } from "@/hooks/use-toast";
 import { useTranslation } from "react-i18next";
 import { useAuthStyles } from "@/lib/authStyles";
 import AuthLayout from "@/components/AuthLayout";
+import GoogleAuthButton from "@/components/GoogleAuthButton";
 
 function isValidEmail(str) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(str.trim());
@@ -33,39 +33,10 @@ export default function Register() {
   const [fieldErrors, setFieldErrors] = useState({ username: "", email: "", password: "", general: "" });
   const [emailTaken, setEmailTaken] = useState(false);
 
-  // Avatar state
-  const avatarInputRef = useRef(null);
-  const [avatarFile, setAvatarFile] = useState(null);
-  const [avatarPreview, setAvatarPreview] = useState(null);
-  const [avatarError, setAvatarError] = useState("");
-  const [isConverting, setIsConverting] = useState(false);
-
-  useEffect(() => {
-    return () => { if (avatarPreview) URL.revokeObjectURL(avatarPreview); };
-  }, [avatarPreview]);
-
   function clearFieldError(field) {
     setFieldErrors((prev) => ({ ...prev, [field]: "" }));
     if (field === "email") setEmailTaken(false);
   }
-
-  const handleAvatarChange = async (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    e.target.value = "";
-    setIsConverting(true);
-    try {
-      const prepared = await prepareImageFile(file);
-      if (avatarPreview) URL.revokeObjectURL(avatarPreview);
-      setAvatarPreview(URL.createObjectURL(prepared));
-      setAvatarFile(prepared);
-      setAvatarError("");
-    } catch (err) {
-      setAvatarError(err.message);
-    } finally {
-      setIsConverting(false);
-    }
-  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -87,21 +58,7 @@ export default function Register() {
     setLoading(true);
 
     try {
-      const u = await register(username.trim(), email.trim(), password);
-      if (avatarFile) {
-        try {
-          const { avatar_url } = await api.upload.avatar(avatarFile);
-          setUser({ ...u, avatar_url });
-        } catch (avatarErr) {
-          toast({
-            title: "Photo upload failed",
-            description:
-              avatarErr.message ||
-              "Your account was created but the profile photo couldn't be uploaded. You can add it later in Settings.",
-            variant: "destructive",
-          });
-        }
-      }
+      await register(username.trim(), email.trim(), password);
       setRegistered(true);
     } catch (err) {
       const raw = err.message || "";
@@ -219,62 +176,16 @@ export default function Register() {
         </p>
       }
     >
-      <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-4">
-        {/* ── Avatar picker ──────────────────────────────────────── */}
-        <div className="flex flex-col items-center gap-2 py-1">
-          <button
-            type="button"
-            onClick={() => avatarInputRef.current?.click()}
-            className="relative focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-400 rounded-full"
-            disabled={loading || isConverting}
-            aria-label="Upload profile photo"
-          >
-            <div
-              className="h-20 w-20 rounded-full overflow-hidden flex items-center justify-center relative"
-              style={{
-                background: s.isDark ? "rgba(255,255,255,0.07)" : "rgba(255,255,255,0.85)",
-                border: avatarError
-                  ? "2px solid rgba(239,68,68,0.6)"
-                  : s.isDark
-                  ? "2px solid rgba(192,132,252,0.25)"
-                  : "2px solid rgba(192,132,252,0.4)",
-              }}
-            >
-              {avatarPreview ? (
-                <img src={avatarPreview} alt="Profile preview" className="w-full h-full object-cover" />
-              ) : (
-                <Camera className="h-7 w-7" style={{ color: s.isDark ? "rgba(192,132,252,0.5)" : "rgba(109,40,217,0.4)" }} />
-              )}
-              {isConverting && (
-                <div className="absolute inset-0 bg-black/30 flex items-center justify-center rounded-full">
-                  <div className="h-5 w-5 rounded-full border-2 border-white border-t-transparent animate-spin" />
-                </div>
-              )}
-            </div>
-            {/* Badge dot */}
-            <div
-              className="absolute -bottom-0.5 -right-0.5 h-6 w-6 rounded-full flex items-center justify-center shadow-md"
-              style={{
-                background: avatarFile
-                  ? "linear-gradient(135deg, #a855f7, #ec4899)"
-                  : "linear-gradient(135deg, #a855f7, #6366f1)",
-              }}
-            >
-              <Camera className="h-3 w-3 text-white" />
-            </div>
-          </button>
-          <input
-            ref={avatarInputRef}
-            type="file"
-            accept="image/*,.heic,.heif"
-            className="hidden"
-            onChange={handleAvatarChange}
-          />
-          <p className="text-[12px] font-medium" style={avatarError ? { color: "rgba(239,68,68,0.9)" } : s.mutedStyle}>
-            {avatarError ? avatarError : avatarFile ? "Photo selected ✓" : "Add a profile photo (optional)"}
-          </p>
+      <div className="flex flex-col gap-4 mb-2">
+        <GoogleAuthButton onSuccess={() => setLocation("/")} />
+        <div className="flex items-center gap-3">
+          <div className="h-px flex-1" style={{ background: s.isDark ? "rgba(255,255,255,0.12)" : "rgba(109,40,217,0.15)" }} />
+          <span className="text-[11px] font-semibold uppercase tracking-wide" style={s.mutedStyle}>{t("orDivider", "or")}</span>
+          <div className="h-px flex-1" style={{ background: s.isDark ? "rgba(255,255,255,0.12)" : "rgba(109,40,217,0.15)" }} />
         </div>
+      </div>
 
+      <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-4">
         {/* Username */}
         <div>
           <label htmlFor="reg-username" className={s.labelClass} style={s.labelStyle}>
