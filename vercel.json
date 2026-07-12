@@ -2,6 +2,8 @@
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
   "rewrites": [
+    { "source": "/api/:path*", "destination": "https://striking-blessing-production-178d.up.railway.app/api/:path*" },
+    { "source": "/uploads/:path*", "destination": "https://striking-blessing-production-178d.up.railway.app/uploads/:path*" },
     { "source": "/(.*)", "destination": "/index.html" }
   ],
   "headers": [
