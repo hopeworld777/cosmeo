@@ -23,7 +23,7 @@ import Chat from "@/pages/Chat";
 import TermsAndSafety from "@/pages/TermsAndSafety";
 import AdminDashboard from "@/pages/AdminDashboard";
 import NewDashboard from "@/pages/NewDashboard";
-import Invite from "@/pages/Invite";
+import Invite, { INVITE_CODE_KEY } from "@/pages/Invite";
 import { AuthProvider } from "@/context/AuthContext";
 import { useAuth } from "@/hooks/useAuth";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
@@ -42,6 +42,9 @@ const AUTH_ROUTES = ["/login", "/register", "/forgot-password", "/reset-password
 
 // Routes that unauthenticated visitors may access without being bounced to the
 // waitlist landing. Authenticated users (any role) bypass this list entirely.
+// NOTE: "/login" and "/register" are intentionally NOT in this list — the
+// site must feel completely closed until someone has come through a valid
+// invite link. See isAuthRoutePublic() below for how those two are gated.
 const WAITLIST_PUBLIC = [
   "/",
   ADMIN_LOGIN_PATH,
@@ -50,9 +53,26 @@ const WAITLIST_PUBLIC = [
   "/verify-email",
   "/terms",
   "/invite",   // reusable invite link (/invite/COSMEOBETA) — grants VIP on signup
-  "/login",
-  "/register",
 ];
+
+// /login and /register are only reachable by visitors who landed via a valid
+// /invite/:code link (Invite.jsx stashes INVITE_CODE_KEY in sessionStorage
+// only when the backend confirms the code is active). Anyone else hitting
+// these URLs directly — the whole point of this gate — gets bounced to the
+// waitlist landing instead of seeing a real sign-in/sign-up form.
+function hasInviteSession() {
+  try {
+    return !!sessionStorage.getItem(INVITE_CODE_KEY);
+  } catch {
+    return false;
+  }
+}
+
+function isAuthRoutePublic(location) {
+  const isLoginOrRegister = location === "/login" || location.startsWith("/login/")
+    || location === "/register" || location.startsWith("/register/");
+  return isLoginOrRegister && hasInviteSession();
+}
 
 // Onboarding gets its own full-screen desktop layout — no DesktopNav, but
 // the shell should expand to full width on desktop (not stay phone-framed).
@@ -130,8 +150,9 @@ function OnboardingGuard() {
 // VIP/ADMIN users pass through freely. WAITLIST users (default for every
 // normal signup) are bounced back to the landing page just like guests —
 // only an invite link (or an admin flipping their status) lifts that.
-// The secret admin path, /login, and /register stay whitelisted so
-// invite-link recipients (and admins) can reach the sign-in flow at all.
+// The secret admin path stays whitelisted unconditionally; /login and
+// /register are only reachable after a valid /invite/:code visit this
+// session (see isAuthRoutePublic) so the site stays closed until invited.
 function WaitlistGate() {
   const { user, loading, waitlistEnabled } = useAuth();
   const [location, setLocation] = useLocation();
@@ -140,7 +161,7 @@ function WaitlistGate() {
     if (loading || hasFullAccess(user, waitlistEnabled)) return;
     const isPublic = WAITLIST_PUBLIC.some(r =>
       r === "/" ? location === "/" : location === r || location.startsWith(r + "/")
-    );
+    ) || isAuthRoutePublic(location);
     if (!isPublic) setLocation("/");
   }, [loading, user, waitlistEnabled, location]);
 
