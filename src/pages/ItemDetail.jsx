@@ -150,6 +150,7 @@ export default function ItemDetail() {
   const [convId, setConvId] = useState(null);
   const [chatMessages, setChatMessages] = useState([]);
   const [chatLoading, setChatLoading] = useState(false);
+  const [heroLoaded, setHeroLoaded] = useState(false);
   const chatEndRef = useRef(null);
   const inputRef = useRef(null);
 
@@ -367,8 +368,10 @@ export default function ItemDetail() {
           <img
             src={imageSrc}
             alt={listing.title}
-            className="w-full h-full object-cover"
+            className={`w-full h-full object-cover transition-opacity duration-300 ${heroLoaded ? "opacity-100" : "opacity-0"}`}
+            onLoad={() => setHeroLoaded(true)}
             onError={(e) => {
+              setHeroLoaded(true);
               e.target.style.display = "none";
               const placeholder = e.target.nextElementSibling;
               if (placeholder) placeholder.style.display = "flex";
@@ -381,6 +384,10 @@ export default function ItemDetail() {
         >
           <Package className="h-16 w-16 text-muted-foreground/20" />
         </div>
+        {/* Shimmer skeleton while the full-size image loads */}
+        {imageSrc && !heroLoaded && (
+          <div className="absolute inset-0 animate-pulse bg-muted pointer-events-none" />
+        )}
         <div className="absolute inset-0 bg-gradient-to-t from-background/50 to-transparent pointer-events-none" />
       </div>
 

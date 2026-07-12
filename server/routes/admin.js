@@ -2,6 +2,7 @@ import { Router } from "express";
 import pool from "../db.js";
 import { requireAdmin } from "../middleware/auth.js";
 import { sendWaitlistLinkEmail, sendWaitlistVipInvite } from "../email.js";
+import { r2, BUCKET, listAllStorageKeys, deleteFromStorage } from "../r2.js";
 
 const router = Router();
 
@@ -419,6 +420,70 @@ router.post("/users/:id/unban", requireNumericId, async (req, res) => {
   } catch (err) {
     console.error("Unban user error:", err);
     res.status(500).json({ error: "Failed to unban user" });
+  }
+});
+
+// ── POST /api/admin/storage/cleanup ──────────────────────────────────────────
+// Finds R2/disk objects that are not referenced in listing_images and deletes
+// them. Defaults to dry-run (reports without deleting). Pass { confirm: true }
+// in the JSON body to actually delete.
+//
+// An image is "referenced" if its key appears in any image_url in listing_images.
+// Both the full key and its "thumb-<key>" counterpart are considered referenced
+// whenever the base key is — so we never accidentally delete a valid thumbnail.
+//
+// Only images stored by the current image pipeline (*.webp keys, or legacy
+// *.jpg / *.jpeg / *.png keys for pre-WebP uploads) are touched.
+router.post("/storage/cleanup", async (req, res) => {
+  const dryRun = req.body?.confirm !== true;
+  try {
+    // 1. Collect all referenced base-keys from the DB
+    const { rows } = await pool.query("SELECT DISTINCT image_url FROM listing_images");
+    const referencedKeys = new Set();
+    for (const { image_url } of rows) {
+      // Strip the URL prefix to get just the storage key
+      const key = image_url.startsWith("/api/media/")
+        ? image_url.slice("/api/media/".length)
+        : image_url.startsWith("/uploads/")
+          ? image_url.slice("/uploads/".length)
+          : null;
+      if (!key) continue;
+      referencedKeys.add(key);
+      referencedKeys.add(`thumb-${key}`); // thumbnail is always referenced alongside its full
+    }
+
+    // 2. List all keys currently in storage
+    const allKeys = await listAllStorageKeys();
+
+    // 3. Find orphans — keys not referenced by any listing_images row
+    const orphanKeys = allKeys.filter(k => !referencedKeys.has(k));
+
+    const report = {
+      dryRun,
+      totalStorageObjects: allKeys.length,
+      referencedObjects: referencedKeys.size,
+      orphanCount: orphanKeys.length,
+      orphanKeys: orphanKeys.slice(0, 50), // cap preview to 50 for readability
+    };
+
+    if (dryRun) {
+      console.log(`[admin/cleanup] dry-run — ${orphanKeys.length} orphan(s) found`);
+      return res.json({ ...report, message: "Dry run — pass { confirm: true } to delete" });
+    }
+
+    // 4. Delete orphans (build full URL so deleteFromStorage can parse them)
+    const prefix = r2 ? "/api/media/" : "/uploads/";
+    const results = await Promise.allSettled(
+      orphanKeys.map(k => deleteFromStorage(`${prefix}${k}`))
+    );
+    const failed  = results.filter(r => r.status === "rejected").length;
+    const deleted = orphanKeys.length - failed;
+
+    console.log(`[admin/cleanup] deleted ${deleted} orphan(s), ${failed} failed`);
+    res.json({ ...report, deleted, failed, message: `Deleted ${deleted} orphan image(s)` });
+  } catch (err) {
+    console.error("[admin/cleanup] error:", err.message);
+    res.status(500).json({ error: "Storage cleanup failed: " + err.message });
   }
 });
 

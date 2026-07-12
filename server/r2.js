@@ -1,4 +1,10 @@
-import { S3Client, PutObjectCommand, GetObjectCommand } from "@aws-sdk/client-s3";
+import {
+  S3Client,
+  PutObjectCommand,
+  GetObjectCommand,
+  DeleteObjectCommand,
+  ListObjectsV2Command,
+} from "@aws-sdk/client-s3";
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
@@ -50,10 +56,13 @@ export const r2 = R2_ACCOUNT_ID
 
 export const BUCKET = R2_BUCKET_NAME || "cosmeo";
 
+/**
+ * Uploads a raw buffer to R2 (or local disk fallback).
+ * Used by avatar uploads in auth.js which don't need sharp processing.
+ * Listing-photo uploads go through processAndSave() in routes/upload.js instead.
+ */
 export async function uploadToR2(buffer, key, contentType) {
   if (!r2) {
-    // Local fallback (dev workspaces without R2 credentials configured):
-    // write under server/uploads/, served statically at /uploads/<key>.
     const destPath = path.join(LOCAL_UPLOADS_DIR, key);
     await fs.promises.mkdir(path.dirname(destPath), { recursive: true });
     await fs.promises.writeFile(destPath, buffer);
@@ -78,4 +87,78 @@ export async function streamFromR2(key, res) {
   if (ContentLength) res.setHeader("Content-Length", ContentLength);
   res.setHeader("Cache-Control", "public, max-age=31536000, immutable");
   Body.pipe(res);
+}
+
+/**
+ * Deletes a stored image (full + thumbnail) from R2 or local disk.
+ *
+ * Accepts the URL returned by the upload endpoint:
+ *   /api/media/<key>   → R2 storage
+ *   /uploads/<key>     → local disk fallback
+ *
+ * Both the full-size file and its "thumb-<key>" counterpart are deleted.
+ * Errors are logged but never re-thrown — callers can fire-and-forget.
+ */
+export async function deleteFromStorage(url) {
+  if (!url) return;
+
+  let key;
+  if (url.startsWith("/api/media/")) {
+    key = url.slice("/api/media/".length);
+  } else if (url.startsWith("/uploads/")) {
+    key = url.slice("/uploads/".length);
+  } else {
+    console.warn("[r2] deleteFromStorage — unrecognised URL, skipping:", url);
+    return;
+  }
+
+  // The thumbnail always shares the same key with a "thumb-" prefix.
+  // e.g. "1234-abc.webp" → "thumb-1234-abc.webp"
+  const thumbKey = `thumb-${key}`;
+
+  try {
+    if (r2) {
+      await Promise.allSettled([
+        r2.send(new DeleteObjectCommand({ Bucket: BUCKET, Key: key })),
+        r2.send(new DeleteObjectCommand({ Bucket: BUCKET, Key: thumbKey })),
+      ]);
+      console.log(`[r2] deleted: ${key} + ${thumbKey}`);
+    } else {
+      await Promise.allSettled([
+        fs.promises.unlink(path.join(LOCAL_UPLOADS_DIR, key)),
+        fs.promises.unlink(path.join(LOCAL_UPLOADS_DIR, thumbKey)),
+      ]);
+      console.log(`[disk] deleted: ${key} + ${thumbKey}`);
+    }
+  } catch (err) {
+    console.error("[r2] deleteFromStorage error:", err.message);
+  }
+}
+
+/**
+ * Lists all object keys currently in the R2 bucket (or local uploads dir).
+ * Used by the admin orphan-cleanup endpoint to find unreferenced files.
+ * Returns an array of key strings.
+ */
+export async function listAllStorageKeys() {
+  if (r2) {
+    const keys = [];
+    let continuationToken;
+    do {
+      const resp = await r2.send(new ListObjectsV2Command({
+        Bucket: BUCKET,
+        ContinuationToken: continuationToken,
+      }));
+      for (const obj of resp.Contents ?? []) keys.push(obj.Key);
+      continuationToken = resp.IsTruncated ? resp.NextContinuationToken : undefined;
+    } while (continuationToken);
+    return keys;
+  } else {
+    // Local disk: list files in uploads/
+    try {
+      return await fs.promises.readdir(LOCAL_UPLOADS_DIR);
+    } catch {
+      return [];
+    }
+  }
 }

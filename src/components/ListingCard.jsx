@@ -12,6 +12,7 @@ import { getThumbUrl } from "@/lib/imageUtils";
 export default function ListingCard({ listing, index = 0 }) {
   const { t } = useTranslation();
   const [isLiked, setIsLiked] = useState(listing.is_favorited || false);
+  const [imgLoaded, setImgLoaded] = useState(false);
   const { toast } = useToast();
   const { user } = useAuth();
   const [, setLocation] = useLocation();
@@ -70,9 +71,10 @@ export default function ListingCard({ listing, index = 0 }) {
               <img
                 src={imageSrc}
                 alt={listing.title}
-                className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                className={`h-full w-full object-cover transition-all duration-300 group-hover:scale-105 ${imgLoaded ? "opacity-100" : "opacity-0"}`}
+                onLoad={() => setImgLoaded(true)}
                 onError={(e) => {
-                  // Hide the broken img element and show the fallback placeholder instead
+                  setImgLoaded(true);
                   e.target.style.display = "none";
                   const placeholder = e.target.nextElementSibling;
                   if (placeholder) placeholder.style.display = "flex";
@@ -85,6 +87,10 @@ export default function ListingCard({ listing, index = 0 }) {
             >
               <Package className="h-10 w-10 text-primary/20" />
             </div>
+            {/* Shimmer skeleton shown while the thumbnail URL is in flight */}
+            {imageSrc && !imgLoaded && (
+              <div className="absolute inset-0 animate-pulse bg-muted pointer-events-none" />
+            )}
 
             {/* Heart */}
             <button

@@ -2,6 +2,7 @@ import { Router } from "express";
 import { z } from "zod";
 import pool from "../db.js";
 import { requireAuth, optionalAuth } from "../middleware/auth.js";
+import { deleteFromStorage } from "../r2.js";
 
 // ── Zod schema for creating a listing ─────────────────────────────────────────
 const createListingSchema = z.object({
@@ -283,11 +284,36 @@ router.post("/", requireAuth, async (req, res) => {
 // DELETE /api/listings/:id
 router.delete("/:id", requireAuth, async (req, res) => {
   try {
+    // 1. Fetch image URLs before soft-deleting so we can clean up storage.
+    //    The JOIN ensures we only read images for listings this seller owns.
+    const imgRows = await pool.query(
+      `SELECT li.image_url
+       FROM listing_images li
+       JOIN listings l ON l.id = li.listing_id
+       WHERE l.id = $1 AND l.seller_id = $2`,
+      [req.params.id, req.userId]
+    );
+
+    // 2. Soft-delete the listing.
     const result = await pool.query(
       "UPDATE listings SET is_active = false WHERE id = $1 AND seller_id = $2 RETURNING id",
       [req.params.id, req.userId]
     );
     if (!result.rows[0]) return res.status(404).json({ error: "Not found or not authorized" });
+
+    // 3. Respond immediately, then delete storage objects in the background.
+    //    Fire-and-forget: a storage error must never fail the user's delete action.
+    //    deleteFromStorage handles both R2 and local-disk, and never throws.
+    if (imgRows.rows.length > 0) {
+      const urls = imgRows.rows.map(r => r.image_url);
+      Promise.allSettled(urls.map(u => deleteFromStorage(u)))
+        .then(results => {
+          const failed = results.filter(r => r.status === "rejected").length;
+          if (failed) console.error(`[listings] ${failed} storage deletion(s) failed for listing ${req.params.id}`);
+          else        console.log(`[listings] deleted ${urls.length} image(s) from storage for listing ${req.params.id}`);
+        });
+    }
+
     res.json({ success: true });
   } catch (err) {
     console.error("Delete listing error:", err);
