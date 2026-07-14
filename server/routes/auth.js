@@ -9,6 +9,7 @@ import pool from "../db.js";
 import { generateToken, requireAuth } from "../middleware/auth.js";
 import { sendVerificationEmail, sendPasswordResetEmail } from "../email.js";
 import { uploadToR2 } from "../r2.js";
+import { isDisposableEmail, DISPOSABLE_EMAIL_ERROR } from "../disposableEmail.js";
 
 // Support both the Replit secret name and the conventional Railway/Heroku name.
 // Read at call-time (not module load) so a newly-added env var takes effect
@@ -138,10 +139,14 @@ router.post("/register", registerLimiter, async (req, res) => {
   if (password.length < 6) {
     return res.status(400).json({ error: "Password must be at least 6 characters" });
   }
+  const normalisedEmail = email.trim().toLowerCase();
+  if (isDisposableEmail(normalisedEmail)) {
+    return res.status(400).json({ error: DISPOSABLE_EMAIL_ERROR });
+  }
   try {
     const emailCheck = await pool.query(
       "SELECT id FROM users WHERE email = $1",
-      [email.toLowerCase()]
+      [normalisedEmail]
     );
     if (emailCheck.rows.length > 0) {
       return res.status(409).json({ error: "email_taken" });
@@ -161,7 +166,7 @@ router.post("/register", registerLimiter, async (req, res) => {
       `INSERT INTO users (username, email, password_hash, bio, email_verified, access_status)
        VALUES ($1, $2, $3, $4, false, $5)
        RETURNING id, username, email, bio, avatar_url, rating, review_count, sales_count, email_verified, access_status, created_at`,
-      [username, email.toLowerCase(), hashedPassword, bio || "", accessStatus]
+      [username, normalisedEmail, hashedPassword, bio || "", accessStatus]
     );
     const user = result.rows[0];
 
@@ -169,7 +174,7 @@ router.post("/register", registerLimiter, async (req, res) => {
     let verifyLink = null;
     try {
       const token = await createAuthToken(user.id, "email_verification", 24);
-      verifyLink = await sendVerificationEmail(email.toLowerCase(), token);
+      verifyLink = await sendVerificationEmail(normalisedEmail, token);
     } catch (emailErr) {
       console.error("Email send error (non-fatal):", emailErr.message);
     }

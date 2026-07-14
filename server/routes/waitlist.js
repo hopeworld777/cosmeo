@@ -1,6 +1,7 @@
 import { Router } from "express";
 import pool from "../db.js";
 import { sendWaitlistConfirmation } from "../email.js";
+import { isDisposableEmail, DISPOSABLE_EMAIL_ERROR } from "../disposableEmail.js";
 
 const router = Router();
 
@@ -13,6 +14,9 @@ router.post("/", async (req, res) => {
     return res.status(400).json({ error: "Please enter a valid email address." });
   }
   const normalised = email.trim().toLowerCase();
+  if (isDisposableEmail(normalised)) {
+    return res.status(400).json({ error: DISPOSABLE_EMAIL_ERROR });
+  }
   try {
     await pool.query(
       "INSERT INTO waitlist (email) VALUES ($1)",
