@@ -210,7 +210,7 @@ router.post("/google", googleAuthLimiter, async (req, res) => {
     console.error("[google-auth] FAIL step=config — no client ID in env (Google_OAuth_Client_ID / GOOGLE_CLIENT_ID)");
     return res.status(503).json({ error: "Google sign-in is not configured" });
   }
-  const { googleClient, id: GOOGLE_CLIENT_ID } = googleAuth;
+  const { client: googleClient, id: GOOGLE_CLIENT_ID } = googleAuth;
   console.log(`[google-auth] step=config — client ID prefix: ${GOOGLE_CLIENT_ID.slice(0, 12)}...`);
 
   // ── Step 2: check credential presence ────────────────────────────────────

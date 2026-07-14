@@ -23,6 +23,13 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
 const PORT = process.env.PORT || 3001;
 
+// ── Startup diagnostics — visible in Railway / Replit logs at boot ────────────
+const _googleId = process.env.Google_OAuth_Client_ID || process.env.GOOGLE_CLIENT_ID;
+console.log(_googleId
+  ? `[startup] Google OAuth: configured (ID prefix ${_googleId.slice(0, 12)}...)`
+  : "[startup] Google OAuth: NOT configured — set Google_OAuth_Client_ID or GOOGLE_CLIENT_ID"
+);
+
 // Trust the first proxy hop (Replit's reverse proxy / load-balancer).
 // Required so express-rate-limit can correctly read X-Forwarded-For
 // instead of throwing ERR_ERL_UNEXPECTED_X_FORWARDED_FOR.
