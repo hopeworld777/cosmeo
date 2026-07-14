@@ -1,143 +1,273 @@
 // ── Cosmic night-sky background for auth pages ──────────────────────────────
-// Layered, lightweight (pure CSS/SVG) decoration: gradient blobs, twinkling
-// stars, sparkles, drifting glow particles, and slow "wishing star" streaks.
+// Layered decoration: gradient blobs, twinkling stars, sparkles, drifting glow
+// particles, and canvas-rendered wishing stars that travel along unique cubic
+// Bezier arcs with curved trails and glowing 4-point star heads.
 // Purely decorative — pointer-events-none throughout — and respects
-// prefers-reduced-motion by disabling all keyframe animation.
+// prefers-reduced-motion by disabling all animation.
 
-// Magical shooting-star element: curved trail + 4-point glowing star head + dust.
-function MagicShootingStar({ id, length, isDark }) {
-  const h = 28;
+import { useEffect, useRef } from "react";
 
-  // Quadratic bezier control points for a gentle arc
-  // Start: left edge, slightly below center (trail originates here, faint)
-  // Control: midway, slightly above centre (creates a gentle upward arc)
-  // End: right edge, centre (star lives here — the leading edge)
-  const P0 = { x: 0,          y: h / 2 + 6 };
-  const P1 = { x: length * 0.5, y: h / 2 - 3 };
-  const P2 = { x: length,     y: h / 2 };
+// ── Canvas wishing-star renderer ─────────────────────────────────────────────
+// Draws 5 shooting stars along unique cubic Bezier curves. Each star:
+//   • Follows a different arc across the sky (no two paths are alike)
+//   • Accelerates naturally (power-easing on the parameter)
+//   • Carries a curved trail of sampled Bezier points (blue→purple→pink)
+//   • Leaves tiny perpendicular sparkle-dust particles
+//   • Has a 4-point magical star head with bloom and inner glow
+//   • Fades in smoothly and fades out as it exits
+// The canvas is DPR-aware for sharp rendering on retina screens.
 
-  const bezier = (t) => ({
-    x: (1 - t) ** 2 * P0.x + 2 * (1 - t) * t * P1.x + t ** 2 * P2.x,
-    y: (1 - t) ** 2 * P0.y + 2 * (1 - t) * t * P1.y + t ** 2 * P2.y,
-  });
-
-  const trailPath  = `M${P0.x},${P0.y} Q${P1.x},${P1.y} ${P2.x},${P2.y}`;
-  const p65        = bezier(0.65);
-  const innerPath  = `M${p65.x},${p65.y} L${P2.x},${P2.y}`;
-
-  // Tiny fading dust/sparkle particles scattered just off the trail
-  const dust = [
-    { t: 0.30, dy: -2.5, r: 0.70, c: "#60a5fa", op: 0.45 },
-    { t: 0.42, dy:  1.2, r: 0.45, c: "#818cf8", op: 0.32 },
-    { t: 0.50, dy: -1.8, r: 0.60, c: "#818cf8", op: 0.38 },
-    { t: 0.58, dy:  2.4, r: 0.75, c: "#a855f7", op: 0.48 },
-    { t: 0.67, dy: -2.2, r: 0.60, c: "#c084fc", op: 0.43 },
-    { t: 0.76, dy:  2.6, r: 0.55, c: "#f472b6", op: 0.46 },
-    { t: 0.85, dy: -1.0, r: 0.65, c: "#f9a8d4", op: 0.42 },
-    { t: 0.91, dy:  1.5, r: 0.50, c: "#fecdd3", op: 0.38 },
+function cubicBezier(P0, P1, P2, P3, t) {
+  const m = 1 - t;
+  return [
+    m**3*P0[0] + 3*m**2*t*P1[0] + 3*m*t**2*P2[0] + t**3*P3[0],
+    m**3*P0[1] + 3*m**2*t*P1[1] + 3*m*t**2*P2[1] + t**3*P3[1],
   ];
+}
+
+function cubicBezierTangent(P0, P1, P2, P3, t) {
+  const m = 1 - t;
+  return [
+    3*(m**2*(P1[0]-P0[0]) + 2*m*t*(P2[0]-P1[0]) + t**2*(P3[0]-P2[0])),
+    3*(m**2*(P1[1]-P0[1]) + 2*m*t*(P2[1]-P1[1]) + t**2*(P3[1]-P2[1])),
+  ];
+}
+
+// Builds 5 unique crossing arcs scaled to the current viewport.
+// Called once on mount and again on resize so paths always fit the screen.
+function buildStarPaths(W, H) {
+  return [
+    // 1 — Gentle upper arc, sweeps from top-left toward lower-right
+    {
+      P0: [-200, H * 0.12], P1: [W * 0.28, H * -0.04],
+      P2: [W * 0.65, H * 0.26], P3: [W + 200, H * 0.40],
+      dur: 9, delay: 1.0, cycle: 22,
+      c1: "#60a5fa", c2: "#a855f7", c3: "#f472b6",
+    },
+    // 2 — Mid-screen gentle S-like sweep
+    {
+      P0: [-180, H * 0.62], P1: [W * 0.25, H * 0.50],
+      P2: [W * 0.68, H * 0.56], P3: [W + 200, H * 0.42],
+      dur: 11, delay: 6.5, cycle: 26,
+      c1: "#818cf8", c2: "#c084fc", c3: "#f9a8d4",
+    },
+    // 3 — Steeper arc that dips then rises toward bottom-right
+    {
+      P0: [-220, H * 0.22], P1: [W * 0.18, H * 0.04],
+      P2: [W * 0.58, H * 0.44], P3: [W + 200, H * 0.70],
+      dur: 8,  delay: 13.0, cycle: 30,
+      c1: "#a5b4fc", c2: "#e879f9", c3: "#f472b6",
+    },
+    // 4 — Low shallow arc grazing the bottom quarter
+    {
+      P0: [-180, H * 0.78], P1: [W * 0.38, H * 0.68],
+      P2: [W * 0.72, H * 0.74], P3: [W + 220, H * 0.58],
+      dur: 13, delay: 4.0, cycle: 34,
+      c1: "#60a5fa", c2: "#7c3aed", c3: "#ec4899",
+    },
+    // 5 — Near-top wide arc that crests upward then flattens out
+    {
+      P0: [-200, H * 0.40], P1: [W * 0.14, H * 0.22],
+      P2: [W * 0.52, H * 0.16], P3: [W + 180, H * 0.24],
+      dur: 10, delay: 18.0, cycle: 38,
+      c1: "#93c5fd", c2: "#a855f7", c3: "#fb7185",
+    },
+  ];
+}
+
+function WishingStarsCanvas({ isDark }) {
+  const canvasRef = useRef(null);
+  const isDarkRef = useRef(isDark);
+  useEffect(() => { isDarkRef.current = isDark; }, [isDark]);
+
+  useEffect(() => {
+    // Respect prefers-reduced-motion
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+
+    let raf;
+    let paths = [];
+
+    // DPR-aware sizing so stars are crisp on retina displays
+    const resize = () => {
+      const dpr = window.devicePixelRatio || 1;
+      const W   = window.innerWidth;
+      const H   = window.innerHeight;
+      canvas.width        = W * dpr;
+      canvas.height       = H * dpr;
+      canvas.style.width  = W + "px";
+      canvas.style.height = H + "px";
+      ctx.setTransform(1, 0, 0, 1, 0, 0); // reset before re-scaling
+      ctx.scale(dpr, dpr);
+      paths = buildStarPaths(W, H);
+    };
+    resize();
+    window.addEventListener("resize", resize);
+
+    const startTime = performance.now();
+
+    const draw = (now) => {
+      raf = requestAnimationFrame(draw);
+      const W = window.innerWidth;
+      const H = window.innerHeight;
+      ctx.clearRect(0, 0, W, H);
+
+      const elapsed = (now - startTime) / 1000; // seconds
+      const dark    = isDarkRef.current;
+
+      paths.forEach((star) => {
+        const tAdj = elapsed - star.delay;
+        if (tAdj < 0) return;                          // still in initial delay
+
+        const cycleTime = tAdj % star.cycle;
+        if (cycleTime > star.dur) return;              // resting between passes
+
+        const tLinear = cycleTime / star.dur;           // 0 → 1, linear time
+
+        // Power-ease: star accelerates as it crosses the sky
+        const tPos = Math.pow(tLinear, 1.55);
+
+        // Opacity envelope: fade in over first 8%, hold, fade out over last 18%
+        const opacity =
+          tLinear < 0.08 ? tLinear / 0.08
+          : tLinear > 0.82 ? 1 - (tLinear - 0.82) / 0.18
+          : 1;
+        const baseAlpha = Math.max(0, Math.min(1, opacity)) * (dark ? 0.90 : 0.70);
+        if (baseAlpha < 0.01) return;
+
+        const [px, py] = cubicBezier(
+          star.P0, star.P1, star.P2, star.P3, tPos
+        );
+        const [tangX, tangY] = cubicBezierTangent(
+          star.P0, star.P1, star.P2, star.P3, tPos
+        );
+        const angle = Math.atan2(tangY, tangX);
+
+        // ── Curved trail ───────────────────────────────────────────────────
+        // Sample 32 points behind the star along the Bezier curve.
+        // Because they're taken from the same curve, the trail follows every
+        // twist of the arc automatically — no straight lines anywhere.
+        const TRAIL  = 32;
+        const DT     = 0.058; // how far back in tPos-space the trail reaches
+        const tTail  = Math.max(0, tPos - DT);
+
+        for (let j = 0; j <= TRAIL; j++) {
+          const sample = tTail + (tPos - tTail) * (j / TRAIL);
+          const [sx, sy] = cubicBezier(star.P0, star.P1, star.P2, star.P3, sample);
+          const frac = j / TRAIL; // 0 = tail, 1 = head
+
+          // Radius: whisper-thin at tail, swells to 1.5 near head
+          const r = 0.25 + frac * 1.5;
+
+          // Colour gradient along the trail: blue → purple → pink
+          const col = frac < 0.38 ? star.c1 : frac < 0.72 ? star.c2 : star.c3;
+
+          // Opacity: near-zero at tail, bright near head
+          const trailAlpha = baseAlpha * Math.pow(frac, 1.4) * 0.85;
+
+          ctx.beginPath();
+          ctx.arc(sx, sy, r, 0, Math.PI * 2);
+          ctx.fillStyle = col;
+          ctx.globalAlpha = trailAlpha;
+          ctx.fill();
+        }
+
+        // ── Sparkle dust ───────────────────────────────────────────────────
+        // Tiny dots offset perpendicularly from the trail — each one on a
+        // slightly different Bezier sample so they scatter naturally along
+        // the curve rather than in a straight line.
+        const PERP = angle + Math.PI / 2;
+        const dustFracs = [0.14, 0.26, 0.40, 0.54, 0.66, 0.78, 0.88, 0.95];
+        dustFracs.forEach((f, j) => {
+          const tDust = tTail + (tPos - tTail) * f;
+          const [dx, dy] = cubicBezier(star.P0, star.P1, star.P2, star.P3, tDust);
+          const side   = j % 2 === 0 ? 1 : -1;
+          const spread = side * (1.8 + (j % 3) * 1.6);
+          const nx = dx + Math.cos(PERP) * spread;
+          const ny = dy + Math.sin(PERP) * spread;
+          const col = j % 3 === 0 ? star.c1 : j % 3 === 1 ? star.c2 : star.c3;
+
+          ctx.beginPath();
+          ctx.arc(nx, ny, 0.62, 0, Math.PI * 2);
+          ctx.fillStyle = col;
+          ctx.globalAlpha = baseAlpha * (1 - f) * 0.55 + baseAlpha * f * 0.32;
+          ctx.fill();
+        });
+
+        // ── 4-point magical star head ──────────────────────────────────────
+        ctx.save();
+        ctx.globalAlpha = baseAlpha;
+        ctx.translate(px, py);
+        ctx.rotate(angle); // star faces the direction of travel
+
+        // Outer bloom (large, blurred)
+        const bloom = ctx.createRadialGradient(0, 0, 0, 0, 0, 10);
+        bloom.addColorStop(0, star.c3 + "55");
+        bloom.addColorStop(1, "transparent");
+        ctx.beginPath();
+        ctx.arc(0, 0, 10, 0, Math.PI * 2);
+        ctx.fillStyle = bloom;
+        ctx.fill();
+
+        // Mid-glow halo
+        const halo = ctx.createRadialGradient(0, 0, 0, 0, 0, 4.5);
+        halo.addColorStop(0, star.c2 + "99");
+        halo.addColorStop(1, "transparent");
+        ctx.beginPath();
+        ctx.arc(0, 0, 4.5, 0, Math.PI * 2);
+        ctx.fillStyle = halo;
+        ctx.fill();
+
+        // 4-point sparkle star (same bezier-curve construction as the SVG
+        // Sparkle — four quadrants, each a shallow S-curve through the origin)
+        const SZ = 3.8, TH = 0.62;
+        ctx.beginPath();
+        ctx.moveTo(0, -SZ);
+        ctx.bezierCurveTo( 0,  -TH,  TH,   0,  SZ,   0);
+        ctx.bezierCurveTo( TH,   0,   0,  TH,   0,  SZ);
+        ctx.bezierCurveTo(  0,  TH, -TH,   0, -SZ,   0);
+        ctx.bezierCurveTo(-TH,   0,   0, -TH,   0, -SZ);
+        ctx.closePath();
+        ctx.shadowBlur  = 6;
+        ctx.shadowColor = star.c3;
+        ctx.fillStyle   = "rgba(255,255,255,0.97)";
+        ctx.fill();
+        ctx.shadowBlur  = 0;
+
+        // Tiny bright core dot
+        ctx.beginPath();
+        ctx.arc(0, 0, 0.9, 0, Math.PI * 2);
+        ctx.fillStyle = "#ffffff";
+        ctx.fill();
+
+        ctx.restore();
+      });
+
+      ctx.globalAlpha = 1; // always restore global alpha
+    };
+
+    raf = requestAnimationFrame(draw);
+
+    return () => {
+      cancelAnimationFrame(raf);
+      window.removeEventListener("resize", resize);
+    };
+  }, []); // isDark changes handled via ref above
 
   return (
-    <svg
-      width={length + 16}
-      height={h}
-      viewBox={`0 0 ${length + 16} ${h}`}
-      style={{ display: "block", overflow: "visible" }}
+    <canvas
+      ref={canvasRef}
+      className="absolute inset-0 pointer-events-none"
       aria-hidden="true"
-    >
-      <defs>
-        {/* Blue → purple → pink gradient for the trail */}
-        <linearGradient id={`mg-trail-${id}`} x1="0%" y1="0%" x2="100%" y2="0%">
-          <stop offset="0%"   stopColor="transparent" />
-          <stop offset="20%"  stopColor="#60a5fa" stopOpacity={isDark ? 0.18 : 0.22} />
-          <stop offset="55%"  stopColor="#a855f7" stopOpacity={isDark ? 0.62 : 0.52} />
-          <stop offset="82%"  stopColor="#f472b6" stopOpacity={isDark ? 0.88 : 0.72} />
-          <stop offset="100%" stopColor="#fda4af" stopOpacity={isDark ? 0.75 : 0.60} />
-        </linearGradient>
-        {/* Glow filter for the star (keeps SourceGraphic, adds soft blur layer) */}
-        <filter id={`mg-glow-${id}`} x="-150%" y="-150%" width="400%" height="400%">
-          <feGaussianBlur stdDeviation="2" result="blur" />
-          <feMerge>
-            <feMergeNode in="blur" />
-            <feMergeNode in="SourceGraphic" />
-          </feMerge>
-        </filter>
-        {/* Bloom filter — pure blur used on the outer halo circle */}
-        <filter id={`mg-bloom-${id}`} x="-200%" y="-200%" width="500%" height="500%">
-          <feGaussianBlur stdDeviation="4.5" />
-        </filter>
-      </defs>
-
-      {/* Soft wide glow along the whole trail */}
-      <path
-        d={trailPath}
-        stroke="#a855f7"
-        strokeWidth="6"
-        fill="none"
-        strokeLinecap="round"
-        opacity={isDark ? 0.07 : 0.05}
-      />
-
-      {/* Main gradient trail */}
-      <path
-        d={trailPath}
-        stroke={`url(#mg-trail-${id})`}
-        strokeWidth="1.5"
-        fill="none"
-        strokeLinecap="round"
-      />
-
-      {/* Thin bright inner core — last 35% of trail near the star */}
-      <path
-        d={innerPath}
-        stroke="rgba(255,255,255,0.7)"
-        strokeWidth="0.65"
-        fill="none"
-        strokeLinecap="round"
-        opacity={isDark ? 0.62 : 0.40}
-      />
-
-      {/* Dust / sparkle particles */}
-      {dust.map((d, j) => {
-        const pt = bezier(d.t);
-        return (
-          <circle
-            key={j}
-            cx={pt.x}
-            cy={pt.y + d.dy}
-            r={d.r}
-            fill={d.c}
-            opacity={isDark ? d.op : d.op * 0.75}
-          />
-        );
-      })}
-
-      {/* ── Magical 4-point star at the leading edge ── */}
-      <g transform={`translate(${P2.x}, ${P2.y})`}>
-        {/* Outer bloom — blurred halo */}
-        <circle
-          cx="0" cy="0" r="7"
-          fill="#e879f9"
-          opacity={isDark ? 0.22 : 0.15}
-          filter={`url(#mg-bloom-${id})`}
-        />
-        {/* Mid glow ring */}
-        <circle cx="0" cy="0" r="3.2" fill="#c084fc" opacity={isDark ? 0.42 : 0.32} />
-        {/* 4-point sparkle star (same bezier-curve approach as the Sparkle component) */}
-        <path
-          d="M0,-3.8 C0,-0.65 0.65,0 3.8,0 C0.65,0 0,0.65 0,3.8 C0,0.65 -0.65,0 -3.8,0 C-0.65,0 0,-0.65 0,-3.8 Z"
-          fill="white"
-          opacity="0.97"
-          filter={`url(#mg-glow-${id})`}
-        />
-        {/* Tiny bright core dot */}
-        <circle cx="0" cy="0" r="0.9" fill="white" />
-      </g>
-    </svg>
+    />
   );
 }
 
-// 4-pointed sparkle, matches the mark used on the waitlist page.
+// ── 4-pointed sparkle SVG ─────────────────────────────────────────────────────
+// Matches the mark used on the waitlist page.
 function Sparkle({ size = 14, color = "#c4b5fd", opacity = 0.7, style = {} }) {
   const half = size / 2;
   const thin = size * 0.08;
@@ -156,9 +286,6 @@ function Sparkle({ size = 14, color = "#c4b5fd", opacity = 0.7, style = {} }) {
     </svg>
   );
 }
-
-// Dreamy palette: pastel purple, lavender, soft pink, periwinkle blue, indigo.
-const PALETTE = ["#c084fc", "#ddd6fe", "#f9a8d4", "#a5b4fc", "#818cf8"];
 
 const BLOBS = [
   { top: "-14%", left: "-12%", size: 520, color: "#a855f7", darkOp: 0.16, lightOp: 0.32, dur: "22s", delay: "0s" },
@@ -208,13 +335,6 @@ const PARTICLES = [
   { top: "62%", left: "78%", size: 2, color: "#ddd6fe", delay: "1.2s", dur: "8s" },
   { top: "42%", left: "50%", size: 2.5, color: "#818cf8", delay: "3.2s", dur: "12s" },
   { top: "82%", left: "48%", size: 2, color: "#c4b5fd", delay: "0.6s", dur: "9.5s" },
-];
-
-// Slow "wishing star" streaks that occasionally cross the sky.
-const SHOOTING_STARS = [
-  { top: "12%", left: "-10%", angle: 18, length: 140, delay: "1s", dur: "9s", pause: "11s" },
-  { top: "55%", left: "-10%", angle: 12, length: 110, delay: "5s", dur: "10s", pause: "14s" },
-  { top: "78%", left: "-10%", angle: 22, length: 130, delay: "9s", dur: "8s", pause: "16s" },
 ];
 
 export default function AuthCosmicBackground({ isDark = true }) {
@@ -288,31 +408,8 @@ export default function AuthCosmicBackground({ isDark = true }) {
         />
       ))}
 
-      {/* Magical wishing stars — curved SVG trail + glowing 4-point star head */}
-      {SHOOTING_STARS.map((s, i) => (
-        <div
-          key={`shoot-${i}`}
-          className="absolute"
-          style={{
-            top: s.top,
-            left: s.left,
-            width: 0,
-            height: 0,
-            transform: `rotate(${s.angle}deg)`,
-            transformOrigin: "left center",
-          }}
-        >
-          <div
-            className="absolute"
-            style={{
-              opacity: 0,
-              animation: `acb-shoot ${parseFloat(s.dur) + parseFloat(s.pause)}s ${s.delay} linear infinite`,
-            }}
-          >
-            <MagicShootingStar id={i} length={s.length} isDark={isDark} />
-          </div>
-        </div>
-      ))}
+      {/* Canvas wishing stars — 5 unique cubic Bezier arcs */}
+      <WishingStarsCanvas isDark={isDark} />
 
       <style>{`
         @keyframes acb-drift {
@@ -332,12 +429,6 @@ export default function AuthCosmicBackground({ isDark = true }) {
           0%   { transform: translateY(0px); opacity: 0.25; }
           50%  { opacity: 0.65; }
           100% { transform: translateY(-22px); opacity: 0.2; }
-        }
-        @keyframes acb-shoot {
-          0%   { opacity: 0; transform: translateX(0); }
-          2%   { opacity: 1; }
-          14%  { opacity: 0; transform: translateX(160vw); }
-          100% { opacity: 0; transform: translateX(160vw); }
         }
         @media (prefers-reduced-motion: reduce) {
           .auth-cosmic-bg * {
