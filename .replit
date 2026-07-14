@@ -51,6 +51,7 @@ build = ["npm", "run", "build"]
 [userenv]
 
 [userenv.shared]
+JWT_SECRET = "7dfe43970d8f9b6189ec3505cd232e24e930186d0b8606b37f86aed86ca097ff"
 
 [userenv.development]
 NODE_ENV = "development"
