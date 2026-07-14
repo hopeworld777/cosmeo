@@ -101,7 +101,7 @@ app.get("/api/config", (req, res) => {
     // Google OAuth Client ID is not secret — it's meant to be embedded in
     // frontend code. Omitted entirely (rather than sent as null) when unset
     // so the frontend can cleanly hide the "Continue with Google" button.
-    googleClientId: process.env.Google_OAuth_Client_ID || null,
+    googleClientId: process.env.Google_OAuth_Client_ID || process.env.GOOGLE_CLIENT_ID || null,
   });
 });
 

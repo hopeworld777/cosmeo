@@ -72,7 +72,11 @@ export default function GoogleAuthButton({ onSuccess }) {
   const gsiRef = useRef(null);
   const [clientId, setClientId] = useState(null);
   const [ready, setReady] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [hover, setHover] = useState(false);
+  // Ref so the GSI callback always closes over the latest version of initGsi
+  // even though it's defined after the ref is created.
+  const initGsiRef = useRef(null);
 
   useEffect(() => {
     fetch("/api/config")
@@ -99,31 +103,50 @@ export default function GoogleAuthButton({ onSuccess }) {
     if (!clientId) return;
     let cancelled = false;
 
+    // initGsi is stored in a ref so the GSI callback always calls the latest
+    // version without creating stale-closure or circular-dependency issues.
+    initGsiRef.current = () => {
+      if (!window.google?.accounts?.id) return;
+      window.google.accounts.id.initialize({
+        client_id: clientId,
+        callback: async ({ credential }) => {
+          setLoading(true);
+          try {
+            const u = await loginWithGoogle(credential);
+            onSuccess?.(u);
+          } catch (err) {
+            toast({
+              title: "Google sign-in failed",
+              description: err.message || "Please try again.",
+              variant: "destructive",
+            });
+            // Cancel the current GSI session and re-initialize so the button
+            // is immediately clickable again — without this, GSI considers the
+            // credential consumed and won't open the account picker on the
+            // next click until the page is refreshed.
+            if (window.google?.accounts?.id) {
+              window.google.accounts.id.cancel();
+              initGsiRef.current?.();
+              renderGsiButton();
+            }
+          } finally {
+            setLoading(false);
+          }
+        },
+      });
+    };
+
     loadGoogleScript()
       .then(() => {
         if (cancelled || !window.google?.accounts?.id) return;
-        window.google.accounts.id.initialize({
-          client_id: clientId,
-          callback: async ({ credential }) => {
-            try {
-              const u = await loginWithGoogle(credential);
-              onSuccess?.(u);
-            } catch (err) {
-              toast({
-                title: "Google sign-in failed",
-                description: err.message || "Please try again.",
-                variant: "destructive",
-              });
-            }
-          },
-        });
+        initGsiRef.current?.();
         renderGsiButton();
         setReady(true);
       })
       .catch(() => setReady(false));
 
     return () => { cancelled = true; };
-  }, [clientId, renderGsiButton]);
+  }, [clientId, loginWithGoogle, onSuccess, toast, renderGsiButton]);
 
   // Keep the invisible GSI button's hit area in sync with our custom
   // button's width whenever the layout changes (resize, font load, etc.).
@@ -144,12 +167,14 @@ export default function GoogleAuthButton({ onSuccess }) {
       onMouseLeave={() => setHover(false)}
     >
       {/* Real Google button — fully functional, but visually invisible and
-          stretched to cover the entire custom button below. This is the
-          element that actually receives the click/keyboard activation. */}
+          stretched to cover the entire custom button below. Hidden (pointer-
+          events-none) while a sign-in is in-flight so a second click can't
+          fire a second credential before the first one resolves. */}
       <div
         ref={gsiRef}
         aria-hidden="true"
         className="absolute inset-0 z-10 overflow-hidden rounded-2xl opacity-0 [&_iframe]:!w-full [&_iframe]:!h-full [&>div]:!w-full [&>div]:!h-full"
+        style={{ pointerEvents: loading ? "none" : undefined }}
       />
 
       {/* Visible, Cosmeo-styled button. Purely decorative — the accessible,
@@ -157,7 +182,8 @@ export default function GoogleAuthButton({ onSuccess }) {
           rings/hover states are mirrored here via group-focus-within/hover.
           Kept in normal flow (not absolute) so it sets the container's
           height; the invisible GSI overlay above stretches to match via
-          inset-0. A loading skeleton takes its place until GSI is ready. */}
+          inset-0. Shows a pulse skeleton until GSI is ready, and a spinner
+          while a sign-in request is in-flight. */}
       {ready ? (
         <div
           role="button"
@@ -176,13 +202,27 @@ export default function GoogleAuthButton({ onSuccess }) {
               ? "1px solid rgba(192,132,252,0.28)"
               : "1px solid rgba(192,132,252,0.35)",
             color: s.isDark ? "#ffffff" : "#1e1b4b",
-            boxShadow: hover
+            opacity: loading ? 0.65 : 1,
+            boxShadow: hover && !loading
               ? "0 6px 28px rgba(168,85,247,0.35), 0 0 0 1px rgba(236,72,153,0.15)"
               : "0 2px 12px rgba(168,85,247,0.12)",
           }}
         >
-          <GoogleGIcon className="h-5 w-5 shrink-0" />
-          <span>{t("continueWithGoogle")}</span>
+          {loading ? (
+            /* Spinner shown while waiting for backend response */
+            <svg
+              className="h-5 w-5 animate-spin shrink-0"
+              viewBox="0 0 24 24"
+              fill="none"
+              aria-hidden="true"
+            >
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" />
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
+            </svg>
+          ) : (
+            <GoogleGIcon className="h-5 w-5 shrink-0" />
+          )}
+          <span>{loading ? t("signingIn") || "Signing in…" : t("continueWithGoogle")}</span>
         </div>
       ) : (
         <div

@@ -10,8 +10,13 @@ import { generateToken, requireAuth } from "../middleware/auth.js";
 import { sendVerificationEmail, sendPasswordResetEmail } from "../email.js";
 import { uploadToR2 } from "../r2.js";
 
-const GOOGLE_CLIENT_ID = process.env.Google_OAuth_Client_ID;
-const googleClient = GOOGLE_CLIENT_ID ? new OAuth2Client(GOOGLE_CLIENT_ID) : null;
+// Support both the Replit secret name and the conventional Railway/Heroku name.
+// Read at call-time (not module load) so a newly-added env var takes effect
+// without requiring a server restart.
+function getGoogleClient() {
+  const id = process.env.Google_OAuth_Client_ID || process.env.GOOGLE_CLIENT_ID;
+  return id ? { client: new OAuth2Client(id), id } : null;
+}
 
 const ALLOWED_AVATAR_TYPES = new Set([
   "image/jpeg", "image/jpg", "image/png", "image/webp",
@@ -188,9 +193,11 @@ router.get("/invite/:code", async (req, res) => {
 //   3. create a brand-new account, same WAITLIST/VIP invite-code logic as
 //      /register, with the email pre-verified (Google already confirmed it)
 router.post("/google", registerLimiter, async (req, res) => {
-  if (!googleClient) {
+  const googleAuth = getGoogleClient();
+  if (!googleAuth) {
     return res.status(503).json({ error: "Google sign-in is not configured" });
   }
+  const { googleClient, id: GOOGLE_CLIENT_ID } = googleAuth;
   const { credential, inviteCode } = req.body;
   if (!credential) return res.status(400).json({ error: "Missing Google credential" });
 
