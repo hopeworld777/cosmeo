@@ -209,7 +209,10 @@ export default function Sell() {
     );
   }
   // ── Listing limit gate ────────────────────────────────────────────────────
-  if (user && user.email_verified && activeListingCount >= 3) {
+  // ADMIN is exempt — the cap bounds beta testers (VIP), not the site's
+  // own operator/owner account. Mirrors the same exemption enforced
+  // server-side in POST /api/listings.
+  if (user && user.email_verified && user.access_status !== "ADMIN" && activeListingCount >= 3) {
     return (
       <div className="flex flex-col h-full bg-background">
         {/* Header */}

@@ -258,14 +258,21 @@ router.post("/", requireAuth, requireFullAccess, async (req, res) => {
 
   // Beta VIP listing limit — max 3 active listings per user (sold/deleted/
   // inactive listings don't count against it). This is a temporary beta
-  // constraint, not a permanent product limit — see listingLimitTitle/Body
-  // in the translation files for the user-facing copy.
-  const countResult = await pool.query(
-    "SELECT COUNT(*) FROM listings WHERE seller_id = $1 AND is_active = true",
-    [req.userId]
-  );
-  if (parseInt(countResult.rows[0].count, 10) >= 3) {
-    return res.status(403).json({ error: "listing_limit_reached" });
+  // constraint on testers, not a permanent product limit — see
+  // listingLimitTitle/Body in the translation files for the user-facing
+  // copy. ADMIN accounts are exempt: the cap exists to bound how much beta
+  // testers can list, not to restrict the site's own operator/owner, and
+  // admin is supposed to be a strict superset of VIP, never a more
+  // restricted role.
+  const accessCheck = await pool.query("SELECT access_status FROM users WHERE id = $1", [req.userId]);
+  if (accessCheck.rows[0]?.access_status !== "ADMIN") {
+    const countResult = await pool.query(
+      "SELECT COUNT(*) FROM listings WHERE seller_id = $1 AND is_active = true",
+      [req.userId]
+    );
+    if (parseInt(countResult.rows[0].count, 10) >= 3) {
+      return res.status(403).json({ error: "listing_limit_reached" });
+    }
   }
 
   // Zod validation
