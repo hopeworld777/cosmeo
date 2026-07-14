@@ -47,6 +47,13 @@ export default function ListingCard({ listing, index = 0 }) {
 
   // Use thumbnail (600 px WebP) for cards — full image is used in ItemDetail.
   const imageSrc = getThumbUrl(listing.images?.[0] ?? null);
+
+  // [image-debug] Traces the final <img src> value actually rendered for
+  // this listing, so it can be compared against the create/get-detail log
+  // lines emitted server-side (see server/routes/listings.js) for the same
+  // listing id — the three checkpoints together show exactly where an image
+  // URL diverges (client upload → DB → API response → rendered <img>).
+  console.log(`[image-debug] listing=${listing.id} step=render-card db_images=${JSON.stringify(listing.images)} final_img_src=${imageSrc}`);
   const city = listing.location || listing.seller_location || null;
   const rating = listing.seller_rating ? Number(listing.seller_rating).toFixed(1) : null;
   const formatGEL = (n) => n != null ? `₾${Number(n).toFixed(0)}` : null;

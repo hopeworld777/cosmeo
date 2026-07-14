@@ -219,6 +219,14 @@ router.get("/:id", optionalAuth, async (req, res) => {
 
     if (!result.rows[0]) return res.status(404).json({ error: "Listing not found" });
 
+    // [image-debug] see matching note in POST / — traces the same listing's
+    // image field on every subsequent read, so a "broken on view" report can
+    // be compared directly against the create-time log line.
+    console.log(
+      `[image-debug] listing=${result.rows[0].id} step=get-detail ` +
+      `db_images=${JSON.stringify(result.rows[0].images)}`
+    );
+
     // Increment view count
     await pool.query("UPDATE listings SET views = views + 1 WHERE id = $1", [req.params.id]);
 
@@ -343,6 +351,16 @@ router.post("/", requireAuth, requireFullAccess, async (req, res) => {
               FROM listing_images WHERE listing_id = l.id) as images
       FROM listings l JOIN users u ON u.id = l.seller_id WHERE l.id = $1
     `, [listing.id]);
+
+    // [image-debug] Trace the image URL end to end: what the client sent →
+    // what got persisted in listing_images → what the create response hands
+    // back. Left in place (cheap, one-line) so a future "images broken"
+    // report can be diagnosed from logs alone instead of ad-hoc DB queries.
+    console.log(
+      `[image-debug] listing=${listing.id} step=create ` +
+      `received_from_client=${JSON.stringify(images)} ` +
+      `returned_in_response=${JSON.stringify(full.rows[0].images)}`
+    );
 
     res.status(201).json(full.rows[0]);
   } catch (err) {
