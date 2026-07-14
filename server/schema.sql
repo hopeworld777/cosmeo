@@ -228,3 +228,15 @@ ALTER TABLE listings ADD COLUMN IF NOT EXISTS care_instructions TEXT;
 ALTER TABLE listings ADD COLUMN IF NOT EXISTS delivery_method VARCHAR(20)
   CHECK (delivery_method IS NULL OR delivery_method IN ('pickup', 'shipping', 'both'));
 ALTER TABLE listings ADD COLUMN IF NOT EXISTS damage_policy TEXT;
+
+-- Small generic key/value store for server-recorded settings that aren't
+-- tied to any single user row. Used to pin the admin Google account's
+-- immutable "sub" (subject ID) the first time it signs in, so later logins
+-- can require both the allowlisted email AND a matching sub — the sub
+-- can never change even if the email is renamed or an alias is used,
+-- so this is what actually prevents account-takeover via email changes.
+CREATE TABLE IF NOT EXISTS app_settings (
+  key         VARCHAR(100)  PRIMARY KEY,
+  value       TEXT,
+  updated_at  TIMESTAMPTZ   DEFAULT NOW()
+);

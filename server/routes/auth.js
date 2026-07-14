@@ -323,6 +323,28 @@ router.post("/google", googleAuthLimiter, async (req, res) => {
 // frontend never makes this decision — it just relays whatever the
 // backend returns — so there is no client-side bypass.
 const ADMIN_ALLOWED_EMAIL = (process.env.ADMIN_GOOGLE_EMAIL || "bbunnixx7@gmail.com").toLowerCase();
+const ADMIN_SUB_SETTING_KEY = "admin_google_sub";
+
+// The email above is the human-facing allowlist, but emails can be renamed
+// or aliased on Google's side — the "sub" claim (payload.sub) is the
+// account's permanent, immutable subject ID and is what we actually pin
+// admin access to. Resolution order: an explicit ADMIN_GOOGLE_SUB env var
+// always wins (lets an operator hard-pin or rotate it out-of-band);
+// otherwise fall back to whatever sub was recorded in the DB the first
+// time the allowlisted email ever signed in here.
+async function getTrustedAdminSub() {
+  if (process.env.ADMIN_GOOGLE_SUB) return process.env.ADMIN_GOOGLE_SUB;
+  const result = await pool.query("SELECT value FROM app_settings WHERE key = $1", [ADMIN_SUB_SETTING_KEY]);
+  return result.rows[0]?.value || null;
+}
+
+async function recordTrustedAdminSub(sub) {
+  await pool.query(
+    `INSERT INTO app_settings (key, value, updated_at) VALUES ($1, $2, NOW())
+     ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, updated_at = NOW()`,
+    [ADMIN_SUB_SETTING_KEY, sub]
+  );
+}
 
 router.post("/admin-google", adminGoogleAuthLimiter, async (req, res) => {
   // ── Step 1: check configuration ──────────────────────────────────────────
@@ -362,21 +384,46 @@ router.post("/admin-google", adminGoogleAuthLimiter, async (req, res) => {
   }
 
   const email = payload.email.toLowerCase();
+  const sub   = payload.sub;
 
-  // ── Step 4: server-side allowlist — the ONLY authorization check that ────
-  // matters. Never trust the frontend to enforce this; it can't be trusted
-  // not to be tampered with, and this backend check is what actually gates
-  // access. Any account other than the one authorized admin email is
-  // rejected with a generic message that doesn't leak which email *would*
-  // have worked.
+  // ── Step 4: server-side authorization — the ONLY checks that matter. ─────
+  // Never trust the frontend to enforce this. Two independent checks:
+  //   a) email must match the allowlisted admin email
+  //   b) sub (Google's permanent, immutable subject ID) must match the
+  //      trusted sub — pinned on first successful login, or forced via
+  //      ADMIN_GOOGLE_SUB. The email alone isn't enough: Google lets an
+  //      account rename its email or use aliases, so pinning to the sub
+  //      is what actually prevents a renamed/aliased account (or a
+  //      never-should-have-matched account after some future email churn)
+  //      from silently inheriting admin access.
+  // Both failures return the same generic message so neither leaks which
+  // check tripped or what value would have passed.
   if (email !== ADMIN_ALLOWED_EMAIL) {
     console.warn(`[admin-google-auth] FAIL step=allowlist — unauthorized Google account attempted admin login (email domain: ${email.split("@")[1] ?? "unknown"})`);
     return res.status(403).json({ error: "You are not authorized to access the admin panel." });
   }
 
+  try {
+    const trustedSub = await getTrustedAdminSub();
+    if (trustedSub) {
+      if (sub !== trustedSub) {
+        console.warn(`[admin-google-auth] FAIL step=sub-check — allowlisted email presented an unrecognized Google subject ID (possible account change/alias)`);
+        return res.status(403).json({ error: "You are not authorized to access the admin panel." });
+      }
+    } else {
+      // First-ever successful admin login: pin this account's sub so all
+      // future logins are checked against it, not just the email.
+      await recordTrustedAdminSub(sub);
+      console.log(`[admin-google-auth] step=sub-check — no trusted sub on record yet; pinned current Google account's sub as the admin identity`);
+    }
+  } catch (subErr) {
+    console.error(`[admin-google-auth] FAIL step=sub-check — ${subErr.constructor?.name}: ${subErr.message}`);
+    return res.status(500).json({ error: "Admin sign-in failed. Please try again." });
+  }
+
   // ── Step 5: find / upsert the admin account, then sign a normal session ──
   try {
-    const googleId = payload.sub;
+    const googleId = sub;
     const picture  = payload.picture || null;
 
     let result = await pool.query("SELECT * FROM users WHERE google_id = $1 OR email = $2", [googleId, email]);
