@@ -2,68 +2,19 @@
 //
 // Used by both POST /api/waitlist and POST /api/auth/register so the two
 // signup entry points can never drift out of sync on which providers are
-// blocked. Add new domains to DISPOSABLE_EMAIL_DOMAINS only — never
-// duplicate this list elsewhere.
+// blocked. The actual domain list lives in
+// server/config/disposableEmailDomains.json — add new domains there only,
+// never duplicate the list in code.
 
-export const DISPOSABLE_EMAIL_DOMAINS = new Set([
-  "mailinator.com",
-  "yopmail.com",
-  "guerrillamail.com",
-  "guerrillamail.info",
-  "guerrillamail.biz",
-  "guerrillamail.de",
-  "guerrillamail.org",
-  "guerrillamail.net",
-  "guerrillamailblock.com",
-  "sharklasers.com",
-  "grr.la",
-  "tempmail.com",
-  "temp-mail.org",
-  "tempmail.net",
-  "tempmailo.com",
-  "throwawaymail.com",
-  "trashmail.com",
-  "trashmail.net",
-  "trashmail.org",
-  "trash-mail.com",
-  "10minutemail.com",
-  "10minutemail.net",
-  "20minutemail.com",
-  "getnada.com",
-  "maildrop.cc",
-  "mailnesia.com",
-  "mailcatch.com",
-  "moakt.com",
-  "moakt.cc",
-  "dispostable.com",
-  "fakeinbox.com",
-  "spamgourmet.com",
-  "mytemp.email",
-  "emailondeck.com",
-  "mohmal.com",
-  "mintemail.com",
-  "discard.email",
-  "discardmail.com",
-  "spam4.me",
-  "mailpoof.com",
-  "burnermail.io",
-  "tempinbox.com",
-  "tempr.email",
-  "inboxkitten.com",
-  "luxusmail.org",
-  "1secmail.com",
-  "1secmail.net",
-  "1secmail.org",
-  "harakirimail.com",
-  "no-spam.ws",
-  "nowmymail.com",
-  "tempmailaddress.com",
-  "anonbox.net",
-  "einrot.com",
-  "wegwerfmail.de",
-  "wegwerfmail.net",
-  "wegwerfmail.org",
-]);
+import { readFileSync } from "fs";
+import { fileURLToPath } from "url";
+import path from "path";
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const configPath = path.join(__dirname, "config", "disposableEmailDomains.json");
+const { domains } = JSON.parse(readFileSync(configPath, "utf-8"));
+
+export const DISPOSABLE_EMAIL_DOMAINS = new Set(domains);
 
 /**
  * Extracts the lowercased domain from an email address.
