@@ -9,6 +9,7 @@ import { useTranslation } from "react-i18next";
 import BrandMark from "@/components/BrandMark";
 import ThemeToggle from "@/components/ThemeToggle";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
+import GoogleAuthButton from "@/components/GoogleAuthButton";
 
 // ── Floating particles — same as WaitlistLanding ──────────────────────────────
 const PARTICLES = [
@@ -24,7 +25,7 @@ const PARTICLES = [
 
 export default function AdminLogin() {
   const { t } = useTranslation();
-  const { login } = useAuth();
+  const { login, loginAdminWithGoogle } = useAuth();
   const { theme } = useTheme();
   const [, setLocation] = useLocation();
   const { toast } = useToast();
@@ -188,6 +189,26 @@ export default function AdminLogin() {
               backdropFilter: "blur(16px)",
             }}
           >
+            {/* Google sign-in — same button, styling, loading/hover/error
+                behavior as the main site; the backend enforces that only
+                the authorized admin Google account can actually succeed. */}
+            <GoogleAuthButton
+              authFn={loginAdminWithGoogle}
+              errorTitle="Admin sign-in failed"
+              onSuccess={() => setLocation("/admin")}
+            />
+
+            <div className="flex items-center gap-3">
+              <div className="h-px flex-1" style={{ background: isDark ? "rgba(255,255,255,0.12)" : "rgba(109,40,217,0.15)" }} />
+              <span
+                className="text-[11px] font-semibold uppercase tracking-wide"
+                style={{ color: isDark ? "rgba(255,255,255,0.45)" : "rgba(109,40,217,0.55)" }}
+              >
+                {t("orDivider", "or")}
+              </span>
+              <div className="h-px flex-1" style={{ background: isDark ? "rgba(255,255,255,0.12)" : "rgba(109,40,217,0.15)" }} />
+            </div>
+
             <form onSubmit={handleSubmit} className="flex flex-col gap-4">
               {/* Email */}
               <div className="flex flex-col gap-1.5">

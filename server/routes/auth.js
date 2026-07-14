@@ -63,6 +63,17 @@ const googleAuthLimiter = rateLimit({
   message: { error: "Too many Google sign-in attempts. Please wait 15 minutes and try again." },
 });
 
+// Hidden admin gate's Google sign-in — tighter than the normal Google
+// limiter since this endpoint is a prime target for credential-stuffing /
+// enumeration attempts against the admin panel.
+const adminGoogleAuthLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 10,                   // 10 attempts per IP per 15-minute window
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: "Too many admin sign-in attempts. Please wait 15 minutes and try again." },
+});
+
 const forgotPasswordLimiter = rateLimit({
   windowMs: 60 * 60 * 1000, // 1 hour
   max: 5,
@@ -301,6 +312,113 @@ router.post("/google", googleAuthLimiter, async (req, res) => {
   } catch (dbErr) {
     console.error(`[google-auth] FAIL step=db — ${dbErr.constructor?.name}: ${dbErr.message}`);
     res.status(500).json({ error: "Account lookup failed. Please try again." });
+  }
+});
+
+// POST /api/auth/admin-google
+// "Continue with Google" on the hidden admin gate (/secret-admin-gate).
+// Uses the exact same Google Identity Services credential-verification
+// flow as /api/auth/google, but with a hard server-side allowlist: only
+// the one authorized admin Google account may ever succeed here. The
+// frontend never makes this decision — it just relays whatever the
+// backend returns — so there is no client-side bypass.
+const ADMIN_ALLOWED_EMAIL = (process.env.ADMIN_GOOGLE_EMAIL || "bbunnixx7@gmail.com").toLowerCase();
+
+router.post("/admin-google", adminGoogleAuthLimiter, async (req, res) => {
+  // ── Step 1: check configuration ──────────────────────────────────────────
+  const googleAuth = getGoogleClient();
+  if (!googleAuth) {
+    console.error("[admin-google-auth] FAIL step=config — no client ID in env (Google_OAuth_Client_ID / GOOGLE_CLIENT_ID)");
+    return res.status(503).json({ error: "Google sign-in is not configured" });
+  }
+  const { client: googleClient, id: GOOGLE_CLIENT_ID } = googleAuth;
+
+  // ── Step 2: check credential presence ────────────────────────────────────
+  const { credential } = req.body;
+  if (!credential) {
+    console.error("[admin-google-auth] FAIL step=credential — no credential in request body");
+    return res.status(400).json({ error: "Missing Google credential" });
+  }
+
+  // ── Step 3: verify the ID token with Google ───────────────────────────────
+  let payload;
+  try {
+    const ticket = await googleClient.verifyIdToken({
+      idToken: credential,
+      audience: GOOGLE_CLIENT_ID,
+    });
+    payload = ticket.getPayload();
+  } catch (verifyErr) {
+    console.error(`[admin-google-auth] FAIL step=verify — ${verifyErr.constructor?.name}: ${verifyErr.message}`);
+    return res.status(401).json({
+      error: "Google sign-in failed. Please try again.",
+      detail: verifyErr.message,
+    });
+  }
+
+  if (!payload?.email) {
+    console.error("[admin-google-auth] FAIL step=payload — no email in Google token payload");
+    return res.status(400).json({ error: "Google account has no email" });
+  }
+
+  const email = payload.email.toLowerCase();
+
+  // ── Step 4: server-side allowlist — the ONLY authorization check that ────
+  // matters. Never trust the frontend to enforce this; it can't be trusted
+  // not to be tampered with, and this backend check is what actually gates
+  // access. Any account other than the one authorized admin email is
+  // rejected with a generic message that doesn't leak which email *would*
+  // have worked.
+  if (email !== ADMIN_ALLOWED_EMAIL) {
+    console.warn(`[admin-google-auth] FAIL step=allowlist — unauthorized Google account attempted admin login (email domain: ${email.split("@")[1] ?? "unknown"})`);
+    return res.status(403).json({ error: "You are not authorized to access the admin panel." });
+  }
+
+  // ── Step 5: find / upsert the admin account, then sign a normal session ──
+  try {
+    const googleId = payload.sub;
+    const picture  = payload.picture || null;
+
+    let result = await pool.query("SELECT * FROM users WHERE google_id = $1 OR email = $2", [googleId, email]);
+    let user   = result.rows[0];
+
+    if (user) {
+      // Make sure this account is (still) flagged as admin/full-access and
+      // linked to this Google ID, in case it was created some other way.
+      const updated = await pool.query(
+        `UPDATE users
+         SET google_id = $1, avatar_url = COALESCE(avatar_url, $2), email_verified = true,
+             is_admin = true, access_status = 'ADMIN'
+         WHERE id = $3 RETURNING *`,
+        [googleId, picture, user.id]
+      );
+      user = updated.rows[0];
+    } else {
+      const usernameSeed = payload.name || email.split("@")[0];
+      const username = await generateUniqueUsername(usernameSeed);
+      const inserted = await pool.query(
+        `INSERT INTO users (username, email, password_hash, avatar_url, google_id, email_verified, is_admin, access_status)
+         VALUES ($1, $2, NULL, $3, $4, true, true, 'ADMIN')
+         RETURNING *`,
+        [username, email, picture, googleId]
+      );
+      user = inserted.rows[0];
+    }
+
+    if (user.is_banned) {
+      console.warn(`[admin-google-auth] FAIL step=access — admin account is banned (id=${user.id})`);
+      return res.status(403).json({ error: "This account has been suspended." });
+    }
+
+    const jwtToken = generateToken(user.id);
+    const { password_hash, ...safeUser } = user;
+    // Audit log — success. Never logs the credential/JWT, only identifying
+    // info useful for reviewing admin access after the fact.
+    console.log(`[admin-google-auth] SUCCESS admin login — user_id=${user.id} email=${email} ip=${req.ip}`);
+    res.json({ user: safeUser, token: jwtToken });
+  } catch (dbErr) {
+    console.error(`[admin-google-auth] FAIL step=db — ${dbErr.constructor?.name}: ${dbErr.message}`);
+    res.status(500).json({ error: "Admin sign-in failed. Please try again." });
   }
 });
 

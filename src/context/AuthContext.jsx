@@ -79,13 +79,25 @@ export function AuthProvider({ children }) {
     return u;
   };
 
+  // Hidden admin gate's "Continue with Google" — same shape as
+  // loginWithGoogle, but hits the admin-only backend endpoint, which
+  // enforces server-side that only the authorized admin Google account
+  // may succeed (any other account gets a 403 the caller surfaces as an
+  // error via the shared GoogleAuthButton error handling).
+  const loginAdminWithGoogle = async (credential) => {
+    const { user: u, token } = await api.auth.adminGoogle({ credential });
+    localStorage.setItem("kosmeo_token", token);
+    setUser(u);
+    return u;
+  };
+
   const logout = () => {
     localStorage.removeItem("kosmeo_token");
     setUser(null);
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, loginWithGoogle, logout, setUser, waitlistEnabled }}>
+    <AuthContext.Provider value={{ user, loading, login, register, loginWithGoogle, loginAdminWithGoogle, logout, setUser, waitlistEnabled }}>
       {children}
     </AuthContext.Provider>
   );

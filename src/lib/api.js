@@ -52,6 +52,10 @@ export const api = {
       request("/auth/login", { method: "POST", body: JSON.stringify(body) }),
     google: (body) =>
       request("/auth/google", { method: "POST", body: JSON.stringify(body) }),
+    // Separate endpoint for the hidden admin gate — the backend enforces
+    // that only the authorized admin Google account may succeed here.
+    adminGoogle: (body) =>
+      request("/auth/admin-google", { method: "POST", body: JSON.stringify(body) }),
     me: () => request("/auth/me"),
     updateMe: (body) =>
       request("/auth/me", { method: "PATCH", body: JSON.stringify(body) }),

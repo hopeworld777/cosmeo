@@ -63,9 +63,13 @@ function GoogleGIcon({ className }) {
  * (no VITE-exposed client ID from /api/config) so the app keeps working
  * without it.
  */
-export default function GoogleAuthButton({ onSuccess }) {
+export default function GoogleAuthButton({ onSuccess, authFn, errorTitle }) {
   const { t } = useTranslation();
   const { loginWithGoogle } = useAuth();
+  // Callers (e.g. the admin gate) can override which backend call the
+  // credential is sent to while keeping the exact same visuals, loading
+  // state, hover effects, and error handling as the main sign-in button.
+  const doLogin = authFn || loginWithGoogle;
   const { toast } = useToast();
   const s = useAuthStyles();
   const wrapRef = useRef(null);
@@ -114,7 +118,7 @@ export default function GoogleAuthButton({ onSuccess }) {
           console.debug(`[google-auth] credential received from GSI (${credential?.length ?? 0} chars)`);
           setLoading(true);
           try {
-            const u = await loginWithGoogle(credential);
+            const u = await doLogin(credential);
             console.debug(`[google-auth] backend sign-in OK — user id: ${u?.id}`);
             onSuccess?.(u);
           } catch (err) {
@@ -130,7 +134,7 @@ export default function GoogleAuthButton({ onSuccess }) {
             // rejection reason (e.g. "Token used too late", "Invalid audience").
             // It arrives as part of err.message via api.request's error throw.
             toast({
-              title: "Google sign-in failed",
+              title: errorTitle || "Google sign-in failed",
               description: err.message || "Please try again.",
               variant: "destructive",
             });
@@ -164,7 +168,7 @@ export default function GoogleAuthButton({ onSuccess }) {
       });
 
     return () => { cancelled = true; };
-  }, [clientId, loginWithGoogle, onSuccess, toast, renderGsiButton]);
+  }, [clientId, doLogin, onSuccess, toast, errorTitle, renderGsiButton]);
 
   // Keep the invisible GSI button's hit area in sync with our custom
   // button's width whenever the layout changes (resize, font load, etc.).
