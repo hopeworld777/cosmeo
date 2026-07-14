@@ -148,6 +148,7 @@
   "email": "ელ.ფოსტა",
   "password": "პაროლი",
   "createAccountBtn": "ანგარიშის შექმნა",
+  "continueWithGoogle": "გაგრძელება Google-ით",
   "termsNotice": "ანგარიშის შექმნით თქვენ ეთანხმებით გამოყენების პირობებს.",
   "checkInbox": "შეამოწმეთ შემოსული ფოსტა",
   "verificationSentTo": "გადამოწმების ბმული გაიგზავნა",
