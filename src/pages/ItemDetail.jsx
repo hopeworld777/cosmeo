@@ -1,7 +1,8 @@
 import { useParams, Link, useLocation } from "wouter";
 import {
   ChevronLeft, Share2, Heart, ShieldCheck, MapPin,
-  Eye, Star, MessageCircle, Send, X, Loader2, Calendar, Tag, Package
+  Eye, Star, MessageCircle, Send, X, Loader2, Calendar, Tag, Package,
+  Ruler, Truck, ListChecks, Sparkles, ChevronRight
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -14,6 +15,105 @@ import { useAuth } from "@/hooks/useAuth";
 import { useTranslation } from "react-i18next";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
 import VerifiedBadge from "@/components/VerifiedBadge";
+import { getThumbUrl } from "@/lib/imageUtils";
+
+// ── Image Gallery — contained aspect-ratio hero + click-through thumbnails ──
+// Never full page height: the main frame is capped by an aspect ratio, and
+// thumbnails live below/beside it so a multi-photo listing never forces a
+// giant scroll before any info is visible.
+function ImageGallery({ images, title, isSold }) {
+  const [active, setActive] = useState(0);
+  useEffect(() => { setActive(0); }, [images]);
+
+  const hasImages = images && images.length > 0;
+  const activeSrc = hasImages ? images[active] : null;
+
+  return (
+    <div>
+      <div className="relative w-full aspect-square sm:aspect-[4/5] rounded-3xl overflow-hidden bg-muted card-shadow">
+        <AnimatePresence mode="wait">
+          {activeSrc ? (
+            <motion.img
+              key={activeSrc}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.18 }}
+              src={activeSrc}
+              alt={title}
+              className="absolute inset-0 h-full w-full object-cover"
+            />
+          ) : (
+            <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-primary/10 to-secondary/10">
+              <Package className="h-16 w-16 text-muted-foreground/20" />
+            </div>
+          )}
+        </AnimatePresence>
+
+        {isSold && (
+          <div className="absolute top-4 left-4 z-10">
+            <Badge className="bg-amber-500 text-white border-none uppercase tracking-wider font-black px-3 py-1.5 rounded-full text-xs shadow-lg flex items-center gap-1">
+              <Tag className="h-3 w-3" />Sold
+            </Badge>
+          </div>
+        )}
+
+        {hasImages && images.length > 1 && (
+          <div className="absolute bottom-3 right-3 px-2.5 py-1 rounded-full bg-black/45 backdrop-blur-md text-white text-xs font-bold tabular-nums">
+            {active + 1} / {images.length}
+          </div>
+        )}
+      </div>
+
+      {hasImages && images.length > 1 && (
+        <div className="mt-3 flex gap-2.5 overflow-x-auto no-scrollbar pb-1">
+          {images.map((src, i) => (
+            <button
+              key={src + i}
+              type="button"
+              onClick={() => setActive(i)}
+              aria-label={`${title} photo ${i + 1}`}
+              className={`relative shrink-0 h-16 w-16 sm:h-[4.5rem] sm:w-[4.5rem] rounded-2xl overflow-hidden transition-all ${
+                i === active
+                  ? "ring-2 ring-primary ring-offset-2 ring-offset-background"
+                  : "opacity-60 hover:opacity-100"
+              }`}
+            >
+              <img src={getThumbUrl(src)} alt="" className="h-full w-full object-cover" />
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── Below-fold info section — glass card with icon header, hidden entirely
+// when it has nothing to show (caller passes hasContent). ──────────────────
+function InfoSection({ icon: Icon, title, hasContent, children }) {
+  if (!hasContent) return null;
+  return (
+    <div className="rounded-3xl bg-card/80 backdrop-blur-sm border border-border/40 card-shadow p-5 sm:p-6">
+      <div className="flex items-center gap-2.5 mb-4">
+        <div className="h-8 w-8 rounded-xl bg-gradient-to-br from-primary/15 to-secondary/15 flex items-center justify-center shrink-0">
+          <Icon className="h-4 w-4 text-primary" />
+        </div>
+        <h3 className="text-base font-black text-foreground">{title}</h3>
+      </div>
+      {children}
+    </div>
+  );
+}
+
+function DetailRow({ label, value }) {
+  if (!value) return null;
+  return (
+    <div className="flex items-center justify-between gap-4 py-2 border-b border-border/30 last:border-b-0">
+      <span className="text-sm font-bold text-muted-foreground">{label}</span>
+      <span className="text-sm font-extrabold text-foreground text-right">{value}</span>
+    </div>
+  );
+}
 
 // ── Seller Review Modal — buyer rates the seller from a sold listing ──────────
 function SellerReviewModal({ listing, onClose, onSubmitted }) {
@@ -150,7 +250,7 @@ export default function ItemDetail() {
   const [convId, setConvId] = useState(null);
   const [chatMessages, setChatMessages] = useState([]);
   const [chatLoading, setChatLoading] = useState(false);
-  const [heroLoaded, setHeroLoaded] = useState(false);
+  const [descExpanded, setDescExpanded] = useState(false);
   const chatEndRef = useRef(null);
   const inputRef = useRef(null);
 
@@ -179,12 +279,17 @@ export default function ItemDetail() {
 
   if (loading) {
     return (
-      <div className="flex flex-col h-full bg-background animate-pulse">
-        <div className="w-full aspect-[3/4] bg-muted" />
-        <div className="p-6 space-y-4">
-          <div className="h-8 bg-muted rounded w-2/3" />
-          <div className="h-4 bg-muted rounded w-1/2" />
-          <div className="h-20 bg-muted rounded w-full" />
+      <div className="min-h-full bg-background animate-pulse">
+        <div className="mx-auto w-full max-w-6xl px-4 pt-4 lg:px-8 lg:pt-8">
+          <div className="grid grid-cols-1 lg:grid-cols-[1.15fr_0.85fr] lg:gap-10">
+            <div className="w-full aspect-square sm:aspect-[4/5] rounded-3xl bg-muted" />
+            <div className="mt-5 lg:mt-0 space-y-4">
+              <div className="h-8 bg-muted rounded-full w-2/3" />
+              <div className="h-4 bg-muted rounded-full w-1/2" />
+              <div className="h-24 bg-muted rounded-3xl w-full" />
+              <div className="h-14 bg-muted rounded-2xl w-full" />
+            </div>
+          </div>
         </div>
       </div>
     );
@@ -330,287 +435,385 @@ export default function ItemDetail() {
     }
   };
 
-  const imageSrc = listing.images && listing.images.length > 0 ? listing.images[0] : null;
+  const images = listing.images && listing.images.length > 0 ? listing.images : [];
   const sellerInitial = listing.seller_username ? listing.seller_username.slice(0, 2).toUpperCase() : "U";
   const formatGEL = (n) => n != null ? `₾${Number(n).toFixed(0)}` : null;
+  const isSold = listing.status === "sold";
+  const memberSinceYear = listing.seller_created_at ? new Date(listing.seller_created_at).getFullYear() : null;
+  const description = listing.description || "";
+  const descIsLong = description.length > 220;
+  const rentalDurationText = listing.rental_duration === "custom"
+    ? listing.rental_duration_custom
+    : listing.rental_duration ? t(`rentalDuration_${listing.rental_duration}`) : null;
+
+  const hasCostumeDetails = !!(listing.fandom || listing.brand || listing.category);
+  const hasIncludedItems = Array.isArray(listing.included_items) && listing.included_items.length > 0;
+  const hasSizeInfo = !!(listing.size || listing.height_range || listing.measurements || listing.shoe_size);
+  const hasRentalRules = listing.is_for_rent && !!(listing.deposit_amount || rentalDurationText || listing.care_instructions || listing.damage_policy);
+  const hasDelivery = !!(listing.delivery_method || listing.location || listing.seller_location);
+
+  // ── Shared CTA block — rendered once in the sticky right panel, used on
+  // both mobile (flows right after the gallery) and desktop (sticky sidebar).
+  const ctaBlock = isOwner ? (
+    <div className="flex gap-3">
+      <Button
+        variant="outline"
+        className={`flex-1 h-14 rounded-2xl border-2 font-bold transition-colors ${
+          isSold
+            ? "border-muted-foreground/40 bg-muted/50 text-muted-foreground hover:bg-muted hover:border-muted-foreground/60"
+            : "border-secondary bg-secondary/10 text-secondary hover:bg-secondary/20 hover:text-secondary"
+        }`}
+        onClick={handleToggleSold}
+      >
+        <span className="text-sm font-black leading-tight">
+          {isSold ? t("markAsAvailable") : t("markAsSold")}
+        </span>
+      </Button>
+      <Button
+        className="flex-1 h-14 rounded-2xl bg-red-500 hover:bg-red-600 text-white font-black text-sm shadow-[0_8px_20px_rgba(239,68,68,0.25)] transition-colors"
+        onClick={handleDelete}
+      >
+        {t("deleteListing")}
+      </Button>
+    </div>
+  ) : isSold ? (
+    user && listing.seller_id !== user.id ? (
+      <motion.button
+        whileTap={{ scale: 0.97 }}
+        onClick={() => setRateSellerOpen(true)}
+        className="w-full h-14 rounded-2xl bg-gradient-to-r from-amber-400 to-orange-400 text-white font-black text-base flex items-center justify-center gap-2 shadow-md hover:opacity-90 transition-opacity"
+      >
+        <Star className="h-5 w-5 fill-white" />
+        Rate this Seller
+      </motion.button>
+    ) : (
+      <div className="w-full h-14 rounded-2xl bg-muted/60 border-2 border-muted flex items-center justify-center gap-2">
+        <Tag className="h-5 w-5 text-muted-foreground/60" />
+        <span className="font-black text-sm text-muted-foreground">{t("itemSoldNote")}</span>
+      </div>
+    )
+  ) : (
+    <div className="flex gap-3">
+      {listing.is_for_rent && listing.rent_price && (
+        <Button
+          className="flex-1 h-14 rounded-2xl bg-secondary/10 border-2 border-secondary text-secondary hover:bg-secondary/20 hover:text-secondary"
+          variant="outline"
+          onClick={openChat}
+        >
+          <div className="flex flex-col items-center">
+            <span className="text-[11px] font-bold opacity-80 uppercase tracking-wide">{t("rentDay")}</span>
+            <span className="font-black text-base">{formatGEL(listing.rent_price)}<span className="text-xs font-bold opacity-70">/d</span></span>
+          </div>
+        </Button>
+      )}
+      {listing.is_for_sale && listing.price && (
+        <Button
+          className="flex-[2] h-14 rounded-2xl bg-gradient-to-r from-primary to-secondary text-white font-black text-lg shadow-[0_8px_20px_rgba(139,92,246,0.3)] hover:opacity-90 transition-opacity"
+          onClick={openChat}
+        >
+          <MessageCircle className="h-5 w-5 mr-1.5" />
+          {t("messageSeller")}
+        </Button>
+      )}
+      {!listing.is_for_sale && listing.is_for_rent && !listing.rent_price && (
+        <Button
+          className="flex-1 h-14 rounded-2xl bg-gradient-to-r from-primary to-secondary text-white font-black text-lg shadow-[0_8px_20px_rgba(139,92,246,0.3)] hover:opacity-90 transition-opacity"
+          onClick={openChat}
+        >
+          <MessageCircle className="h-5 w-5 mr-1.5" />
+          {t("messageSeller")}
+        </Button>
+      )}
+    </div>
+  );
 
   return (
-    <div className="flex flex-col min-h-full bg-background relative md:max-w-3xl md:mx-auto md:w-full" style={{ paddingBottom: "max(8rem, calc(5rem + env(safe-area-inset-bottom)))" }}>
+    <div className="min-h-full bg-background pb-10 sm:pb-16">
 
-      {/* Sticky Top Nav */}
-      <div className="absolute top-0 left-0 right-0 z-50 flex justify-between items-center px-4 pt-4 pb-2">
-        {/* Back */}
-        <div
+      {/* Top toolbar — in normal flow (not overlaid on the image), so the
+          gallery below never has to fight for contrast against controls. */}
+      <div className="flex items-center justify-between px-4 py-3 sm:px-6 lg:px-8 lg:py-4">
+        <button
           onClick={() => window.history.back()}
-          className="flex h-11 w-11 shrink-0 cursor-pointer items-center justify-center rounded-full bg-card card-shadow text-foreground hover:scale-105 transition-transform"
+          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-card card-shadow text-foreground hover:scale-105 transition-transform"
         >
           <ChevronLeft className="h-6 w-6" />
-        </div>
+        </button>
 
-        {/* Right-side controls — lang switcher then listing actions, all in one row */}
         <div className="flex items-center gap-2">
           <LanguageSwitcher />
-          <div onClick={handleShare} className="flex h-11 w-11 shrink-0 cursor-pointer items-center justify-center rounded-full bg-card card-shadow text-foreground hover:scale-105 transition-transform">
+          <button onClick={handleShare} className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-card card-shadow text-foreground hover:scale-105 transition-transform">
             <Share2 className="h-5 w-5" />
-          </div>
-          <div
+          </button>
+          <button
             onClick={handleLikeToggle}
-            className="flex h-11 w-11 shrink-0 cursor-pointer items-center justify-center rounded-full bg-card card-shadow text-muted-foreground hover:scale-105 transition-transform"
+            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-card card-shadow text-muted-foreground hover:scale-105 transition-transform"
           >
             <Heart className={`h-6 w-6 transition-colors ${isLiked ? "fill-secondary text-secondary" : ""}`} />
-          </div>
+          </button>
         </div>
       </div>
 
-      {/* Hero Image */}
-      <div className="relative w-full aspect-[3/4] bg-muted">
-        {imageSrc ? (
-          <img
-            src={imageSrc}
-            alt={listing.title}
-            className={`w-full h-full object-cover transition-opacity duration-300 ${heroLoaded ? "opacity-100" : "opacity-0"}`}
-            onLoad={() => setHeroLoaded(true)}
-            onError={(e) => {
-              setHeroLoaded(true);
-              e.target.style.display = "none";
-              const placeholder = e.target.nextElementSibling;
-              if (placeholder) placeholder.style.display = "flex";
-            }}
-          />
-        ) : null}
-        <div
-          className="w-full h-full bg-gradient-to-br from-primary/10 to-secondary/10 items-center justify-center"
-          style={{ display: imageSrc ? "none" : "flex" }}
-        >
-          <Package className="h-16 w-16 text-muted-foreground/20" />
-        </div>
-        {/* Shimmer skeleton while the full-size image loads */}
-        {imageSrc && !heroLoaded && (
-          <div className="absolute inset-0 animate-pulse bg-muted pointer-events-none" />
-        )}
-        <div className="absolute inset-0 bg-gradient-to-t from-background/50 to-transparent pointer-events-none" />
-      </div>
+      <div className="mx-auto w-full max-w-6xl px-4 sm:px-6 lg:px-8">
 
-      {/* Content Card */}
-      <div className="relative -mt-12 rounded-t-[2.5rem] bg-card p-6 pb-8 shadow-[0_-8px_30px_rgba(0,0,0,0.06)] flex-1">
-        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
+        {/* ── Two-column hero: gallery (left, ~58%) + sticky info panel (right) ── */}
+        <div className="grid grid-cols-1 lg:grid-cols-[1.35fr_1fr] lg:gap-10 xl:gap-14">
 
-          {/* Badges */}
-          <div className="flex items-center gap-2 mb-4 flex-wrap">
-            {listing.status === "sold" && (
-              <Badge className="bg-amber-100 text-amber-700 border border-amber-200 uppercase tracking-wider font-black px-3 py-1 rounded-full text-xs flex items-center gap-1">
-                <Tag className="h-3 w-3" />{t("soldLabel")}
-              </Badge>
-            )}
-            {listing.fandom && (
-              <Badge className="bg-primary/10 text-primary border-none uppercase tracking-wider font-bold px-3 py-1 rounded-full text-xs">
-                {listing.fandom}
-              </Badge>
-            )}
-            {listing.condition && (
-              <Badge className="bg-secondary/10 text-secondary border-none uppercase font-bold px-3 py-1 rounded-full text-xs">
-                {listing.condition}
-              </Badge>
-            )}
-            {listing.category && (
-              <Badge variant="outline" className="border-border text-muted-foreground capitalize font-bold px-3 py-1 rounded-full text-xs">
-                {listing.category}
-              </Badge>
-            )}
-            {listing.brand && (
-              <Badge className="bg-violet-100 text-violet-700 border-none font-bold px-3 py-1 rounded-full text-xs">
-                {t(`brand_${listing.brand}`, { defaultValue: listing.brand })}
-              </Badge>
-            )}
+          {/* LEFT — image gallery */}
+          <div>
+            <ImageGallery images={images} title={listing.title} isSold={isSold} />
           </div>
 
-          {/* Title */}
-          <h1 className="text-3xl font-black leading-tight mb-3 text-foreground">{listing.title}</h1>
+          {/* RIGHT — sticky listing info panel */}
+          <div className="mt-5 lg:mt-0">
+            <div className="lg:sticky lg:top-6 rounded-3xl bg-card/70 backdrop-blur-md border border-border/40 card-shadow p-5 sm:p-6 space-y-5">
 
-          {/* Meta row */}
-          <div className="flex items-center gap-4 text-sm text-muted-foreground mb-4 font-bold flex-wrap">
-            {(listing.location || listing.seller_location) && (
-              <span className="flex items-center gap-1.5">
-                <MapPin className="h-4 w-4 text-primary" />
-                {listing.location || listing.seller_location}
-              </span>
-            )}
-            <span className="flex items-center gap-1.5">
-              <Eye className="h-4 w-4 text-secondary" />
-              {listing.views || 0} {t("viewedLabel")}
-            </span>
-            {listing.sold_at && (
-              <span className="flex items-center gap-1.5 text-amber-600">
-                <Calendar className="h-4 w-4" />
-                Sold {new Date(listing.sold_at).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}
-              </span>
-            )}
-          </div>
-
-          {/* Price row */}
-          <div className="flex items-center gap-3 mb-4">
-            {listing.is_for_sale && listing.price && (
-              <div className="flex flex-col">
-                <span className="text-xs font-bold text-muted-foreground uppercase tracking-wide">{t("priceLabel")}</span>
-                <span className="text-3xl font-black text-primary">{formatGEL(listing.price)}</span>
+              {/* Badges */}
+              <div className="flex items-center gap-2 flex-wrap">
+                {listing.is_for_sale && (
+                  <Badge className="bg-primary text-primary-foreground border-none font-black px-3 py-1 rounded-full text-xs uppercase tracking-wide">
+                    {t("saleBadge")}
+                  </Badge>
+                )}
+                {listing.is_for_rent && (
+                  <Badge className="bg-secondary text-secondary-foreground border-none font-black px-3 py-1 rounded-full text-xs uppercase tracking-wide">
+                    {t("rentBadge")}
+                  </Badge>
+                )}
+                {isSold && (
+                  <Badge className="bg-amber-100 text-amber-700 border border-amber-200 uppercase tracking-wider font-black px-3 py-1 rounded-full text-xs flex items-center gap-1">
+                    <Tag className="h-3 w-3" />{t("soldLabel")}
+                  </Badge>
+                )}
+                {listing.condition && (
+                  <Badge variant="outline" className="border-border text-muted-foreground font-bold px-3 py-1 rounded-full text-xs">
+                    {listing.condition}
+                  </Badge>
+                )}
               </div>
-            )}
-            {listing.is_for_rent && listing.rent_price && (
-              <div className="flex flex-col ml-4 pl-4 border-l border-border">
-                <span className="text-xs font-bold text-muted-foreground uppercase tracking-wide">{t("rentDay")}</span>
-                <span className="text-2xl font-black text-secondary">{formatGEL(listing.rent_price)}</span>
+
+              {/* Title */}
+              <h1 className="text-2xl sm:text-3xl font-black leading-tight text-foreground">{listing.title}</h1>
+
+              {/* Meta row */}
+              <div className="flex items-center gap-4 text-xs text-muted-foreground font-bold flex-wrap -mt-1">
+                {(listing.location || listing.seller_location) && (
+                  <span className="flex items-center gap-1.5">
+                    <MapPin className="h-3.5 w-3.5 text-primary" />
+                    {listing.location || listing.seller_location}
+                  </span>
+                )}
+                <span className="flex items-center gap-1.5">
+                  <Eye className="h-3.5 w-3.5 text-secondary" />
+                  {listing.views || 0} {t("viewedLabel")}
+                </span>
+                {listing.sold_at && (
+                  <span className="flex items-center gap-1.5 text-amber-600">
+                    <Calendar className="h-3.5 w-3.5" />
+                    Sold {new Date(listing.sold_at).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}
+                  </span>
+                )}
               </div>
-            )}
-          </div>
 
-          {/* Hand-to-Hand Exchange Banner */}
-          <div className="flex items-start gap-3 bg-amber-50 border border-amber-200/60 rounded-2xl px-4 py-3 mb-3">
-            <MapPin className="h-4 w-4 text-amber-600 mt-0.5 shrink-0" />
-            <p className="text-[13px] font-semibold text-amber-800 leading-snug">
-              {t("handoffBanner")}
-            </p>
-          </div>
-
-          {/* Safety reminder */}
-          <div className="flex items-center gap-2 mb-6 px-1">
-            <span className="text-xs font-semibold text-muted-foreground flex items-center gap-1"><ShieldCheck className="h-3.5 w-3.5 text-primary shrink-0" />{t("safetyMeetReminder")}</span>
-            <Link href="/terms">
-              <span className="text-xs font-bold text-primary hover:underline cursor-pointer">
-                {t("readSafetyGuide")} →
-              </span>
-            </Link>
-          </div>
-
-          {/* Description */}
-          {listing.description && (
-            <p className="text-muted-foreground leading-relaxed mb-8 font-medium text-base">
-              {listing.description}
-            </p>
-          )}
-
-          {/* Seller Card */}
-          <div className="mb-6 bg-gradient-to-br from-primary/5 to-secondary/5 p-5 rounded-3xl border border-border/40">
-            <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-3">{t("seller")}</p>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <Avatar className="h-14 w-14 border-2 border-primary/20">
+              {/* Seller profile preview + trust indicators */}
+              <div className="flex items-center gap-3 p-3 rounded-2xl bg-muted/40 border border-border/30">
+                <Avatar className="h-11 w-11 border-2 border-primary/20 shrink-0">
                   <AvatarImage src={listing.seller_avatar} />
-                  <AvatarFallback className="bg-primary/10 text-primary font-black text-lg">{sellerInitial}</AvatarFallback>
+                  <AvatarFallback className="bg-primary/10 text-primary font-black">{sellerInitial}</AvatarFallback>
                 </Avatar>
-                <div>
-                  <p className="font-extrabold text-foreground text-lg leading-tight flex items-center gap-1.5">
+                <div className="min-w-0 flex-1">
+                  <p className="font-extrabold text-foreground text-sm leading-tight flex items-center gap-1.5 truncate">
                     {listing.seller_username}
-                    {listing.seller_is_verified && <VerifiedBadge size={16} />}
+                    {listing.seller_is_verified && <VerifiedBadge size={14} />}
                   </p>
-                  <div className="flex items-center gap-1.5 text-sm font-bold text-muted-foreground mt-1">
-                    <Star className="h-4 w-4 fill-amber-400 text-amber-400" />
-                    <span className="text-foreground">{listing.seller_rating ? Number(listing.seller_rating).toFixed(1) : "New"}</span>
-                    <span>({listing.seller_review_count || 0} {t("reviewsLabel")})</span>
+                  <div className="flex items-center gap-1.5 text-xs font-bold text-muted-foreground mt-0.5">
+                    <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
+                    <span className="text-foreground">{listing.seller_rating ? Number(listing.seller_rating).toFixed(1) : t("newSeller")}</span>
+                    {listing.seller_review_count > 0 && <span>({listing.seller_review_count} {t("reviewsLabel")})</span>}
                   </div>
                 </div>
+                <div className="h-9 w-9 bg-primary/10 rounded-full flex items-center justify-center shrink-0">
+                  <ShieldCheck className="h-4.5 w-4.5 text-primary" />
+                </div>
               </div>
-              <div className="h-10 w-10 bg-primary/10 rounded-full flex items-center justify-center">
-                <ShieldCheck className="h-5 w-5 text-primary" />
-              </div>
-            </div>
 
-            {(!user || listing.seller_id !== user.id) && listing.status !== "sold" && (
-              <motion.button
-                whileTap={{ scale: 0.96 }}
-                onClick={openChat}
-                className="mt-4 w-full h-12 rounded-2xl bg-gradient-to-r from-primary to-secondary text-white font-bold flex items-center justify-center gap-2 shadow-[0_4px_14px_rgba(124,58,237,0.3)] hover:opacity-90 transition-opacity"
-              >
-                <MessageCircle className="h-5 w-5" />
-                {t("openChat")}
-              </motion.button>
-            )}
-            {listing.status === "sold" && user && listing.seller_id !== user.id && (
-              <motion.button
-                whileTap={{ scale: 0.96 }}
-                onClick={() => setRateSellerOpen(true)}
-                className="mt-4 w-full h-12 rounded-2xl bg-gradient-to-r from-amber-400 to-orange-400 text-white font-bold flex items-center justify-center gap-2 shadow-md hover:opacity-90 transition-opacity"
-              >
-                <Star className="h-5 w-5 fill-white" />
-                Rate this Seller
-              </motion.button>
-            )}
-          </div>
-
-          {/* Size & Category grid */}
-          <div className="grid grid-cols-2 gap-4">
-            {listing.size && (
-              <div className="bg-muted/50 p-5 rounded-3xl">
-                <p className="text-sm text-muted-foreground font-bold mb-1">{t("size")}</p>
-                <p className="font-extrabold text-lg text-foreground">{listing.size}</p>
-              </div>
-            )}
-            {listing.category && (
-              <div className="bg-muted/50 p-5 rounded-3xl">
-                <p className="text-sm text-muted-foreground font-bold mb-1">{t("category")}</p>
-                <p className="font-extrabold text-lg text-foreground capitalize">{listing.category}</p>
-              </div>
-            )}
-          </div>
-        </motion.div>
-      </div>
-
-      {/* Bottom Sticky Action Bar */}
-      <div className="fixed bottom-0 left-0 right-0 bg-card/95 backdrop-blur-xl shadow-[0_-8px_30px_rgba(0,0,0,0.06)] z-40 flex gap-3 max-w-[430px] md:max-w-3xl mx-auto rounded-t-3xl px-4 pt-4" style={{ paddingBottom: "max(1rem, env(safe-area-inset-bottom))" }}>
-        {isOwner ? (
-          /* ── Owner actions ── */
-          <>
-            <Button
-              variant="outline"
-              className={`flex-1 h-16 rounded-2xl border-2 font-bold transition-colors ${
-                listing.status === "sold"
-                  ? "border-muted-foreground/40 bg-muted/50 text-muted-foreground hover:bg-muted hover:border-muted-foreground/60"
-                  : "border-secondary bg-secondary/10 text-secondary hover:bg-secondary/20 hover:text-secondary"
-              }`}
-              onClick={handleToggleSold}
-            >
-              <span className="text-base font-black leading-tight">
-                {listing.status === "sold" ? t("markAsAvailable") : t("markAsSold")}
-              </span>
-            </Button>
-            <Button
-              className="flex-[2] h-16 rounded-2xl bg-red-500 hover:bg-red-600 text-white font-black text-base shadow-[0_8px_20px_rgba(239,68,68,0.25)] transition-colors"
-              onClick={handleDelete}
-            >
-              {t("deleteListing")}
-            </Button>
-          </>
-        ) : (
-          /* ── Buyer actions ── */
-          listing.status === "sold" ? (
-            <div className="flex-1 h-16 rounded-2xl bg-muted/60 border-2 border-muted flex items-center justify-center gap-2">
-              <Tag className="h-5 w-5 text-muted-foreground/60" />
-              <span className="font-black text-base text-muted-foreground">{t("itemSoldNote")}</span>
-            </div>
-          ) : (
-            <>
-              {listing.is_for_rent && listing.rent_price && (
-                <Button
-                  className="flex-1 h-16 rounded-2xl bg-secondary/10 border-2 border-secondary text-secondary hover:bg-secondary/20 hover:text-secondary"
-                  variant="outline"
-                  onClick={openChat}
-                >
-                  <div className="flex flex-col items-center">
-                    <span className="text-xs font-bold opacity-80 uppercase tracking-wide">{t("rentDay")}</span>
-                    <span className="font-black text-lg">{formatGEL(listing.rent_price)}<span className="text-xs font-bold opacity-70">/d</span></span>
+              {/* Price */}
+              <div className="flex items-center gap-3 flex-wrap">
+                {listing.is_for_sale && listing.price && (
+                  <div className="flex flex-col">
+                    <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-wide">{t("priceLabel")}</span>
+                    <span className="text-3xl font-black text-primary">{formatGEL(listing.price)}</span>
                   </div>
-                </Button>
+                )}
+                {listing.is_for_rent && listing.rent_price && (
+                  <div className={`flex flex-col ${listing.is_for_sale ? "ml-2 pl-4 border-l border-border" : ""}`}>
+                    <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-wide">{t("rentDay")}</span>
+                    <span className="text-2xl font-black text-secondary">{formatGEL(listing.rent_price)}</span>
+                  </div>
+                )}
+              </div>
+
+              {/* Main CTA */}
+              {ctaBlock}
+
+              {/* Hand-to-hand + safety reminder, compact */}
+              <div className="space-y-2">
+                <div className="flex items-start gap-2.5 bg-amber-50 border border-amber-200/60 rounded-2xl px-3.5 py-2.5">
+                  <MapPin className="h-3.5 w-3.5 text-amber-600 mt-0.5 shrink-0" />
+                  <p className="text-[12px] font-semibold text-amber-800 leading-snug">
+                    {t("handoffBanner")}
+                  </p>
+                </div>
+                <div className="flex items-center gap-2 px-1">
+                  <span className="text-[11px] font-semibold text-muted-foreground flex items-center gap-1">
+                    <ShieldCheck className="h-3.5 w-3.5 text-primary shrink-0" />{t("safetyMeetReminder")}
+                  </span>
+                  <Link href="/terms">
+                    <span className="text-[11px] font-bold text-primary hover:underline cursor-pointer">
+                      {t("readSafetyGuide")} →
+                    </span>
+                  </Link>
+                </div>
+              </div>
+
+              {/* Short summary */}
+              {description && (
+                <p className="text-sm text-muted-foreground leading-relaxed line-clamp-3">
+                  {description}
+                </p>
               )}
-              {listing.is_for_sale && listing.price && (
-                <Button
-                  className="flex-[2] h-16 rounded-2xl bg-gradient-to-r from-primary to-secondary text-white font-black text-xl shadow-[0_8px_20px_rgba(139,92,246,0.3)] hover:opacity-90 transition-opacity"
-                  onClick={openChat}
-                >
-                  {t("messageSeller")}
-                </Button>
+
+              {/* Key details chips */}
+              {(listing.size || listing.category || listing.fandom) && (
+                <div>
+                  <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest mb-2">{t("keyDetails")}</p>
+                  <div className="grid grid-cols-2 gap-2.5">
+                    {listing.size && (
+                      <div className="bg-muted/50 px-3.5 py-2.5 rounded-xl">
+                        <p className="text-[11px] text-muted-foreground font-bold mb-0.5">{t("size")}</p>
+                        <p className="font-extrabold text-sm text-foreground">{listing.size}</p>
+                      </div>
+                    )}
+                    {listing.category && (
+                      <div className="bg-muted/50 px-3.5 py-2.5 rounded-xl">
+                        <p className="text-[11px] text-muted-foreground font-bold mb-0.5">{t("category")}</p>
+                        <p className="font-extrabold text-sm text-foreground capitalize">{listing.category}</p>
+                      </div>
+                    )}
+                    {listing.fandom && (
+                      <div className="bg-muted/50 px-3.5 py-2.5 rounded-xl col-span-2">
+                        <p className="text-[11px] text-muted-foreground font-bold mb-0.5">{t("fandomLabel")}</p>
+                        <p className="font-extrabold text-sm text-foreground">{listing.fandom}</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
               )}
-            </>
-          )
-        )}
+            </div>
+          </div>
+        </div>
+
+        {/* ── Below-the-fold organized sections ───────────────────────── */}
+        <div className="mt-8 lg:mt-12 grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-5">
+
+          <InfoSection icon={Sparkles} title={t("descriptionSection")} hasContent={!!description}>
+            <p className="text-sm text-muted-foreground leading-relaxed font-medium whitespace-pre-wrap">
+              {descIsLong && !descExpanded ? `${description.slice(0, 220).trim()}…` : description}
+            </p>
+            {descIsLong && (
+              <button
+                onClick={() => setDescExpanded((v) => !v)}
+                className="mt-2 text-xs font-bold text-primary hover:underline"
+              >
+                {descExpanded ? t("viewLessDescription") : t("viewFullDescription")}
+              </button>
+            )}
+          </InfoSection>
+
+          <InfoSection icon={Tag} title={t("costumeDetailsSection")} hasContent={hasCostumeDetails}>
+            <div className="space-y-0.5">
+              <DetailRow label={t("fandomLabel")} value={listing.fandom} />
+              <DetailRow label={t("brandLabel")} value={listing.brand && t(`brand_${listing.brand}`, { defaultValue: listing.brand })} />
+              <DetailRow label={t("categoryLabel")} value={listing.category} />
+            </div>
+          </InfoSection>
+
+          <InfoSection icon={ListChecks} title={t("includedItemsSection")} hasContent={hasIncludedItems}>
+            <ul className="space-y-1.5">
+              {(listing.included_items || []).map((item, i) => (
+                <li key={i} className="flex items-center gap-2 text-sm font-semibold text-foreground">
+                  <span className="h-1.5 w-1.5 rounded-full bg-primary shrink-0" />
+                  {item}
+                </li>
+              ))}
+            </ul>
+          </InfoSection>
+
+          <InfoSection icon={Ruler} title={t("sizeInformationSection")} hasContent={hasSizeInfo}>
+            <div className="space-y-0.5">
+              <DetailRow label={t("size")} value={listing.size} />
+              <DetailRow label={t("heightRangeLabel")} value={listing.height_range} />
+              <DetailRow label={t("measurementsLabel")} value={listing.measurements} />
+              <DetailRow label={t("shoeSizeLabel")} value={listing.shoe_size} />
+            </div>
+          </InfoSection>
+
+          <InfoSection icon={ShieldCheck} title={t("conditionSection")} hasContent={!!listing.condition}>
+            <p className="text-sm font-extrabold text-foreground">{listing.condition}</p>
+          </InfoSection>
+
+          <InfoSection icon={Calendar} title={t("rentalRulesSection")} hasContent={hasRentalRules}>
+            <div className="space-y-0.5">
+              <DetailRow label={t("depositLabel")} value={formatGEL(listing.deposit_amount)} />
+              <DetailRow label={t("rentalDurationLabel")} value={rentalDurationText} />
+              <DetailRow label={t("careInstructionsLabel")} value={listing.care_instructions} />
+              <DetailRow label={t("damagePolicyLabel")} value={listing.damage_policy} />
+            </div>
+          </InfoSection>
+
+          <InfoSection icon={Truck} title={t("deliveryOptionsSection")} hasContent={hasDelivery}>
+            <div className="space-y-0.5">
+              <DetailRow label={t("deliveryMethodLabel")} value={listing.delivery_method && t(`delivery_${listing.delivery_method}`)} />
+              <DetailRow label={t("locationLabel")} value={listing.location || listing.seller_location} />
+            </div>
+          </InfoSection>
+
+          <InfoSection icon={Star} title={t("sellerInformationSection")} hasContent={true}>
+            <div className="flex items-center gap-3 mb-3">
+              <Avatar className="h-12 w-12 border-2 border-primary/20 shrink-0">
+                <AvatarImage src={listing.seller_avatar} />
+                <AvatarFallback className="bg-primary/10 text-primary font-black">{sellerInitial}</AvatarFallback>
+              </Avatar>
+              <div className="min-w-0">
+                <p className="font-extrabold text-foreground text-sm leading-tight flex items-center gap-1.5 truncate">
+                  {listing.seller_username}
+                  {listing.seller_is_verified && <VerifiedBadge size={14} />}
+                </p>
+                <div className="flex items-center gap-1.5 text-xs font-bold text-muted-foreground mt-0.5 flex-wrap">
+                  <span className="flex items-center gap-1">
+                    <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
+                    {listing.seller_rating ? Number(listing.seller_rating).toFixed(1) : t("newSeller")}
+                  </span>
+                  {listing.seller_sales > 0 && <span>{t("salesCountLabel", { count: listing.seller_sales })}</span>}
+                  {memberSinceYear && <span>{t("memberSince", { year: memberSinceYear })}</span>}
+                </div>
+              </div>
+            </div>
+            {listing.seller_bio && (
+              <p className="text-sm text-muted-foreground leading-relaxed font-medium mb-3">{listing.seller_bio}</p>
+            )}
+            {!isOwner && (
+              <button
+                onClick={openChat}
+                className="w-full h-11 rounded-xl bg-muted/60 hover:bg-muted text-foreground font-bold text-sm flex items-center justify-center gap-2 transition-colors"
+              >
+                <MessageCircle className="h-4 w-4" />
+                {t("messageSeller")}
+                <ChevronRight className="h-4 w-4 opacity-50" />
+              </button>
+            )}
+          </InfoSection>
+        </div>
       </div>
 
       {/* ── Chat Overlay ──────────────────────────────────────────────── */}

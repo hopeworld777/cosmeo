@@ -12,12 +12,20 @@ export function AuthProvider({ children }) {
   // Defaults to true (fail closed) until /api/config resolves; flip
   // PUBLIC_LAUNCH=true server-side at launch to turn this false for everyone.
   const [waitlistEnabled, setWaitlistEnabled] = useState(true);
+  // Tracks whether /api/config has resolved (success or failure) at least
+  // once. WaitlistGate must wait on this too — otherwise a direct deep link
+  // (e.g. /item/42) mounts with the fail-closed waitlistEnabled=true default
+  // and bounces a fully-public visitor to "/" before the real flag (false)
+  // arrives, only to redirect again once it does. Two client-side redirects
+  // for what should be a single page load.
+  const [configLoaded, setConfigLoaded] = useState(false);
 
   useEffect(() => {
     fetch("/api/config")
       .then(r => r.json())
       .then(cfg => setWaitlistEnabled(cfg.waitlistEnabled !== false))
-      .catch(() => {}); // keep the safe default (gate enforced) on failure
+      .catch(() => {}) // keep the safe default (gate enforced) on failure
+      .finally(() => setConfigLoaded(true));
   }, []);
 
   const fetchMe = useCallback(async () => {
@@ -97,7 +105,7 @@ export function AuthProvider({ children }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, loginWithGoogle, loginAdminWithGoogle, logout, setUser, waitlistEnabled }}>
+    <AuthContext.Provider value={{ user, loading, login, register, loginWithGoogle, loginAdminWithGoogle, logout, setUser, waitlistEnabled, configLoaded }}>
       {children}
     </AuthContext.Provider>
   );

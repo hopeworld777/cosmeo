@@ -154,11 +154,11 @@ function OnboardingGuard() {
 // /register are only reachable after a valid /invite/:code visit this
 // session (see isAuthRoutePublic) so the site stays closed until invited.
 function WaitlistGate() {
-  const { user, loading, waitlistEnabled } = useAuth();
+  const { user, loading, waitlistEnabled, configLoaded } = useAuth();
   const [location, setLocation] = useLocation();
 
   useEffect(() => {
-    if (loading || hasFullAccess(user, waitlistEnabled)) return;
+    if (loading || !configLoaded || hasFullAccess(user, waitlistEnabled)) return;
     const isPublic = WAITLIST_PUBLIC.some(r =>
       r === "/" ? location === "/" : location === r || location.startsWith(r + "/")
     ) || isAuthRoutePublic(location);
