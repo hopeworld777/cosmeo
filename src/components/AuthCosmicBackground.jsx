@@ -4,6 +4,139 @@
 // Purely decorative — pointer-events-none throughout — and respects
 // prefers-reduced-motion by disabling all keyframe animation.
 
+// Magical shooting-star element: curved trail + 4-point glowing star head + dust.
+function MagicShootingStar({ id, length, isDark }) {
+  const h = 28;
+
+  // Quadratic bezier control points for a gentle arc
+  // Start: left edge, slightly below center (trail originates here, faint)
+  // Control: midway, slightly above centre (creates a gentle upward arc)
+  // End: right edge, centre (star lives here — the leading edge)
+  const P0 = { x: 0,          y: h / 2 + 6 };
+  const P1 = { x: length * 0.5, y: h / 2 - 3 };
+  const P2 = { x: length,     y: h / 2 };
+
+  const bezier = (t) => ({
+    x: (1 - t) ** 2 * P0.x + 2 * (1 - t) * t * P1.x + t ** 2 * P2.x,
+    y: (1 - t) ** 2 * P0.y + 2 * (1 - t) * t * P1.y + t ** 2 * P2.y,
+  });
+
+  const trailPath  = `M${P0.x},${P0.y} Q${P1.x},${P1.y} ${P2.x},${P2.y}`;
+  const p65        = bezier(0.65);
+  const innerPath  = `M${p65.x},${p65.y} L${P2.x},${P2.y}`;
+
+  // Tiny fading dust/sparkle particles scattered just off the trail
+  const dust = [
+    { t: 0.30, dy: -2.5, r: 0.70, c: "#60a5fa", op: 0.45 },
+    { t: 0.42, dy:  1.2, r: 0.45, c: "#818cf8", op: 0.32 },
+    { t: 0.50, dy: -1.8, r: 0.60, c: "#818cf8", op: 0.38 },
+    { t: 0.58, dy:  2.4, r: 0.75, c: "#a855f7", op: 0.48 },
+    { t: 0.67, dy: -2.2, r: 0.60, c: "#c084fc", op: 0.43 },
+    { t: 0.76, dy:  2.6, r: 0.55, c: "#f472b6", op: 0.46 },
+    { t: 0.85, dy: -1.0, r: 0.65, c: "#f9a8d4", op: 0.42 },
+    { t: 0.91, dy:  1.5, r: 0.50, c: "#fecdd3", op: 0.38 },
+  ];
+
+  return (
+    <svg
+      width={length + 16}
+      height={h}
+      viewBox={`0 0 ${length + 16} ${h}`}
+      style={{ display: "block", overflow: "visible" }}
+      aria-hidden="true"
+    >
+      <defs>
+        {/* Blue → purple → pink gradient for the trail */}
+        <linearGradient id={`mg-trail-${id}`} x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%"   stopColor="transparent" />
+          <stop offset="20%"  stopColor="#60a5fa" stopOpacity={isDark ? 0.18 : 0.22} />
+          <stop offset="55%"  stopColor="#a855f7" stopOpacity={isDark ? 0.62 : 0.52} />
+          <stop offset="82%"  stopColor="#f472b6" stopOpacity={isDark ? 0.88 : 0.72} />
+          <stop offset="100%" stopColor="#fda4af" stopOpacity={isDark ? 0.75 : 0.60} />
+        </linearGradient>
+        {/* Glow filter for the star (keeps SourceGraphic, adds soft blur layer) */}
+        <filter id={`mg-glow-${id}`} x="-150%" y="-150%" width="400%" height="400%">
+          <feGaussianBlur stdDeviation="2" result="blur" />
+          <feMerge>
+            <feMergeNode in="blur" />
+            <feMergeNode in="SourceGraphic" />
+          </feMerge>
+        </filter>
+        {/* Bloom filter — pure blur used on the outer halo circle */}
+        <filter id={`mg-bloom-${id}`} x="-200%" y="-200%" width="500%" height="500%">
+          <feGaussianBlur stdDeviation="4.5" />
+        </filter>
+      </defs>
+
+      {/* Soft wide glow along the whole trail */}
+      <path
+        d={trailPath}
+        stroke="#a855f7"
+        strokeWidth="6"
+        fill="none"
+        strokeLinecap="round"
+        opacity={isDark ? 0.07 : 0.05}
+      />
+
+      {/* Main gradient trail */}
+      <path
+        d={trailPath}
+        stroke={`url(#mg-trail-${id})`}
+        strokeWidth="1.5"
+        fill="none"
+        strokeLinecap="round"
+      />
+
+      {/* Thin bright inner core — last 35% of trail near the star */}
+      <path
+        d={innerPath}
+        stroke="rgba(255,255,255,0.7)"
+        strokeWidth="0.65"
+        fill="none"
+        strokeLinecap="round"
+        opacity={isDark ? 0.62 : 0.40}
+      />
+
+      {/* Dust / sparkle particles */}
+      {dust.map((d, j) => {
+        const pt = bezier(d.t);
+        return (
+          <circle
+            key={j}
+            cx={pt.x}
+            cy={pt.y + d.dy}
+            r={d.r}
+            fill={d.c}
+            opacity={isDark ? d.op : d.op * 0.75}
+          />
+        );
+      })}
+
+      {/* ── Magical 4-point star at the leading edge ── */}
+      <g transform={`translate(${P2.x}, ${P2.y})`}>
+        {/* Outer bloom — blurred halo */}
+        <circle
+          cx="0" cy="0" r="7"
+          fill="#e879f9"
+          opacity={isDark ? 0.22 : 0.15}
+          filter={`url(#mg-bloom-${id})`}
+        />
+        {/* Mid glow ring */}
+        <circle cx="0" cy="0" r="3.2" fill="#c084fc" opacity={isDark ? 0.42 : 0.32} />
+        {/* 4-point sparkle star (same bezier-curve approach as the Sparkle component) */}
+        <path
+          d="M0,-3.8 C0,-0.65 0.65,0 3.8,0 C0.65,0 0,0.65 0,3.8 C0,0.65 -0.65,0 -3.8,0 C-0.65,0 0,-0.65 0,-3.8 Z"
+          fill="white"
+          opacity="0.97"
+          filter={`url(#mg-glow-${id})`}
+        />
+        {/* Tiny bright core dot */}
+        <circle cx="0" cy="0" r="0.9" fill="white" />
+      </g>
+    </svg>
+  );
+}
+
 // 4-pointed sparkle, matches the mark used on the waitlist page.
 function Sparkle({ size = 14, color = "#c4b5fd", opacity = 0.7, style = {} }) {
   const half = size / 2;
@@ -155,7 +288,7 @@ export default function AuthCosmicBackground({ isDark = true }) {
         />
       ))}
 
-      {/* Shooting / wishing stars — static rotate on the wrapper, animation on the streak itself */}
+      {/* Magical wishing stars — curved SVG trail + glowing 4-point star head */}
       {SHOOTING_STARS.map((s, i) => (
         <div
           key={`shoot-${i}`}
@@ -172,14 +305,12 @@ export default function AuthCosmicBackground({ isDark = true }) {
           <div
             className="absolute"
             style={{
-              width: s.length,
-              height: 2,
-              borderRadius: "999px",
-              background: `linear-gradient(90deg, transparent 0%, ${isDark ? "rgba(255,255,255,0.9)" : "rgba(124,58,237,0.8)"} 70%, transparent 100%)`,
               opacity: 0,
               animation: `acb-shoot ${parseFloat(s.dur) + parseFloat(s.pause)}s ${s.delay} linear infinite`,
             }}
-          />
+          >
+            <MagicShootingStar id={i} length={s.length} isDark={isDark} />
+          </div>
         </div>
       ))}
 
