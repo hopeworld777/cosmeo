@@ -19,7 +19,13 @@ async function request(path, options = {}) {
     ...options,
   });
   const data = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error(data.error || `Request failed: ${res.status}`);
+  if (!res.ok) {
+    const err = new Error(data.error || `Request failed: ${res.status}`);
+    // Attach any extra diagnostic fields the backend includes so callers
+    // (e.g. GoogleAuthButton) can log them without exposing them to users.
+    if (data.detail) err.detail = data.detail;
+    throw err;
+  }
   return data;
 }
 

@@ -52,6 +52,17 @@ const registerLimiter = rateLimit({
   message: { error: "Too many accounts created from this IP. Please try again later." },
 });
 
+// Google auth is both login AND registration in one hop, so it needs its own
+// limiter — stricter than login but looser than register, since a user may
+// legitimately retry several times if the popup fails on the first attempt.
+const googleAuthLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 15,                   // 15 attempts per IP per 15-minute window
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: "Too many Google sign-in attempts. Please wait 15 minutes and try again." },
+});
+
 const forgotPasswordLimiter = rateLimit({
   windowMs: 60 * 60 * 1000, // 1 hour
   max: 5,
@@ -192,37 +203,68 @@ router.get("/invite/:code", async (req, res) => {
 //      → link this Google account to it so we never create a duplicate
 //   3. create a brand-new account, same WAITLIST/VIP invite-code logic as
 //      /register, with the email pre-verified (Google already confirmed it)
-router.post("/google", registerLimiter, async (req, res) => {
+router.post("/google", googleAuthLimiter, async (req, res) => {
+  // ── Step 1: check configuration ──────────────────────────────────────────
   const googleAuth = getGoogleClient();
   if (!googleAuth) {
+    console.error("[google-auth] FAIL step=config — no client ID in env (Google_OAuth_Client_ID / GOOGLE_CLIENT_ID)");
     return res.status(503).json({ error: "Google sign-in is not configured" });
   }
   const { googleClient, id: GOOGLE_CLIENT_ID } = googleAuth;
-  const { credential, inviteCode } = req.body;
-  if (!credential) return res.status(400).json({ error: "Missing Google credential" });
+  console.log(`[google-auth] step=config — client ID prefix: ${GOOGLE_CLIENT_ID.slice(0, 12)}...`);
 
+  // ── Step 2: check credential presence ────────────────────────────────────
+  const { credential, inviteCode } = req.body;
+  if (!credential) {
+    console.error("[google-auth] FAIL step=credential — no credential in request body");
+    return res.status(400).json({ error: "Missing Google credential" });
+  }
+  console.log(`[google-auth] step=credential — received token (${credential.length} chars)`);
+
+  // ── Step 3: verify the ID token with Google ───────────────────────────────
+  let payload;
   try {
     const ticket = await googleClient.verifyIdToken({
       idToken: credential,
       audience: GOOGLE_CLIENT_ID,
     });
-    const payload = ticket.getPayload();
-    if (!payload?.email) {
-      return res.status(400).json({ error: "Google account has no email" });
-    }
+    payload = ticket.getPayload();
+    console.log(`[google-auth] step=verify — OK, email domain: ${payload?.email?.split("@")[1] ?? "unknown"}`);
+  } catch (verifyErr) {
+    // Surface the exact Google rejection reason — common causes:
+    //   "Token used too late"  → server clock skew
+    //   "Invalid audience"     → client ID mismatch between frontend and backend
+    //   "Token is expired"     → credential was issued too long ago before this request arrived
+    console.error(`[google-auth] FAIL step=verify — ${verifyErr.constructor?.name}: ${verifyErr.message}`);
+    return res.status(401).json({
+      error: "Google sign-in failed. Please try again.",
+      // detail is safe to expose (no secrets), helpful for client-side debugging
+      detail: verifyErr.message,
+    });
+  }
+
+  if (!payload?.email) {
+    console.error("[google-auth] FAIL step=payload — no email in Google token payload");
+    return res.status(400).json({ error: "Google account has no email" });
+  }
+
+  // ── Step 4: find / link / create the account ──────────────────────────────
+  try {
     const googleId = payload.sub;
-    const email = payload.email.toLowerCase();
-    const picture = payload.picture || null;
+    const email    = payload.email.toLowerCase();
+    const picture  = payload.picture || null;
 
     // 1. Already linked — sign in.
     let result = await pool.query("SELECT * FROM users WHERE google_id = $1", [googleId]);
-    let user = result.rows[0];
+    let user   = result.rows[0];
+    if (user) console.log(`[google-auth] step=lookup — found by google_id`);
 
     // 2. Existing email/password account — link, don't duplicate.
     if (!user) {
       result = await pool.query("SELECT * FROM users WHERE email = $1", [email]);
-      user = result.rows[0];
+      user   = result.rows[0];
       if (user) {
+        console.log(`[google-auth] step=lookup — found by email; linking google_id`);
         const updated = await pool.query(
           `UPDATE users SET google_id = $1, avatar_url = COALESCE(avatar_url, $2), email_verified = true
            WHERE id = $3 RETURNING *`,
@@ -236,7 +278,8 @@ router.post("/google", registerLimiter, async (req, res) => {
     if (!user) {
       const accessStatus = await resolveAccessStatus(inviteCode);
       const usernameSeed = payload.name || email.split("@")[0];
-      const username = await generateUniqueUsername(usernameSeed);
+      const username     = await generateUniqueUsername(usernameSeed);
+      console.log(`[google-auth] step=lookup — new user; access_status=${accessStatus}`);
       const inserted = await pool.query(
         `INSERT INTO users (username, email, password_hash, avatar_url, google_id, email_verified, access_status)
          VALUES ($1, $2, NULL, $3, $4, true, $5)
@@ -247,15 +290,17 @@ router.post("/google", registerLimiter, async (req, res) => {
     }
 
     if (user.is_banned) {
+      console.warn(`[google-auth] FAIL step=access — account is banned (id=${user.id})`);
       return res.status(403).json({ error: "This account has been suspended." });
     }
 
     const jwtToken = generateToken(user.id);
     const { password_hash, ...safeUser } = user;
+    console.log(`[google-auth] step=done — sign-in OK (id=${user.id}, access=${user.access_status})`);
     res.json({ user: safeUser, token: jwtToken });
-  } catch (err) {
-    console.error("Google auth error:", err.message);
-    res.status(401).json({ error: "Google sign-in failed. Please try again." });
+  } catch (dbErr) {
+    console.error(`[google-auth] FAIL step=db — ${dbErr.constructor?.name}: ${dbErr.message}`);
+    res.status(500).json({ error: "Account lookup failed. Please try again." });
   }
 });
 

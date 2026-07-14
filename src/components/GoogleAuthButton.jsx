@@ -107,14 +107,28 @@ export default function GoogleAuthButton({ onSuccess }) {
     // version without creating stale-closure or circular-dependency issues.
     initGsiRef.current = () => {
       if (!window.google?.accounts?.id) return;
+      console.debug(`[google-auth] initializing GSI — client ID prefix: ${clientId.slice(0, 12)}...`);
       window.google.accounts.id.initialize({
         client_id: clientId,
         callback: async ({ credential }) => {
+          console.debug(`[google-auth] credential received from GSI (${credential?.length ?? 0} chars)`);
           setLoading(true);
           try {
             const u = await loginWithGoogle(credential);
+            console.debug(`[google-auth] backend sign-in OK — user id: ${u?.id}`);
             onSuccess?.(u);
           } catch (err) {
+            // Log the full error so it's visible in DevTools → Console even
+            // if the toast message is truncated. `err.detail` carries the
+            // exact Google rejection reason (e.g. "Token used too late",
+            // "Invalid audience") attached by api.request from the backend.
+            console.error(
+              "[google-auth] backend sign-in FAILED:", err.message,
+              err.detail ? `| Google detail: ${err.detail}` : ""
+            );
+            // The backend now includes a `detail` field with the exact Google
+            // rejection reason (e.g. "Token used too late", "Invalid audience").
+            // It arrives as part of err.message via api.request's error throw.
             toast({
               title: "Google sign-in failed",
               description: err.message || "Please try again.",
@@ -139,11 +153,15 @@ export default function GoogleAuthButton({ onSuccess }) {
     loadGoogleScript()
       .then(() => {
         if (cancelled || !window.google?.accounts?.id) return;
+        console.debug("[google-auth] GSI script loaded — rendering button");
         initGsiRef.current?.();
         renderGsiButton();
         setReady(true);
       })
-      .catch(() => setReady(false));
+      .catch((err) => {
+        console.error("[google-auth] failed to load GSI script:", err);
+        setReady(false);
+      });
 
     return () => { cancelled = true; };
   }, [clientId, loginWithGoogle, onSuccess, toast, renderGsiButton]);
