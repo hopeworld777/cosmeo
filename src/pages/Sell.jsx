@@ -617,20 +617,18 @@ export default function Sell() {
     }
 
     const { title, description, fandom } = getValues();
-    const images = uploadedImages.filter(img => img.status === "done").map(img => img.url);
 
-    // Guard against stale /uploads/ URLs — these come from uploads that happened
-    // before R2 was configured, or from a session where the server restarted and
-    // wiped the local disk between upload and publish. Those files no longer exist,
-    // so saving them produces a listing with permanently broken images.
-    // The user must re-upload any affected photos before publishing.
-    const staleImages = images.filter(url => url.startsWith("/uploads/"));
-    if (staleImages.length > 0) {
-      toast({
-        title: "Photos need to be re-uploaded",
-        description: "One or more photos were uploaded in a previous session and can no longer be served. Please remove them and upload again before publishing.",
-        variant: "destructive",
-      });
+    // Only keep images that can actually be served. Any URL that isn't a
+    // durable media path is silently dropped so the user never sees storage
+    // internals — if a photo was lost (e.g. container restart before R2 was
+    // configured) it simply won't appear in the published listing rather than
+    // blocking the whole publish flow.
+    const validImages = uploadedImages
+      .filter(img => img.status === "done" && img.url?.startsWith("/api/media/"))
+      .map(img => img.url);
+
+    if (validImages.length === 0) {
+      toast({ title: "Please upload at least one photo before publishing.", variant: "destructive" });
       return;
     }
     const finalSize = isForRent ? (sizeOption === "custom" ? sizeCustom : sizeOption) : "";
@@ -662,7 +660,7 @@ export default function Sell() {
         care_instructions:      isForRent ? careInstructions : "",
         delivery_method:        isForRent ? deliveryMethod : null,
         damage_policy:          isForRent ? damagePolicy : "",
-        images,
+        images: validImages,
       });
       setSuccess(true);
       toast({ title: t("listingPublished"), description: t("itemIsLive") });
