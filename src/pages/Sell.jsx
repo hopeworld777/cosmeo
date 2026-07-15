@@ -618,6 +618,21 @@ export default function Sell() {
 
     const { title, description, fandom } = getValues();
     const images = uploadedImages.filter(img => img.status === "done").map(img => img.url);
+
+    // Guard against stale /uploads/ URLs — these come from uploads that happened
+    // before R2 was configured, or from a session where the server restarted and
+    // wiped the local disk between upload and publish. Those files no longer exist,
+    // so saving them produces a listing with permanently broken images.
+    // The user must re-upload any affected photos before publishing.
+    const staleImages = images.filter(url => url.startsWith("/uploads/"));
+    if (staleImages.length > 0) {
+      toast({
+        title: "Photos need to be re-uploaded",
+        description: "One or more photos were uploaded in a previous session and can no longer be served. Please remove them and upload again before publishing.",
+        variant: "destructive",
+      });
+      return;
+    }
     const finalSize = isForRent ? (sizeOption === "custom" ? sizeCustom : sizeOption) : "";
 
     setSubmitting(true);

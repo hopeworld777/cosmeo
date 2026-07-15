@@ -302,6 +302,18 @@ router.post("/", requireAuth, requireFullAccess, async (req, res) => {
     care_instructions, delivery_method, damage_policy,
   } = parsed.data;
 
+  // Reject listings whose image URLs point to temporary local disk storage.
+  // /uploads/ paths are written by the local-disk fallback when R2 is not
+  // configured; those files are wiped on every container restart and must
+  // never be persisted to the database.  A client that reaches this check
+  // has bypassed the frontend guard (stale session, direct API call, etc.).
+  const staleImages = images.filter(url => url.startsWith("/uploads/"));
+  if (staleImages.length > 0) {
+    return res.status(400).json({
+      error: "One or more image URLs point to temporary local storage (/uploads/). Please re-upload those photos and try again.",
+    });
+  }
+
   const client = await pool.connect();
   try {
     await client.query("BEGIN");
