@@ -56,6 +56,37 @@ export const r2 = R2_ACCOUNT_ID
 
 export const BUCKET = R2_BUCKET_NAME || "cosmeo";
 
+// ── Startup connectivity probe ────────────────────────────────────────────────
+// Writes and immediately deletes a tiny sentinel object to verify that the R2
+// credentials actually work.  Runs once, non-blocking (fire-and-forget).
+// A failed probe means every subsequent upload will also fail, so we log a
+// prominent actionable error rather than letting the first real upload blow up
+// mid-form with an opaque "Unauthorized" message.
+if (r2) {
+  const sentinelKey = `__r2-probe-${Date.now()}.txt`;
+  Promise.resolve()
+    .then(async () => {
+      await r2.send(new PutObjectCommand({
+        Bucket: BUCKET, Key: sentinelKey, Body: Buffer.from("ok"), ContentType: "text/plain",
+      }));
+      await r2.send(new DeleteObjectCommand({ Bucket: BUCKET, Key: sentinelKey }));
+      console.log("[r2] ✓ connectivity probe passed — writes to R2 are working");
+    })
+    .catch((err) => {
+      const httpStatus = err.$metadata?.httpStatusCode ?? "unknown";
+      console.error(
+        `\n[r2] ✗ CONNECTIVITY PROBE FAILED (HTTP ${httpStatus}: ${err.message})\n` +
+        `  All image uploads will fail until this is resolved.\n` +
+        `  Common causes:\n` +
+        `    • R2_ACCESS_KEY_ID is set to the Account ID instead of an API token key\n` +
+        `      (they look the same — a 32-char hex string — but are different values)\n` +
+        `    • The API token lacks "Object Read & Write" permission on bucket "${BUCKET}"\n` +
+        `    • R2_SECRET_ACCESS_KEY does not match the access key\n` +
+        `  Fix: Cloudflare Dashboard → R2 → Manage R2 API Tokens → Create API Token\n`
+      );
+    });
+}
+
 /**
  * Uploads a raw buffer to R2 (or local disk fallback).
  * Used by avatar uploads in auth.js which don't need sharp processing.
