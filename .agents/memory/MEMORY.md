@@ -8,3 +8,4 @@
 - [Toast notifications silently invisible](kosmeo-toast-store.md) — useToast() lacked a shared store, so toast() calls from forms never reached <Toaster/>; fixed with module-level store
 - [Rental listing fields](kosmeo-rental-fields.md) — deposit/duration/size/delivery live as nullable columns on listings gated by is_for_rent; node backend needs a workflow restart, no hot-reload
 - [Beta/waitlist access gate](kosmeo-waitlist-gate.md) — ALL /api/* except auth/waitlist/health/config/media require a logged-in JWT even with PUBLIC_LAUNCH=true (anonymous GETs 401); client waitlist redirect must wait for /api/config, not just auth, to resolve
+- [Form field error border approach](kosmeo-error-border.md) — use inset box-shadow (not border-color/outline/external shadow); fields are border-none and some live inside overflow:hidden parents that clip external effects
