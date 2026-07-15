@@ -283,7 +283,7 @@
   "itemIsLive": "Your item is now live.",
   "takingToFeed": "Taking you to the feed…",
   "listed": "Listed!",
-  "titleMin": "Title must be at least 5 characters",
+  "titleMin": "Please enter a descriptive title for your listing.",
   "descriptionMin": "Add a bit more detail",
   "editProfile": "Edit Profile",
   "avatarComingSoon": "Avatar editing coming soon",

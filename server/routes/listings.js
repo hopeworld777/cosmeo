@@ -3,6 +3,7 @@ import { z } from "zod";
 import pool from "../db.js";
 import { requireAuth, requireFullAccess, optionalAuth } from "../middleware/auth.js";
 import { deleteFromStorage } from "../r2.js";
+import { validateListingTitle } from "../../shared/titleValidation.js";
 
 // ── Zod schema for creating a listing ─────────────────────────────────────────
 const RENTAL_DURATIONS = ["1_day", "3_days", "1_week", "custom"];
@@ -10,7 +11,10 @@ const DELIVERY_METHODS  = ["pickup", "shipping", "both"];
 const INCLUDED_ITEM_OPTIONS = ["costume", "wig", "shoes", "props", "armor", "accessories", "other"];
 
 const createListingSchema = z.object({
-  title:       z.string().min(5,  "Title must be at least 5 characters"),
+  title:       z.string().superRefine((val, ctx) => {
+    const error = validateListingTitle(val);
+    if (error) ctx.addIssue({ code: z.ZodIssueCode.custom, message: error });
+  }),
   description: z.string().min(10, "Description must be at least 10 characters"),
   category:    z.enum(["outfit", "wig", "shoes", "prop", "crafting", "accessories", "collectibles"], {
     errorMap: () => ({ message: "Select a valid category" }),

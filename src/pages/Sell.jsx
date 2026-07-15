@@ -14,6 +14,7 @@ import { prepareImageFile, MAX_LISTING_BYTES, MAX_IMAGES_PER_LISTING } from "@/l
 import { useAuth } from "@/hooks/useAuth";
 import { useTranslation } from "react-i18next";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
+import { validateListingTitle } from "../../shared/titleValidation.js";
 
 const CATEGORIES = [
   { id: "outfit",   icon: Shirt,      labelKey: "cat_outfit",   bg: "bg-pink-50",   border: "border-pink-300",   text: "text-pink-600",   activeBg: "bg-pink-100"   },
@@ -273,7 +274,10 @@ export default function Sell() {
   // ── End gate ──────────────────────────────────────────────────────────────
 
   const detailsSchema = z.object({
-    title:       z.string().min(5, t("titleMin")),
+    title:       z.string().superRefine((val, ctx) => {
+      const error = validateListingTitle(val);
+      if (error) ctx.addIssue({ code: z.ZodIssueCode.custom, message: t("titleMin") });
+    }),
     description: z.string().min(10, t("descriptionMin")),
     fandom:      z.string().optional(),
   });
