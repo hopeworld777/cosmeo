@@ -244,6 +244,7 @@ export default function Settings() {
               </span>
               <Input
                 {...register("username")}
+                aria-invalid={!!errors.username}
                 placeholder="your_handle"
                 autoCapitalize="none"
                 autoCorrect="off"
@@ -252,7 +253,7 @@ export default function Settings() {
               />
             </div>
             {errors.username ? (
-              <p className="text-xs text-red-500 font-medium">{errors.username.message}</p>
+              <p className="text-xs text-error font-medium">{errors.username.message}</p>
             ) : (
               <p className="text-xs text-muted-foreground font-medium">
                 {t("usernameHint")}
@@ -273,12 +274,13 @@ export default function Settings() {
             </div>
             <textarea
               {...register("bio")}
+              aria-invalid={!!errors.bio}
               placeholder={t("bioPlaceholder")}
               rows={3}
               className="w-full rounded-xl bg-muted border-none p-3.5 text-sm font-medium resize-none outline-none focus:ring-2 focus:ring-primary/25 placeholder:text-muted-foreground/50 transition-shadow leading-relaxed"
             />
             {errors.bio && (
-              <p className="text-xs text-red-500 font-medium">{errors.bio.message}</p>
+              <p className="text-xs text-error font-medium">{errors.bio.message}</p>
             )}
           </div>
 
@@ -291,6 +293,7 @@ export default function Settings() {
             <div className="relative">
               <select
                 {...register("location")}
+                aria-invalid={!!errors.location}
                 className="w-full h-12 rounded-xl bg-muted border-none px-4 text-sm font-medium outline-none focus:ring-2 focus:ring-primary/25 transition-shadow appearance-none cursor-pointer text-foreground"
               >
                 <option value="">{t("selectYourCity")}</option>
@@ -307,7 +310,7 @@ export default function Settings() {
               </div>
             </div>
             {errors.location && (
-              <p className="text-xs text-red-500 font-medium">{errors.location.message}</p>
+              <p className="text-xs text-error font-medium">{errors.location.message}</p>
             )}
           </div>
         </div>

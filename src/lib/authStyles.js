@@ -25,7 +25,8 @@ export function useAuthStyles() {
     inputErrorStyle: {
       background: isDark ? "rgba(255,255,255,0.07)" : "rgba(255,255,255,0.9)",
       color: isDark ? "#ffffff" : "#1e1b4b",
-      border: "1px solid rgba(239,68,68,0.6)",
+      border: isDark ? "1px solid hsl(338 58% 67% / 0.65)" : "1px solid hsl(338 68% 60% / 0.65)",
+      boxShadow: isDark ? "0 0 0 3px hsl(338 58% 67% / 0.18)" : "0 0 0 3px hsl(338 68% 60% / 0.14)",
       caretColor: "#a855f7",
     },
     inputClass:
@@ -36,12 +37,20 @@ export function useAuthStyles() {
     checkboxBoxStyle: (hasError) => ({
       background: isDark ? "rgba(255,255,255,0.04)" : "rgba(255,255,255,0.6)",
       border: hasError
-        ? "1px solid rgba(239,68,68,0.5)"
+        ? isDark
+          ? "1px solid hsl(338 58% 67% / 0.6)"
+          : "1px solid hsl(338 68% 60% / 0.6)"
         : isDark
         ? "1px solid rgba(192,132,252,0.15)"
         : "1px solid rgba(192,132,252,0.25)",
+      boxShadow: hasError
+        ? isDark
+          ? "0 0 0 3px hsl(338 58% 67% / 0.16)"
+          : "0 0 0 3px hsl(338 68% 60% / 0.12)"
+        : "none",
       borderRadius: "1rem",
       padding: "0.75rem",
+      transition: "border-color 150ms ease, box-shadow 150ms ease",
     }),
 
     // ── Submit button ────────────────────────────────────────────────────────
@@ -67,7 +76,8 @@ export function useAuthStyles() {
     // ── Text colours ─────────────────────────────────────────────────────────
     mutedStyle: { color: isDark ? "rgba(255,255,255,0.38)" : "rgba(109,40,217,0.5)" },
     linkStyle: { color: isDark ? "#d8b4fe" : "#7c3aed" },
-    errorStyle: { color: "rgba(239,68,68,0.9)" },
+    // Rose-pink — matches --error CSS variable, friendlier than harsh red
+    errorStyle: { color: isDark ? "hsl(338 58% 72%)" : "hsl(338 68% 52%)" },
 
     // ── Status icon backgrounds ──────────────────────────────────────────────
     iconBoxPurple: {

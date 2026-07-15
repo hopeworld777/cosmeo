@@ -34,6 +34,12 @@
     --input: 250 20% 93%;
     --ring: 265 42% 62%;
     --radius: 1.25rem;
+
+    /* Error state — warm rose-pink, visibly distinct from primary/secondary
+       but softer and friendlier than the harsh --destructive red.
+       Used for field validation borders, glows, error message text. */
+    --error: 338 68% 60%;
+    --error-foreground: 0 0% 100%;
   }
 
   /* Dark mode — neutral dark grays to avoid eye strain.
@@ -67,6 +73,10 @@
     --border: 0 0% 22%;             /* subtle neutral border */
     --input: 0 0% 17%;
     --ring: 265 42% 64%;
+
+    /* Slightly lighter on dark backgrounds for legibility */
+    --error: 338 58% 67%;
+    --error-foreground: 0 0% 100%;
   }
 }
 
@@ -80,6 +90,24 @@
   }
   h1, h2, h3, h4, h5, h6 {
     font-family: 'Nunito', sans-serif;
+  }
+
+  /* Smooth transitions baked into all form controls so error/valid
+     state changes animate without any extra className juggling. */
+  input, select, textarea {
+    transition:
+      border-color  150ms ease,
+      box-shadow    150ms ease,
+      background-color 150ms ease,
+      outline-color 150ms ease;
+  }
+
+  /* Kill the browser's own red-glow :invalid styling — we handle all
+     validation feedback ourselves so the default never leaks through. */
+  input:invalid,
+  select:invalid,
+  textarea:invalid {
+    box-shadow: none;
   }
 }
 
@@ -99,6 +127,39 @@
 .dark .card-shadow {
   box-shadow: none;
   border: 1px solid hsl(var(--border));
+}
+
+/* ── Field validation error state ───────────────────────────────────────
+   Placed outside @layer so it sits above all Tailwind utility layers in
+   the cascade — no !important needed, element+attribute specificity wins.
+   Works on both bordered inputs (Input component) and borderless ones
+   (Sell.jsx price fields that use bg-muted/border-none) since the ring
+   (box-shadow) is the primary indicator and border-color is additive.   */
+input[aria-invalid="true"],
+select[aria-invalid="true"],
+textarea[aria-invalid="true"] {
+  border-color: hsl(var(--error) / 0.65);
+  background-color: hsl(var(--error) / 0.04);
+  box-shadow: 0 0 0 3px hsl(var(--error) / 0.14);
+}
+
+input[aria-invalid="true"]:focus,
+input[aria-invalid="true"]:focus-visible,
+select[aria-invalid="true"]:focus,
+textarea[aria-invalid="true"]:focus,
+textarea[aria-invalid="true"]:focus-visible {
+  border-color: hsl(var(--error) / 0.8);
+  box-shadow: 0 0 0 3px hsl(var(--error) / 0.22);
+  outline: none;
+}
+
+/* Card-level error ring — used on Sell.jsx section cards (listing type,
+   deposit, duration, delivery) that wrap a group of controls.           */
+.card-error {
+  box-shadow: 0 0 0 2px hsl(var(--error) / 0.45), 0 4px 20px hsl(var(--primary) / 0.10), 0 1px 4px hsl(var(--foreground) / 0.04);
+}
+.dark .card-error {
+  box-shadow: 0 0 0 2px hsl(var(--error) / 0.45);
 }
 
 .pastel-gradient {

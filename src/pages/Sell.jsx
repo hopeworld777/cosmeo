@@ -774,12 +774,12 @@ export default function Sell() {
                 <div>
                   <p className="text-sm font-bold text-foreground mb-3">
                     {t("photos")}
-                    <span className="text-red-400 ml-1">*</span>
+                    <span className="text-error ml-1">*</span>
                     <span className="text-muted-foreground font-normal ml-2 text-xs">
                       {uploadedImages.length}/{MAX_IMAGES_PER_LISTING}
                     </span>
                     {imageError && (
-                      <span className="text-destructive font-normal ml-2 text-xs">
+                      <span className="text-error font-normal ml-2 text-xs">
                         Please upload at least one image.
                       </span>
                     )}
@@ -799,12 +799,12 @@ export default function Sell() {
                         disabled={uploading}
                         className={`flex h-28 w-28 shrink-0 cursor-pointer flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed transition-colors disabled:opacity-60 ${
                           imageError
-                            ? "border-destructive bg-destructive/5 text-destructive hover:bg-destructive/10"
+                            ? "border-error/50 bg-error/5 text-error hover:bg-error/10"
                             : "border-primary/40 bg-primary/5 hover:bg-primary/10 text-primary"
                         }`}
                       >
                         {uploading ? (
-                          <span className={`h-5 w-5 rounded-full border-2 animate-spin ${imageError ? "border-destructive/40 border-t-destructive" : "border-primary/40 border-t-primary"}`} />
+                          <span className={`h-5 w-5 rounded-full border-2 animate-spin ${imageError ? "border-error/40 border-t-error" : "border-primary/40 border-t-primary"}`} />
                         ) : (
                           <><Camera className="h-6 w-6" /><span className="text-xs font-bold">{t("addPhoto")}</span></>
                         )}
@@ -849,7 +849,7 @@ export default function Sell() {
                   </div>
 
                   {uploadErrors.length > 0 && (
-                    <div className="mt-3 flex items-start gap-2 rounded-2xl border border-destructive/30 bg-destructive/5 p-3 text-destructive">
+                    <div className="mt-3 flex items-start gap-2 rounded-2xl border border-error/30 bg-error/5 p-3 text-error">
                       <AlertTriangle className="h-4 w-4 shrink-0 mt-0.5" />
                       <p className="text-xs font-semibold leading-relaxed">{uploadErrors[uploadErrors.length - 1]}</p>
                     </div>
@@ -879,25 +879,27 @@ export default function Sell() {
                 <div className="bg-card rounded-3xl card-shadow p-5 flex flex-col gap-5">
                   {/* Title */}
                   <div className="flex flex-col gap-1.5">
-                    <label className="text-sm font-bold text-foreground">{t("titleLabel")} <span className="text-red-400">*</span></label>
+                    <label className="text-sm font-bold text-foreground">{t("titleLabel")} <span className="text-error">*</span></label>
                     <Input
                       {...register("title")}
+                      aria-invalid={!!errors.title}
                       placeholder="e.g. Sailor Moon Wig – Silver, Long"
                       className="bg-muted border-none h-12 rounded-xl text-sm font-medium focus-visible:ring-primary/30"
                     />
-                    {errors.title && <p className="text-xs text-red-500 font-medium">{errors.title.message}</p>}
+                    {errors.title && <p className="text-xs text-error font-medium">{errors.title.message}</p>}
                   </div>
 
                   {/* Description */}
                   <div className="flex flex-col gap-1.5">
-                    <label className="text-sm font-bold text-foreground">{t("descriptionLabel")} <span className="text-red-400">*</span></label>
+                    <label className="text-sm font-bold text-foreground">{t("descriptionLabel")} <span className="text-error">*</span></label>
                     <textarea
                       {...register("description")}
+                      aria-invalid={!!errors.description}
                       placeholder="Describe the size, condition, materials, what's included…"
                       rows={4}
                       className="w-full rounded-xl bg-muted border-none p-3.5 text-sm font-medium resize-none outline-none focus:ring-2 focus:ring-primary/25 placeholder:text-muted-foreground/50 leading-relaxed transition-shadow"
                     />
-                    {errors.description && <p className="text-xs text-red-500 font-medium">{errors.description.message}</p>}
+                    {errors.description && <p className="text-xs text-error font-medium">{errors.description.message}</p>}
                   </div>
 
                   {/* Fandom */}
@@ -953,7 +955,7 @@ export default function Sell() {
 
                 {/* Listing type selection error (Sell / Rent) */}
                 {listingTypeError && (
-                  <div className="flex items-start gap-2 rounded-2xl border border-destructive/30 bg-destructive/5 p-3 text-destructive">
+                  <div className="flex items-start gap-2 rounded-2xl border border-error/30 bg-error/5 p-3 text-error">
                     <AlertTriangle className="h-4 w-4 shrink-0 mt-0.5" />
                     <p className="text-xs font-semibold leading-relaxed">Please select a listing type.</p>
                   </div>
@@ -965,7 +967,7 @@ export default function Sell() {
                   tabIndex={-1}
                   className={`bg-card rounded-3xl card-shadow p-5 flex flex-col gap-4 transition-all outline-none ${
                     isForSale ? "ring-2 ring-primary/30" : ""
-                  } ${listingTypeError ? "ring-2 ring-destructive" : ""}`}
+                  } ${listingTypeError ? "card-error" : ""}`}
                 >
                   <div className="flex items-center justify-between">
                     <div>
@@ -994,13 +996,11 @@ export default function Sell() {
                             onChange={e => { setSalePrice(e.target.value); if (priceErrors.sale) setPriceErrors(p => ({ ...p, sale: "" })); }}
                             placeholder="0"
                             aria-invalid={!!priceErrors.sale}
-                            className={`w-full h-14 rounded-2xl bg-muted border-none pl-10 pr-4 text-2xl font-black text-foreground outline-none focus:ring-2 transition-shadow ${
-                              priceErrors.sale ? "ring-2 ring-destructive focus:ring-destructive" : "focus:ring-primary/25"
-                            }`}
+                            className="w-full h-14 rounded-2xl bg-muted border-none pl-10 pr-4 text-2xl font-black text-foreground outline-none focus:ring-2 focus:ring-primary/25 transition-shadow"
                           />
                         </div>
                         {priceErrors.sale && (
-                          <p className="text-xs text-destructive font-semibold mt-2 flex items-center gap-1.5">
+                          <p className="text-xs text-error font-semibold mt-2 flex items-center gap-1.5">
                             <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
                             {priceErrors.sale}
                           </p>
@@ -1014,7 +1014,7 @@ export default function Sell() {
                 <div
                   className={`bg-card rounded-3xl card-shadow p-5 flex flex-col gap-4 transition-all ${
                     isForRent ? "ring-2 ring-secondary/30" : ""
-                  } ${listingTypeError ? "ring-2 ring-destructive" : ""}`}
+                  } ${listingTypeError ? "card-error" : ""}`}
                 >
                   <div className="flex items-center justify-between">
                     <div>
@@ -1043,14 +1043,12 @@ export default function Sell() {
                             onChange={e => { setRentPrice(e.target.value); if (priceErrors.rent) setPriceErrors(p => ({ ...p, rent: "" })); }}
                             placeholder="0"
                             aria-invalid={!!priceErrors.rent}
-                            className={`w-full h-14 rounded-2xl bg-muted border-none pl-10 pr-4 text-2xl font-black text-foreground outline-none focus:ring-2 transition-shadow ${
-                              priceErrors.rent ? "ring-2 ring-destructive focus:ring-destructive" : "focus:ring-secondary/25"
-                            }`}
+                            className="w-full h-14 rounded-2xl bg-muted border-none pl-10 pr-4 text-2xl font-black text-foreground outline-none focus:ring-2 focus:ring-secondary/25 transition-shadow"
                           />
                           <span className="absolute right-4 top-1/2 -translate-y-1/2 text-sm text-muted-foreground font-bold">{t("perDay")}</span>
                         </div>
                         {priceErrors.rent && (
-                          <p className="text-xs text-destructive font-semibold mt-2 flex items-center gap-1.5">
+                          <p className="text-xs text-error font-semibold mt-2 flex items-center gap-1.5">
                             <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
                             {priceErrors.rent}
                           </p>
@@ -1079,11 +1077,11 @@ export default function Sell() {
                           ref={depositRef}
                           tabIndex={-1}
                           className={`bg-card rounded-3xl card-shadow p-5 flex flex-col gap-2 outline-none ${
-                            rentalErrors.deposit ? "ring-2 ring-destructive" : ""
+                            rentalErrors.deposit ? "card-error" : ""
                           }`}
                         >
                           <label className="text-sm font-bold text-foreground">
-                            Refundable Security Deposit <span className="text-red-400">*</span>
+                            Refundable Security Deposit <span className="text-error">*</span>
                           </label>
                           <p className="text-xs text-muted-foreground font-medium -mt-1">
                             Protects you if the costume/props are damaged, lost, or returned in bad condition.
@@ -1098,13 +1096,11 @@ export default function Sell() {
                               onChange={e => { setDepositAmount(e.target.value); if (rentalErrors.deposit) setRentalErrors(p => ({ ...p, deposit: "" })); }}
                               placeholder="e.g. 150"
                               aria-invalid={!!rentalErrors.deposit}
-                              className={`w-full h-14 rounded-2xl bg-muted border-none pl-10 pr-4 text-2xl font-black text-foreground outline-none focus:ring-2 transition-shadow ${
-                                rentalErrors.deposit ? "ring-2 ring-destructive focus:ring-destructive" : "focus:ring-secondary/25"
-                              }`}
+                              className="w-full h-14 rounded-2xl bg-muted border-none pl-10 pr-4 text-2xl font-black text-foreground outline-none focus:ring-2 focus:ring-secondary/25 transition-shadow"
                             />
                           </div>
                           {rentalErrors.deposit && (
-                            <p className="text-xs text-destructive font-semibold mt-1 flex items-center gap-1.5">
+                            <p className="text-xs text-error font-semibold mt-1 flex items-center gap-1.5">
                               <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
                               {rentalErrors.deposit}
                             </p>
@@ -1116,11 +1112,11 @@ export default function Sell() {
                           ref={durationRef}
                           tabIndex={-1}
                           className={`bg-card rounded-3xl card-shadow p-5 flex flex-col gap-3 outline-none ${
-                            rentalErrors.duration ? "ring-2 ring-destructive" : ""
+                            rentalErrors.duration ? "card-error" : ""
                           }`}
                         >
                           <label className="text-sm font-bold text-foreground">
-                            Rental Duration <span className="text-red-400">*</span>
+                            Rental Duration <span className="text-error">*</span>
                           </label>
                           <div className="grid grid-cols-2 gap-2">
                             {RENTAL_DURATION_OPTIONS.map(opt => (
@@ -1147,7 +1143,7 @@ export default function Sell() {
                             />
                           )}
                           {rentalErrors.duration && (
-                            <p className="text-xs text-destructive font-semibold flex items-center gap-1.5">
+                            <p className="text-xs text-error font-semibold flex items-center gap-1.5">
                               <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
                               {rentalErrors.duration}
                             </p>
@@ -1283,11 +1279,11 @@ export default function Sell() {
                           ref={deliveryRef}
                           tabIndex={-1}
                           className={`bg-card rounded-3xl card-shadow p-5 flex flex-col gap-3 outline-none ${
-                            rentalErrors.delivery ? "ring-2 ring-destructive" : ""
+                            rentalErrors.delivery ? "card-error" : ""
                           }`}
                         >
                           <label className="text-sm font-bold text-foreground">
-                            Pickup / Delivery <span className="text-red-400">*</span>
+                            Pickup / Delivery <span className="text-error">*</span>
                           </label>
                           <div className="grid grid-cols-3 gap-2">
                             {DELIVERY_OPTIONS.map(opt => (
@@ -1306,7 +1302,7 @@ export default function Sell() {
                             ))}
                           </div>
                           {rentalErrors.delivery && (
-                            <p className="text-xs text-destructive font-semibold flex items-center gap-1.5">
+                            <p className="text-xs text-error font-semibold flex items-center gap-1.5">
                               <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
                               {rentalErrors.delivery}
                             </p>
