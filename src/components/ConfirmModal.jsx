@@ -83,6 +83,12 @@ export default function ConfirmModal({
             }}
             className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm"
           />
+          {/* Centering is handled by flexbox on this wrapper so Framer Motion
+              can own the `transform` property for its scale/y animation without
+              conflicting with Tailwind's CSS-variable-based translate utilities
+              (which get silently overridden when Framer Motion writes its own
+              inline transform string). */}
+          <div className="fixed inset-0 z-[100] flex items-center justify-center pointer-events-none px-5">
           <motion.div
             key="confirm-modal-dialog"
             role="alertdialog"
@@ -93,7 +99,7 @@ export default function ConfirmModal({
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.92, y: 12 }}
             transition={{ type: "spring", damping: 26, stiffness: 340 }}
-            className="fixed left-1/2 top-1/2 z-[100] w-[calc(100%-2.5rem)] max-w-sm -translate-x-1/2 -translate-y-1/2 rounded-3xl border border-border/40 bg-card/90 backdrop-blur-xl shadow-2xl p-6"
+            className="pointer-events-auto w-full max-w-sm rounded-3xl border border-border/40 bg-card/90 backdrop-blur-xl shadow-2xl p-6"
           >
             <div
               className={`mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl ${
@@ -140,6 +146,7 @@ export default function ConfirmModal({
               </button>
             </div>
           </motion.div>
+          </div>
         </>
       )}
     </AnimatePresence>,
