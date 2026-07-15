@@ -12,7 +12,8 @@
     "server": "node server/index.js",
     "build": "vite build",
     "preview": "vite preview",
-    "start": "node server/index.js"
+    "start": "node server/index.js",
+    "cleanup:test-users": "node server/scripts/cleanup-test-users.js"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1076.0",
