@@ -453,6 +453,7 @@ export default function Sell() {
         const ok = await trigger(["title", "description"]);
         if (!ok) return;
       }
+      console.debug(`[sell] advancing from step ${step} — uploadedImages:`, uploadedImages.map(i => ({ id: i.id, status: i.status, url: i.url })));
       setDir(1);
       setStep(s => s + 1);
     } finally {
@@ -512,6 +513,7 @@ export default function Sell() {
         files.map((f) => prepareImageFile(f, { maxBytes: MAX_LISTING_BYTES }))
       );
       const { urls } = await api.upload.multiple(prepared);
+      console.debug("[sell] upload complete — urls returned by server:", urls);
       // Important: do NOT call URL.revokeObjectURL inside a state updater.
       // React Strict Mode invokes state updaters twice — the first invocation
       // revokes the blob URL, then React discards that result and runs the
@@ -523,7 +525,9 @@ export default function Sell() {
       setUploadedImages(prev => prev.map(img => {
         const idx = pending.findIndex(p => p.id === img.id);
         if (idx === -1) return img;
-        return { ...img, url: urls[idx], status: "done" };
+        const updated = { ...img, url: urls[idx], status: "done" };
+        console.debug(`[sell] image state update — id:${img.id} url:${updated.url} status:${updated.status}`);
+        return updated;
       }));
     } catch (err) {
       // Drop the failed placeholders and free their object URLs so a failed
@@ -623,9 +627,14 @@ export default function Sell() {
     // internals — if a photo was lost (e.g. container restart before R2 was
     // configured) it simply won't appear in the published listing rather than
     // blocking the whole publish flow.
+    console.debug("[sell] onPublish — uploadedImages at publish time:", uploadedImages.map(i => ({ id: i.id, status: i.status, url: i.url })));
     const validImages = uploadedImages
       .filter(img => img.status === "done" && img.url?.startsWith("/api/media/"))
       .map(img => img.url);
+    const dropped = uploadedImages
+      .filter(img => img.status === "done" && !img.url?.startsWith("/api/media/"))
+      .map(img => ({ id: img.id, url: img.url }));
+    console.debug("[sell] onPublish — validImages:", validImages, "| dropped:", dropped);
 
     if (validImages.length === 0) {
       toast({ title: "Please upload at least one photo before publishing.", variant: "destructive" });
