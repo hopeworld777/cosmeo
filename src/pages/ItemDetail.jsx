@@ -15,6 +15,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useTranslation } from "react-i18next";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
 import VerifiedBadge from "@/components/VerifiedBadge";
+import ConfirmModal from "@/components/ConfirmModal";
 import { getThumbUrl } from "@/lib/imageUtils";
 
 // ── Image Gallery — contained aspect-ratio hero + click-through thumbnails ──
@@ -251,6 +252,8 @@ export default function ItemDetail() {
   const [chatMessages, setChatMessages] = useState([]);
   const [chatLoading, setChatLoading] = useState(false);
   const [descExpanded, setDescExpanded] = useState(false);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const chatEndRef = useRef(null);
   const inputRef = useRef(null);
 
@@ -320,15 +323,19 @@ export default function ItemDetail() {
     }
   };
 
-  const handleDelete = async () => {
-    if (!window.confirm(t("confirmDelete"))) return;
+  const handleDelete = () => setDeleteConfirmOpen(true);
+
+  const handleConfirmDelete = async () => {
+    setIsDeleting(true);
     try {
       await api.listings.delete(id);
       window.dispatchEvent(new Event("kosmeo:listingChanged"));
       toast({ title: t("listingDeleted") });
+      setDeleteConfirmOpen(false);
       setLocation("/profile");
     } catch (err) {
       toast({ title: "Error", description: err.message, variant: "destructive" });
+      setIsDeleting(false);
     }
   };
 
@@ -941,6 +948,18 @@ export default function ItemDetail() {
           />
         )}
       </AnimatePresence>
+
+      {/* ── Delete Listing Confirmation ──────────────────────────────────── */}
+      <ConfirmModal
+        open={deleteConfirmOpen}
+        variant="destructive"
+        title={t("deleteListingTitle", "Delete Listing?")}
+        description={t("deleteListingDescription", "Are you sure you want to delete this listing? This action cannot be undone.")}
+        confirmLabel={t("deleteListing", "Delete Listing")}
+        loading={isDeleting}
+        onCancel={() => { if (!isDeleting) setDeleteConfirmOpen(false); }}
+        onConfirm={handleConfirmDelete}
+      />
     </div>
   );
 }

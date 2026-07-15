@@ -14,6 +14,7 @@ import { api } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
 import { useTranslation } from "react-i18next";
 import VerifiedBadge from "@/components/VerifiedBadge";
+import ConfirmModal from "@/components/ConfirmModal";
 import { getThumbUrl } from "@/lib/imageUtils";
 
 // ── Withdraw Modal ─────────────────────────────────────────────────────────────
@@ -428,6 +429,8 @@ function MyListings({ onSold }) {
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState("active");
   const [reviewListing, setReviewListing] = useState(null);
+  const [deleteTarget, setDeleteTarget] = useState(null);
+  const [isDeleting, setIsDeleting] = useState(false);
   const { toast } = useToast();
   const [, setLocation] = useLocation();
 
@@ -461,15 +464,22 @@ function MyListings({ onSold }) {
     }
   };
 
-  const handleDelete = async (id) => {
-    if (!window.confirm(t("confirmDelete"))) return;
+  const handleDelete = (id) => setDeleteTarget(id);
+
+  const handleConfirmDelete = async () => {
+    const id = deleteTarget;
+    if (!id) return;
+    setIsDeleting(true);
     try {
       await api.listings.delete(id);
       setListings((prev) => prev.filter((l) => l.id !== id));
       window.dispatchEvent(new Event("kosmeo:listingChanged"));
       toast({ title: t("listingDeleted") });
+      setDeleteTarget(null);
     } catch (err) {
       toast({ title: "Error", description: err.message, variant: "destructive" });
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -686,6 +696,18 @@ function MyListings({ onSold }) {
           />
         )}
       </AnimatePresence>
+
+      {/* Delete listing confirmation */}
+      <ConfirmModal
+        open={!!deleteTarget}
+        variant="destructive"
+        title={t("deleteListingTitle", "Delete Listing?")}
+        description={t("deleteListingDescription", "Are you sure you want to delete this listing? This action cannot be undone.")}
+        confirmLabel={t("deleteListing", "Delete Listing")}
+        loading={isDeleting}
+        onCancel={() => { if (!isDeleting) setDeleteTarget(null); }}
+        onConfirm={handleConfirmDelete}
+      />
     </div>
   );
 }
