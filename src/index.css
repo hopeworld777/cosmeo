@@ -93,11 +93,14 @@
   }
 
   /* Smooth transitions baked into all form controls so error/valid
-     state changes animate without any extra className juggling. */
+     state changes animate without any extra className juggling.
+     Base outline is 2px solid transparent so only the color needs to
+     change on error — style/width stay constant → silky transition.  */
   input, select, textarea {
+    outline: 2px solid transparent;
+    outline-offset: 2px;
     transition:
       border-color  150ms ease,
-      box-shadow    150ms ease,
       background-color 150ms ease,
       outline-color 150ms ease;
   }
@@ -132,25 +135,36 @@
 /* ── Field validation error state ───────────────────────────────────────
    Placed outside @layer so it sits above all Tailwind utility layers in
    the cascade — no !important needed, element+attribute specificity wins.
-   Works on both bordered inputs (Input component) and borderless ones
-   (Sell.jsx price fields that use bg-muted/border-none) since the ring
-   (box-shadow) is the primary indicator and border-color is additive.   */
+
+   Glow uses `outline` (not box-shadow) for two reasons:
+     1. outline is never clipped by parent overflow:hidden (cards, modals)
+     2. outline follows border-radius automatically in modern browsers
+   Because all inputs start with outline:2px solid transparent in @layer
+   base, only outline-color needs to change → smooth 150ms fade-in.
+
+   Tailwind ring vars (--tw-ring-offset-shadow / --tw-ring-shadow) are
+   zeroed out so no box-shadow artefact leaks through the CSS-var cascade. */
 input[aria-invalid="true"],
 select[aria-invalid="true"],
 textarea[aria-invalid="true"] {
+  --tw-ring-offset-shadow: 0 0 #0000;
+  --tw-ring-shadow: 0 0 #0000;
   border-color: hsl(var(--error) / 0.65);
   background-color: hsl(var(--error) / 0.04);
-  box-shadow: 0 0 0 3px hsl(var(--error) / 0.14);
+  outline-color: hsl(var(--error) / 0.35);
 }
 
+/* Focus + invalid: keep the error ring visible (beats focus-visible:outline-none
+   which is inside @layer utilities — unlayered CSS always wins the cascade). */
 input[aria-invalid="true"]:focus,
 input[aria-invalid="true"]:focus-visible,
 select[aria-invalid="true"]:focus,
 textarea[aria-invalid="true"]:focus,
 textarea[aria-invalid="true"]:focus-visible {
-  border-color: hsl(var(--error) / 0.8);
-  box-shadow: 0 0 0 3px hsl(var(--error) / 0.22);
-  outline: none;
+  --tw-ring-offset-shadow: 0 0 #0000;
+  --tw-ring-shadow: 0 0 #0000;
+  border-color: hsl(var(--error) / 0.80);
+  outline-color: hsl(var(--error) / 0.55);
 }
 
 /* Card-level error ring — used on Sell.jsx section cards (listing type,
