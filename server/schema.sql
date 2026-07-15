@@ -240,3 +240,26 @@ CREATE TABLE IF NOT EXISTS app_settings (
   value       TEXT,
   updated_at  TIMESTAMPTZ   DEFAULT NOW()
 );
+
+-- Self-service account deletion. deleted_at marks a soft-deleted/anonymized
+-- account: the row is kept (never hard-deleted) so existing messages,
+-- reviews, and conversations the user took part in keep working for the
+-- OTHER party, but the profile fields are scrubbed and login is blocked.
+-- Kept as its own column (not is_banned) so admin bans and self-deletion
+-- stay distinguishable in the users table.
+ALTER TABLE users ADD COLUMN IF NOT EXISTS deleted_at TIMESTAMPTZ;
+
+-- Durable audit trail for account deletions, kept independent of the users
+-- row itself (which gets its email/username scrubbed) so "who deleted what,
+-- and when, with what got removed" survives even after anonymization.
+CREATE TABLE IF NOT EXISTS account_deletion_log (
+  id               SERIAL PRIMARY KEY,
+  user_id          INTEGER      NOT NULL,
+  email            VARCHAR(255) NOT NULL,
+  username         VARCHAR(30)  NOT NULL,
+  was_admin        BOOLEAN      NOT NULL DEFAULT false,
+  listings_removed INTEGER      NOT NULL DEFAULT 0,
+  images_removed   INTEGER      NOT NULL DEFAULT 0,
+  waitlist_removed INTEGER      NOT NULL DEFAULT 0,
+  deleted_at       TIMESTAMPTZ  NOT NULL DEFAULT NOW()
+);

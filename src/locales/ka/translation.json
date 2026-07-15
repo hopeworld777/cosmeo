@@ -493,5 +493,21 @@
   "checkInboxAndRefresh": "გთხოვთ ჯერ დააჭიროთ ბმულს ელ.ფოსტაში.",
   "checking": "მოწმდება…",
   "error": "შეცდომა",
-  "cancel": "გაუქმება"
+  "cancel": "გაუქმება",
+  "dangerZone": "საშიში ზონა",
+  "deleteAccountHint": "სამუდამოდ წაშალეთ თქვენი ანგარიში და მოცილდება თქვენი განცხადებები. ამის დაბრუნება შეუძლებელია.",
+  "deleteMyAccount": "ანგარიშის წაშლა",
+  "deleteAccountTitle": "წაშალეთ თქვენი ანგარიში",
+  "deleteAccountWarningIntro": "ეს მოქმედება საბოლოოა და მისი დაბრუნება შეუძლებელია.",
+  "deleteAccountWarnPermanent": "წაშლის შემდეგ ანგარიშის აღდგენა შეუძლებელი იქნება.",
+  "deleteAccountWarnListings": "თქვენი ყველა განცხადება წაიშლება.",
+  "deleteAccountWarnMessages": "თქვენი შეტყობინებები შეიძლება გახდეს ანონიმური, თუმცა არსებული მიმოწერები მეორე მხარისთვის ხელმისაწვდომი დარჩება.",
+  "deleteAccountContinue": "ანგარიშის წაშლა",
+  "deleteAccountConfirmTitle": "დაადასტურეთ წაშლა",
+  "deleteAccountTypeDelete": "დასადასტურებლად ჩაწერეთ „DELETE“.",
+  "deleteAccountAdminWarning": "ეს არის ადმინისტრატორის ანგარიში. დასადასტურებლად ჩაწერეთ მისი ელ.ფოსტა.",
+  "deleteAccountConfirmButton": "სამუდამოდ წაშლა",
+  "deleting": "იშლება…",
+  "accountDeletedTitle": "ანგარიში წაიშალა",
+  "accountDeleteFailedTitle": "ანგარიშის წაშლა ვერ მოხერხდა"
 }

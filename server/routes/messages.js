@@ -19,7 +19,8 @@ router.get("/conversations", requireAuth, async (req, res) => {
       SELECT DISTINCT ON (c.id) c.id, c.listing_id, c.created_at,
              l.title as listing_title,
              CASE WHEN c.buyer_id = $1 THEN c.seller_id ELSE c.buyer_id END as other_user_id,
-             ou.username as other_username, ou.avatar_url as other_avatar,
+             CASE WHEN ou.deleted_at IS NOT NULL THEN 'Deleted User' ELSE ou.username END as other_username,
+             CASE WHEN ou.deleted_at IS NOT NULL THEN NULL ELSE ou.avatar_url END as other_avatar,
              (SELECT CASE
                        WHEN m.body IS NOT NULL AND m.body <> '' THEN m.body
                        WHEN EXISTS (SELECT 1 FROM message_attachments ma WHERE ma.message_id = m.id) THEN '📷 Photo'
@@ -54,7 +55,9 @@ router.get("/conversations/:id", requireAuth, async (req, res) => {
     // with listing_images — json_agg them onto each message row so the
     // client gets a stable `attachments` array that survives a refresh.
     const messages = await pool.query(
-      `SELECT m.*, u.username, u.avatar_url,
+      `SELECT m.*,
+              CASE WHEN u.deleted_at IS NOT NULL THEN 'Deleted User' ELSE u.username END as username,
+              CASE WHEN u.deleted_at IS NOT NULL THEN NULL ELSE u.avatar_url END as avatar_url,
               COALESCE(
                 (SELECT json_agg(json_build_object('id', ma.id, 'url', ma.image_url, 'thumbUrl', ma.thumb_url) ORDER BY ma.id)
                  FROM message_attachments ma WHERE ma.message_id = m.id),

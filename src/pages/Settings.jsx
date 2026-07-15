@@ -13,6 +13,7 @@ import { useToast } from "@/hooks/use-toast";
 import { api } from "@/lib/api";
 import { prepareImageFile } from "@/lib/imageUtils";
 import { useTranslation } from "react-i18next";
+import DeleteAccountModal from "@/components/DeleteAccountModal";
 
 const GEO_CITIES = [
   "Tbilisi", "Kutaisi", "Batumi", "Rustavi",
@@ -50,6 +51,7 @@ export default function Settings() {
   const { toast } = useToast();
   const [, setLocation] = useLocation();
   const [saved, setSaved] = useState(false);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const { t } = useTranslation();
 
   const schema = z.object({
@@ -398,7 +400,28 @@ export default function Settings() {
           {t("tos_pageTitle")}
         </Link>
 
+        {/* ── Danger zone ──────────────────────────────────────────── */}
+        <div className="bg-card rounded-3xl card-shadow p-5 flex flex-col gap-3 border border-red-200 dark:border-red-900/40 mt-2">
+          <h2 className="text-sm font-extrabold text-red-600 dark:text-red-400 uppercase tracking-wider">
+            {t("dangerZone", "Danger Zone")}
+          </h2>
+          <p className="text-xs text-muted-foreground">
+            {t("deleteAccountHint", "Permanently delete your account and remove your listings. This cannot be undone.")}
+          </p>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => setDeleteModalOpen(true)}
+            className="w-full h-12 rounded-2xl border-red-300 text-red-600 hover:bg-red-50 dark:border-red-900/60 dark:text-red-400 dark:hover:bg-red-900/20"
+            data-testid="button-delete-account"
+          >
+            {t("deleteMyAccount", "Delete my account")}
+          </Button>
+        </div>
+
       </form>
+
+      <DeleteAccountModal open={deleteModalOpen} onOpenChange={setDeleteModalOpen} />
     </div>
   );
 }

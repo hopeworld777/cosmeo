@@ -104,8 +104,17 @@ export function AuthProvider({ children }) {
     setUser(null);
   };
 
+  // Permanent, self-service deletion. The backend anonymizes/deactivates
+  // everything server-side; on success we just clear the local session the
+  // same way logout() does so the caller can redirect to the homepage.
+  const deleteAccount = async (confirmation, adminConfirmation) => {
+    await api.auth.deleteAccount({ confirmation, adminConfirmation });
+    localStorage.removeItem("kosmeo_token");
+    setUser(null);
+  };
+
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, loginWithGoogle, loginAdminWithGoogle, logout, setUser, waitlistEnabled, configLoaded }}>
+    <AuthContext.Provider value={{ user, loading, login, register, loginWithGoogle, loginAdminWithGoogle, logout, deleteAccount, setUser, waitlistEnabled, configLoaded }}>
       {children}
     </AuthContext.Provider>
   );

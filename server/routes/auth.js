@@ -8,7 +8,7 @@ import { OAuth2Client } from "google-auth-library";
 import pool from "../db.js";
 import { generateToken, requireAuth } from "../middleware/auth.js";
 import { sendVerificationEmail, sendPasswordResetEmail } from "../email.js";
-import { uploadToR2 } from "../r2.js";
+import { uploadToR2, deleteFromStorage } from "../r2.js";
 import { isDisposableEmail, DISPOSABLE_EMAIL_ERROR } from "../disposableEmail.js";
 
 // Support both the Replit secret name and the conventional Railway/Heroku name.
@@ -81,6 +81,16 @@ const forgotPasswordLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   message: { error: "Too many password reset requests. Please try again later." },
+});
+
+// Deleting an account is irreversible and fans out into R2 deletes — cap
+// attempts per IP so a scripted/compromised session can't hammer it.
+const deleteAccountLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000, // 1 hour
+  max: 5,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: "Too many account deletion attempts. Please try again later." },
 });
 
 function generateSecureToken() {
@@ -305,6 +315,10 @@ router.post("/google", googleAuthLimiter, async (req, res) => {
       user = inserted.rows[0];
     }
 
+    if (user.deleted_at) {
+      console.warn(`[google-auth] FAIL step=access — account was deleted (id=${user.id})`);
+      return res.status(403).json({ error: "This account has been deleted." });
+    }
     if (user.is_banned) {
       console.warn(`[google-auth] FAIL step=access — account is banned (id=${user.id})`);
       return res.status(403).json({ error: "This account has been suspended." });
@@ -457,6 +471,10 @@ router.post("/admin-google", adminGoogleAuthLimiter, async (req, res) => {
       user = inserted.rows[0];
     }
 
+    if (user.deleted_at) {
+      console.warn(`[admin-google-auth] FAIL step=access — admin account was deleted (id=${user.id})`);
+      return res.status(403).json({ error: "This account has been deleted." });
+    }
     if (user.is_banned) {
       console.warn(`[admin-google-auth] FAIL step=access — admin account is banned (id=${user.id})`);
       return res.status(403).json({ error: "This account has been suspended." });
@@ -494,6 +512,13 @@ router.post("/login", loginLimiter, async (req, res) => {
     const user = result.rows[0];
     if (!user) {
       return res.status(401).json({ error: "Invalid email or password" });
+    }
+    // Checked before the password_hash branch below — a deleted account's
+    // password_hash is also nulled out during deletion, and without this
+    // check first the user would see the misleading "uses Google sign-in"
+    // message instead of the real reason they can't log in.
+    if (user.deleted_at) {
+      return res.status(403).json({ error: "This account has been deleted." });
     }
     if (!user.password_hash) {
       return res.status(401).json({ error: "This account uses Google sign-in. Continue with Google to log in." });
@@ -537,11 +562,18 @@ router.get("/me", requireAuth, async (req, res) => {
   try {
     const result = await pool.query(
       `SELECT id, username, email, bio, avatar_url, rating, review_count, sales_count, balance, email_verified, created_at, location,
-              is_admin, is_verified, is_banned, warning_count, access_status
+              is_admin, is_verified, is_banned, warning_count, access_status, deleted_at
        FROM users WHERE id = $1`,
       [req.userId]
     );
     if (!result.rows[0]) return res.status(404).json({ error: "User not found" });
+    // A still-valid JWT for a self-deleted account (tokens live up to 30
+    // days) must not resolve to a session — AuthContext's fetchMe() clears
+    // the stored token on any non-2xx from this route, which is exactly
+    // what we want here: it logs the client out on next load/focus refresh.
+    if (result.rows[0].deleted_at) {
+      return res.status(401).json({ error: "account_deleted" });
+    }
     res.json(result.rows[0]);
   } catch (err) {
     console.error("Me error:", err);
@@ -629,6 +661,144 @@ router.patch("/me", requireAuth, async (req, res) => {
   } catch (err) {
     console.error("Update me error:", err);
     res.status(500).json({ error: "Failed to update profile" });
+  }
+});
+
+// POST /api/auth/delete-account
+//
+// Self-service, permanent account deletion. Uses a soft-delete/anonymize
+// strategy rather than a hard DELETE of the users row:
+//   - keeps `messages`/`conversations`/`reviews` referencing this user intact
+//     for the OTHER party (a hard delete would cascade and destroy their
+//     conversation history too — see schema.sql FK ON DELETE CASCADE)
+//   - profile fields (username/email/avatar/bio/location) are scrubbed so
+//     the account is no longer personally identifiable
+//   - listings are deactivated (not dropped) so order/review history that
+//     points at listing_id stays valid; their images ARE removed from R2
+//     and from listing_images so no broken image references remain
+//   - waitlist entry (if any) and VIP/beta access are revoked
+// Never trusts a user id from the request body — always req.userId from the
+// verified JWT (requireAuth).
+router.post("/delete-account", requireAuth, deleteAccountLimiter, async (req, res) => {
+  const { confirmation, adminConfirmation } = req.body || {};
+  if (confirmation !== "DELETE") {
+    return res.status(400).json({ error: "Type DELETE to confirm account deletion." });
+  }
+
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+
+    const userResult = await client.query(
+      "SELECT id, email, username, is_admin, access_status, deleted_at FROM users WHERE id = $1 FOR UPDATE",
+      [req.userId]
+    );
+    const user = userResult.rows[0];
+    if (!user) {
+      await client.query("ROLLBACK");
+      return res.status(404).json({ error: "User not found" });
+    }
+    if (user.deleted_at) {
+      await client.query("ROLLBACK");
+      return res.status(400).json({ error: "This account has already been deleted." });
+    }
+
+    // Extra confirmation step for admin accounts — typing DELETE alone is
+    // not enough to nuke an admin account by mistake; the caller must also
+    // type the account's own email exactly.
+    const isAdminAccount = user.is_admin || user.access_status === "ADMIN";
+    if (isAdminAccount && adminConfirmation?.trim().toLowerCase() !== user.email.toLowerCase()) {
+      await client.query("ROLLBACK");
+      return res.status(400).json({
+        error: "admin_confirmation_required",
+        message: "This is an admin account. Type its email address to confirm deletion.",
+      });
+    }
+
+    // Gather every image URL across all of this user's listings (active or
+    // already-deactivated — the old single-listing delete route never
+    // cleaned up R2, so leftovers can exist there too) before anything else
+    // is deleted, since deleting the listing_images rows loses the URLs.
+    const imagesResult = await client.query(
+      `SELECT li.image_url FROM listing_images li
+       JOIN listings l ON l.id = li.listing_id
+       WHERE l.seller_id = $1`,
+      [user.id]
+    );
+    const imageUrls = imagesResult.rows.map(r => r.image_url);
+
+    const listingsResult = await client.query(
+      `UPDATE listings SET is_active = false, status = 'deleted'
+       WHERE seller_id = $1 AND status <> 'deleted'
+       RETURNING id`,
+      [user.id]
+    );
+
+    await client.query(
+      `DELETE FROM listing_images WHERE listing_id IN (SELECT id FROM listings WHERE seller_id = $1)`,
+      [user.id]
+    );
+
+    const waitlistResult = await client.query(
+      "DELETE FROM waitlist WHERE email = $1 RETURNING id",
+      [user.email.toLowerCase()]
+    );
+
+    // Anonymize the profile in place. email/username are rewritten to a
+    // unique tombstone (not left NULL) since both columns are UNIQUE NOT
+    // NULL — this also frees the original email/username for reuse.
+    // access_status/is_admin are reset so VIP/beta/admin access is fully
+    // revoked; password_hash/google_id are cleared so no login method works.
+    await client.query(
+      `UPDATE users SET
+         username = $1,
+         email = $2,
+         password_hash = NULL,
+         google_id = NULL,
+         bio = '',
+         avatar_url = NULL,
+         location = NULL,
+         is_admin = false,
+         access_status = 'WAITLIST',
+         deleted_at = NOW()
+       WHERE id = $3`,
+      [`deleted_user_${user.id}`, `deleted-${user.id}@removed.invalid`, user.id]
+    );
+
+    await client.query(
+      `INSERT INTO account_deletion_log
+         (user_id, email, username, was_admin, listings_removed, images_removed, waitlist_removed)
+       VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+      [
+        user.id, user.email, user.username, isAdminAccount,
+        listingsResult.rows.length, imageUrls.length, waitlistResult.rows.length,
+      ]
+    );
+
+    await client.query("COMMIT");
+
+    // Audit log — after commit, so it only fires once the deletion is durable.
+    console.log(
+      `[account-deletion] user_id=${user.id} email=${user.email} username=${user.username} ` +
+      `was_admin=${isAdminAccount} deleted_at=${new Date().toISOString()} ` +
+      `listings_removed=${listingsResult.rows.length} images_removed=${imageUrls.length} ` +
+      `waitlist_removed=${waitlistResult.rows.length} ip=${req.ip}`
+    );
+
+    // Best-effort R2/disk cleanup — fire after commit so a storage hiccup
+    // never rolls back (or blocks) the actual account deletion. Each call
+    // already swallows its own errors (see deleteFromStorage in r2.js).
+    Promise.allSettled(imageUrls.map(url => deleteFromStorage(url))).then(() => {
+      console.log(`[account-deletion] storage cleanup done for user_id=${user.id} (${imageUrls.length} image(s))`);
+    });
+
+    res.json({ success: true });
+  } catch (err) {
+    await client.query("ROLLBACK");
+    console.error("Delete account error:", err);
+    res.status(500).json({ error: "Account deletion failed. Please try again." });
+  } finally {
+    client.release();
   }
 });
 

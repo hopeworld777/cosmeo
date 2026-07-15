@@ -46,11 +46,17 @@ export async function requireAdmin(req, res, next) {
 // Set PUBLIC_LAUNCH=true (env) to lift this gate for everyone once Cosmeo
 // launches publicly — no code change or migration needed at that point.
 export async function requireFullAccess(req, res, next) {
-  if (process.env.PUBLIC_LAUNCH === "true") return next();
   try {
-    const check = await pool.query("SELECT access_status FROM users WHERE id = $1", [req.userId]);
-    const status = check.rows[0]?.access_status;
-    if (status === "VIP" || status === "ADMIN") return next();
+    const check = await pool.query("SELECT access_status, deleted_at FROM users WHERE id = $1", [req.userId]);
+    const row = check.rows[0];
+    // A deleted account's JWT can still be cryptographically valid for up to
+    // 30 days — this is the one gated check that already hits the DB, so it
+    // doubles as a backstop against a lingering token being used to create
+    // listings/messages/etc. after self-deletion, ahead of the client's next
+    // /me refresh (see /auth/me and login routes for the primary checks).
+    if (row?.deleted_at) return res.status(401).json({ error: "account_deleted" });
+    if (process.env.PUBLIC_LAUNCH === "true") return next();
+    if (row?.access_status === "VIP" || row?.access_status === "ADMIN") return next();
     return res.status(403).json({ error: "waitlist_pending" });
   } catch (err) {
     console.error("requireFullAccess error:", err);

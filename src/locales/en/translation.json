@@ -493,5 +493,21 @@
   "checkInboxAndRefresh": "Please click the link in your email first.",
   "checking": "Checking…",
   "error": "Error",
-  "cancel": "Cancel"
+  "cancel": "Cancel",
+  "dangerZone": "Danger Zone",
+  "deleteAccountHint": "Permanently delete your account and remove your listings. This cannot be undone.",
+  "deleteMyAccount": "Delete my account",
+  "deleteAccountTitle": "Delete your account",
+  "deleteAccountWarningIntro": "This action is permanent and cannot be undone.",
+  "deleteAccountWarnPermanent": "Your account cannot be recovered once deleted.",
+  "deleteAccountWarnListings": "All of your listings will be removed.",
+  "deleteAccountWarnMessages": "Your messages may be anonymized, but existing conversations will remain intact for the other person.",
+  "deleteAccountContinue": "Delete account",
+  "deleteAccountConfirmTitle": "Confirm deletion",
+  "deleteAccountTypeDelete": "Type \"DELETE\" below to confirm.",
+  "deleteAccountAdminWarning": "This is an admin account. Type its email address to confirm.",
+  "deleteAccountConfirmButton": "Permanently delete",
+  "deleting": "Deleting…",
+  "accountDeletedTitle": "Account deleted",
+  "accountDeleteFailedTitle": "Could not delete account"
 }

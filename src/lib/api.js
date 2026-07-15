@@ -69,6 +69,8 @@ export const api = {
       request("/auth/reset-password", { method: "POST", body: JSON.stringify({ token, password }) }),
     validateResetToken: (token) =>
       request("/auth/validate-reset-token", { method: "POST", body: JSON.stringify({ token }) }),
+    deleteAccount: (body) =>
+      request("/auth/delete-account", { method: "POST", body: JSON.stringify(body) }),
   },
 
   listings: {
