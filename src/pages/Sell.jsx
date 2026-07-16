@@ -388,6 +388,26 @@ export default function Sell() {
     (img) => img.status === "done" && !isValidMediaUrl(img.url)
   );
 
+  // ── DIAGNOSTIC: trace every uploadedImages state change ───────────────
+  // Fires on mount (empty []) and on every subsequent change so we can
+  // pinpoint exactly when/where the array becomes empty unexpectedly.
+  const stepRef = useRef(step);
+  useEffect(() => { stepRef.current = step; });
+  useEffect(() => {
+    console.debug(
+      `[sell:images] state change — step=${stepRef.current} count=${uploadedImages.length}`,
+      uploadedImages.map(i => ({
+        id: i.id?.slice(0, 8),
+        status: i.status,
+        url: i.url,
+        previewUrl: i.previewUrl?.slice(0, 40),
+      }))
+    );
+  }, [uploadedImages]);
+  useEffect(() => {
+    console.debug(`[sell:step] step changed → ${step} | uploadedImages.length=${uploadedImages.length}`);
+  }, [step]); // eslint-disable-line react-hooks/exhaustive-deps
+
   // ── Pricing / listing-type field-level validation ─────────────────────
   // Mirrors the toast (which can be missed/dismissed) with a persistent
   // inline message + highlighted field, and scrolls/focuses the first
@@ -463,6 +483,7 @@ export default function Sell() {
         const ok = await trigger(["title", "description"]);
         if (!ok) return;
       }
+      console.debug(`[sell:nav] goNext step=${step}→${step + 1} | uploadedImages:`, uploadedImages.map(i => ({ id: i.id?.slice(0, 8), status: i.status, url: i.url })));
       setDir(1);
       setStep(s => s + 1);
     } finally {
@@ -522,6 +543,7 @@ export default function Sell() {
         files.map((f) => prepareImageFile(f, { maxBytes: MAX_LISTING_BYTES }))
       );
       const { urls } = await api.upload.multiple(prepared);
+      console.debug('[sell:upload] server response — urls:', urls, '| pending ids:', pending.map(p => p.id.slice(0, 8)));
       // Important: do NOT call URL.revokeObjectURL inside a state updater.
       // React Strict Mode invokes state updaters twice — the first invocation
       // revokes the blob URL, then React discards that result and runs the
@@ -567,6 +589,8 @@ export default function Sell() {
   };
 
   const onPublish = async () => {
+    console.debug('[sell:publish] onPublish fired — step=%d | uploadedImages:', step,
+      uploadedImages.map(i => ({ id: i.id?.slice(0, 8), status: i.status, url: i.url, previewUrl: i.previewUrl?.slice(0, 40) })));
     // Guard: images are required — this should normally be caught on step 0,
     // but defend here too so the backend rule is never silently bypassed.
     if (uploadedImages.length === 0) {
