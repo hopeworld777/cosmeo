@@ -101,6 +101,7 @@ function makeKey() {
 
 // Saves one buffer to R2 or local disk with up to 2 attempts on transient failures.
 async function saveBuffer(buffer, key, contentType) {
+  console.log(`[upload:saveBuffer] useR2=${useR2} key="${key}" contentType="${contentType}" bytes=${buffer.length}`);
   const attempt = async () => {
     if (useR2) {
       await r2.send(new PutObjectCommand({
@@ -109,12 +110,16 @@ async function saveBuffer(buffer, key, contentType) {
         Body: buffer,
         ContentType: contentType,
       }));
-      return `/api/media/${key}`;
+      const url = `/api/media/${key}`;
+      console.log(`[upload:saveBuffer] R2 PUT succeeded → ${url}`);
+      return url;
     } else {
       const destPath = path.join(UPLOADS_DIR, key);
       await fs.promises.mkdir(path.dirname(destPath), { recursive: true });
       await fs.promises.writeFile(destPath, buffer);
-      return `/uploads/${key}`;
+      const url = `/uploads/${key}`;
+      console.log(`[upload:saveBuffer] local disk write → ${url}`);
+      return url;
     }
   };
 
