@@ -621,6 +621,12 @@ export default function Sell() {
       }
     }
 
+    // Broken images are caught at step 0 before the user can advance, so
+    // hasBrokenImages here is a defense-in-depth check only.
+    if (hasBrokenImages) {
+      toast({ title: "This photo could not be saved. Please upload it again.", variant: "destructive" });
+      return;
+    }
     if (!imagesReady) {
       toast({ title: "Please wait for photos to finish uploading.", variant: "destructive" });
       return;
@@ -628,24 +634,11 @@ export default function Sell() {
 
     const { title, description, fandom } = getValues();
 
-    // Only keep images that can actually be served. Any URL that isn't a
-    // durable media path is silently dropped so the user never sees storage
-    // internals — if a photo was lost (e.g. container restart before R2 was
-    // configured) it simply won't appear in the published listing rather than
-    // blocking the whole publish flow.
-    console.debug("[sell] onPublish — uploadedImages at publish time:", uploadedImages.map(i => ({ id: i.id, status: i.status, url: i.url })));
-    const validImages = uploadedImages
-      .filter(img => img.status === "done" && img.url?.startsWith("/api/media/"))
+    // Every image that reached this point passed isValidMediaUrl() at the
+    // step-0 gate, so all done images have durable /api/media/ URLs.
+    const images = uploadedImages
+      .filter(img => img.status === "done")
       .map(img => img.url);
-    const dropped = uploadedImages
-      .filter(img => img.status === "done" && !img.url?.startsWith("/api/media/"))
-      .map(img => ({ id: img.id, url: img.url }));
-    console.debug("[sell] onPublish — validImages:", validImages, "| dropped:", dropped);
-
-    if (validImages.length === 0) {
-      toast({ title: "Please upload at least one photo before publishing.", variant: "destructive" });
-      return;
-    }
     const finalSize = isForRent ? (sizeOption === "custom" ? sizeCustom : sizeOption) : "";
 
     setSubmitting(true);
@@ -675,7 +668,7 @@ export default function Sell() {
         care_instructions:      isForRent ? careInstructions : "",
         delivery_method:        isForRent ? deliveryMethod : null,
         damage_policy:          isForRent ? damagePolicy : "",
-        images: validImages,
+        images,
       });
       setSuccess(true);
       toast({ title: t("listingPublished"), description: t("itemIsLive") });
