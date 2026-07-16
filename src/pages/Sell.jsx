@@ -368,19 +368,25 @@ export default function Sell() {
   const uploadingImages = uploadedImages.filter((img) => img.status === "uploading");
   const isUploading = uploadingImages.length > 0;
 
-  // A finished upload always resolves to a media-serving route — either the
-  // R2 proxy (/api/media/...) or the local-disk fallback (/uploads/...), see
-  // server/routes/upload.js `saveBuffer()`. Anything else (null, a stale
-  // blob: preview, etc.) means the upload hasn't actually completed yet.
+  // Only /api/media/ URLs are durable listing images (written to R2).
+  // /uploads/ paths are ephemeral local-disk fallbacks that don't survive
+  // container restarts, so they are never valid for a published listing.
   const isValidMediaUrl = (url) =>
-    typeof url === "string" && (url.startsWith("/api/media/") || url.startsWith("/uploads/"));
+    typeof url === "string" && url.startsWith("/api/media/");
 
-  // Gate for leaving step 0: at least one image, none still uploading, and
-  // every one of them resolved to a real, valid final URL.
+  // True when every selected image has finished uploading AND resolved to a
+  // durable /api/media/ URL. Used to gate step-0 → step-1 navigation.
   const imagesReady =
     uploadedImages.length > 0 &&
     !isUploading &&
     uploadedImages.every((img) => img.status === "done" && isValidMediaUrl(img.url));
+
+  // True when at least one image finished uploading but ended up with an
+  // unusable URL (e.g. storage was unavailable for that request). Checked
+  // separately from imagesReady so the user gets the right message.
+  const hasBrokenImages = uploadedImages.some(
+    (img) => img.status === "done" && !isValidMediaUrl(img.url)
+  );
 
   // ── Pricing / listing-type field-level validation ─────────────────────
   // Mirrors the toast (which can be missed/dismissed) with a persistent
@@ -445,6 +451,10 @@ export default function Sell() {
       // nothing but a possibly-already-revoked blob to fall back on. The
       // Next button is also disabled for the same condition below, so this
       // is a defense-in-depth check, not the only place this is enforced.
+      if (step === 0 && hasBrokenImages) {
+        toast({ title: "This photo could not be saved. Please upload it again.", variant: "destructive" });
+        return;
+      }
       if (step === 0 && !imagesReady) {
         toast({ title: "Please wait for photos to finish uploading.", variant: "destructive" });
         return;
@@ -453,7 +463,6 @@ export default function Sell() {
         const ok = await trigger(["title", "description"]);
         if (!ok) return;
       }
-      console.debug(`[sell] advancing from step ${step} — uploadedImages:`, uploadedImages.map(i => ({ id: i.id, status: i.status, url: i.url })));
       setDir(1);
       setStep(s => s + 1);
     } finally {
@@ -513,7 +522,6 @@ export default function Sell() {
         files.map((f) => prepareImageFile(f, { maxBytes: MAX_LISTING_BYTES }))
       );
       const { urls } = await api.upload.multiple(prepared);
-      console.debug("[sell] upload complete — urls returned by server:", urls);
       // Important: do NOT call URL.revokeObjectURL inside a state updater.
       // React Strict Mode invokes state updaters twice — the first invocation
       // revokes the blob URL, then React discards that result and runs the
@@ -525,9 +533,7 @@ export default function Sell() {
       setUploadedImages(prev => prev.map(img => {
         const idx = pending.findIndex(p => p.id === img.id);
         if (idx === -1) return img;
-        const updated = { ...img, url: urls[idx], status: "done" };
-        console.debug(`[sell] image state update — id:${img.id} url:${updated.url} status:${updated.status}`);
-        return updated;
+        return { ...img, url: urls[idx], status: "done" };
       }));
     } catch (err) {
       // Drop the failed placeholders and free their object URLs so a failed
